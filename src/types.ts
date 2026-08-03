@@ -221,6 +221,7 @@ export interface AdventurerDistributionDecision {
 
 export interface DistributionReport {
   generatedAt: string;
+  randomSeed?: string;
   availableAdventurers: number;
   assignedAdventurers: number;
   unassignedAdventurers: number;
@@ -245,6 +246,7 @@ export interface Contract {
   actualSquadAdvIds?: string[];
   paidAmount?: number;
   paidCommission?: number;
+  distributionCompleted?: boolean;
   isScoutedByGuild?: boolean;
   simulationReport?: SimulationReport;
 }

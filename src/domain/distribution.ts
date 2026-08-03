@@ -18,6 +18,7 @@ export interface DistributionInput {
   hCost: number;
   random?: () => number;
   generatedAt?: string;
+  randomSeed?: string;
 }
 
 export interface DistributionResult {
@@ -213,6 +214,7 @@ export function distributePlayerContracts(input: DistributionInput): Distributio
     contracts,
     report: {
       generatedAt: input.generatedAt ?? new Date().toISOString(),
+      randomSeed: input.randomSeed,
       availableAdventurers: available.length,
       assignedAdventurers,
       unassignedAdventurers: remaining.size,
@@ -221,4 +223,3 @@ export function distributePlayerContracts(input: DistributionInput): Distributio
     }
   };
 }
-

@@ -23,7 +23,17 @@ import {
   isMissionExpired,
   willMissionExpireAfterDay
 } from '../domain/missions';
-import { getDefaultContractPayment } from '../domain/economy';
+import {
+  getAttachedResourcesValue,
+  getDefaultContractPayment,
+  getGuildDailyFunding,
+  getGuildCommission,
+  getTrustPaymentLimit
+} from '../domain/economy';
+import { distributePlayerContracts } from '../domain/distribution';
+import { createDaySeed, createSeededRandom } from '../domain/random';
+import DistributionReportModal from './DistributionReportModal';
+import { performGuildActions } from '../domain/guild';
 
 interface PhasesTabProps {
   state: GameState;
@@ -48,6 +58,7 @@ export default function PhasesTab({
   const [paymentAmount, setPaymentAmount] = useState(getDefaultContractPayment(1, state.hCost));
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editingReportData, setEditingReportData] = useState<Partial<SimulationReport> | null>(null);
+  const [isDistributionReportOpen, setIsDistributionReportOpen] = useState(false);
 
   // Sync selectedMissionId deep link from map
   useEffect(() => {
@@ -86,22 +97,34 @@ export default function PhasesTab({
     setPaymentAmount(getDefaultContractPayment(lvl, state.hCost));
   };
 
-  // Toggle resource attachment check in Phase 1
-  const handleToggleResource = (resType: BasicResourceKey) => {
-    if (attachedResources.includes(resType)) {
-      setAttachedResources(attachedResources.filter(r => r !== resType));
-    } else {
-      if (attachedResources.length >= maxPartySize) {
-        showToast(`Максимум ресурсов на миссию: ${maxPartySize} (по 1 на участника)!`, true);
-        return;
-      }
-      setAttachedResources([...attachedResources, resType]);
+  const handleAddResource = (resType: BasicResourceKey) => {
+    if (attachedResources.length >= maxPartySize) {
+      showToast(`Максимум ресурсов на миссию: ${maxPartySize} (по 1 на участника)!`, true);
+      return;
     }
+    const clan = state.clans.find(item => item.id === selectedClanId);
+    const selectedCount = attachedResources.filter(resource => resource === resType).length;
+    const availableCount = Number(clan?.resources[resType] || 0);
+    if (selectedCount >= availableCount) {
+      showToast(`На складе недостаточно ресурса «${getResourceNameRu(resType)}».`, true);
+      return;
+    }
+    setAttachedResources([...attachedResources, resType]);
+  };
+
+  const handleRemoveResource = (resType: BasicResourceKey) => {
+    const index = attachedResources.lastIndexOf(resType);
+    if (index < 0) return;
+    setAttachedResources(attachedResources.filter((_, resourceIndex) => resourceIndex !== index));
   };
 
   // Create & confirm contract
   const handleConfirmContract = (e: React.FormEvent) => {
     e.preventDefault();
+    if (state.isGuildActionsCompleted) {
+      showToast('Действия Гильдии уже завершены. Новые контракты можно оформить на следующий день.', true);
+      return;
+    }
     if (!selectedMissionId || !selectedClanId) {
       showToast('Выберите миссию и клан-заказчик!', true);
       return;
@@ -109,7 +132,19 @@ export default function PhasesTab({
 
     const mission = state.missions.find(m => m.id === selectedMissionId);
     const clan = state.clans.find(c => c.id === selectedClanId);
-    if (!mission || !clan) return;
+    const guild = state.clans.find(c => c.id === 'clan_guild');
+    if (!mission || !clan || !guild) return;
+
+    if (paymentAmount <= 0) {
+      showToast('Оплата контракта должна быть больше нуля!', true);
+      return;
+    }
+
+    const paymentLimit = getTrustPaymentLimit(clan, state.hCost);
+    if (paymentAmount > paymentLimit) {
+      showToast(`Уровень доверия ${clan.trustLevel} разрешает оплату не выше ${paymentLimit}г за контракт.`, true);
+      return;
+    }
 
     // Check required special item if specified
     if (mission.requiredSpecialItem) {
@@ -121,33 +156,37 @@ export default function PhasesTab({
       }
     }
 
-    // Check gold and prevent negative balance
-    if (clan.gold < paymentAmount || clan.gold <= 0) {
-      showToast(`У клана ${clan.name} недостаточно золота или отрицательный баланс (${clan.gold}г)! Оплата невозможна.`, true);
+    const guildCommission = getGuildCommission(paymentAmount);
+    const totalCharge = paymentAmount + guildCommission;
+
+    if (clan.gold < totalCharge) {
+      showToast(`Казне ${clan.name} нужно ${totalCharge}г: ${paymentAmount}г оплаты и ${guildCommission}г комиссии.`, true);
       return;
     }
 
-    // Check resources availability
-    for (const r of attachedResources) {
-      if ((clan.resources[r] || 0) < 1) {
-        showToast(`У клана ${clan.name} на складе нет ресурса "${getResourceNameRu(r)}"!`, true);
+    for (const resource of new Set(attachedResources)) {
+      const requiredCount = attachedResources.filter(item => item === resource).length;
+      if (Number(clan.resources[resource] || 0) < requiredCount) {
+        showToast(`У клана ${clan.name} недостаточно ресурса «${getResourceNameRu(resource)}»: нужно ${requiredCount}.`, true);
         return;
       }
     }
 
-    // Deduct payments
     const updatedClans = state.clans.map(c => {
       if (c.id === clan.id) {
         const updatedResources = { ...c.resources };
         attachedResources.forEach(r => {
-          updatedResources[r] = (updatedResources[r] || 1) - 1;
+          updatedResources[r] = Number(updatedResources[r] || 0) - 1;
         });
 
         return {
           ...c,
-          gold: c.gold - paymentAmount,
+          gold: c.gold - totalCharge,
           resources: updatedResources
         };
+      }
+      if (c.id === guild.id) {
+        return { ...c, gold: c.gold + guildCommission };
       }
       return c;
     });
@@ -160,7 +199,10 @@ export default function PhasesTab({
       confirmed: true,
       contractLevel,
       paymentAmount,
+      guildCommission,
       paidAmount: paymentAmount,
+      paidCommission: guildCommission,
+      distributionCompleted: false,
       maxPartySize,
       attachedResources: [...attachedResources],
       partyAdvIds: []
@@ -180,7 +222,7 @@ export default function PhasesTab({
       selectedMissionId: null
     });
 
-    showToast(`✅ Контракт "${mission.title}" успешно оформлен! Списано: ${paymentAmount}г из казны ${clan.name}.`);
+    showToast(`✅ Контракт «${mission.title}» оформлен: ${paymentAmount}г отряду и ${guildCommission}г комиссии ${state.guildShortName}.`);
 
     // Reset inputs
     setSelectedMissionId('');
@@ -188,37 +230,43 @@ export default function PhasesTab({
     setAttachedResources([]);
   };
 
-  // Bug 1 Fix: Correctly unassign contract and refund assets, also clearing squads
   const handleUnassignContract = (missionId: string) => {
+    if (state.isGuildActionsCompleted) {
+      showToast('После действий Гильдии состав контрактов зафиксирован до конца дня.', true);
+      return;
+    }
     const contract = state.contracts.find(c => c.missionId === missionId);
     if (!contract) return;
 
-    let updatedClans = [...state.clans];
-    if (contract.confirmed && contract.clanId && contract.paidAmount) {
-      updatedClans = state.clans.map(c => {
-        if (c.id === contract.clanId) {
-          const updatedResources = { ...c.resources };
-          if (contract.attachedResources) {
-            contract.attachedResources.forEach(r => {
-              updatedResources[r] = (updatedResources[r] || 0) + 1;
-            });
-          }
-          return {
-            ...c,
-            gold: c.gold + (contract.paidAmount || 0),
-            resources: updatedResources
-          };
-        }
-        return c;
-      });
-    }
+    const refundCommission = !contract.distributionCompleted;
+    const commission = refundCommission ? (contract.paidCommission || 0) : 0;
+    const updatedClans = state.clans.map(c => {
+      if (c.id === contract.clanId) {
+        const updatedResources = { ...c.resources };
+        contract.attachedResources.forEach(resource => {
+          updatedResources[resource] = Number(updatedResources[resource] || 0) + 1;
+        });
+        return {
+          ...c,
+          gold: c.gold + (contract.paidAmount || 0) + commission,
+          resources: updatedResources
+        };
+      }
+      if (c.id === 'clan_guild' && commission > 0) {
+        return { ...c, gold: Math.max(0, c.gold - commission) };
+      }
+      return c;
+    });
 
     updateState({
       clans: updatedClans,
       contracts: state.contracts.filter(c => c.missionId !== missionId)
     });
 
-    showToast(`Оформление контракта "${contract.title}" отменено. Золото и ресурсы возвращены в казну.`);
+    showToast(refundCommission
+      ? `Контракт «${contract.title}» отменён до распределения. Оплата, комиссия и ресурсы возвращены.`
+      : `Контракт «${contract.title}» отменён после распределения. Оплата и ресурсы возвращены, комиссия удержана.`
+    );
   };
 
   // Phase 2: Toggle adventurer on contract (strictly GM Override check!)
@@ -429,67 +477,59 @@ export default function PhasesTab({
     showToast('⚖️ Рапорт успешно изменен ГМом и показатели пересчитаны!');
   };
 
-  // Phase 2: Guild Actions (AI Guild logic)
   const handleAutoAssign = () => {
-    // 1. Reset non-player adventurer assignments from player contracts only
-    const resetContracts = state.contracts.map(c => {
-      if (c.clanId === 'clan_guild') return c; // don't touch Guild contracts
-      // Keep player assignments, filter out NPC assignments
-      const players = (c.partyAdvIds || []).filter(id => {
-        const adv = state.adventurers.find(a => a.id === id);
-        return adv?.isPlayer;
-      });
-      return { ...c, partyAdvIds: players };
+    const randomSeed = createDaySeed(state.day);
+    const result = distributePlayerContracts({
+      adventurers: state.adventurers,
+      contracts: state.contracts,
+      hCost: state.hCost,
+      randomSeed,
+      random: createSeededRandom(randomSeed)
     });
 
-    const logs: string[] = [];
-    logs.push(`🏰 [РАСПРЕДЕЛЕНИЕ] Запущен тактический совет по распределению бойцов.`);
-
-    // 2. Calculate remaining unassigned READY adventurers
-    const assignedAdventurerIds = new Set(resetContracts.flatMap(c => c.partyAdvIds));
-    const unassignedAdvs = state.adventurers.filter(a => 
-      a.status === 'READY' && 
-      !assignedAdventurerIds.has(a.id)
+    const updatedContracts = result.contracts.map(contract =>
+      contract.clanId === 'clan_guild'
+        ? contract
+        : { ...contract, distributionCompleted: true }
     );
 
-    // Filter available NPCs (non-player adventurers)
-    let availableNPCs = unassignedAdvs.filter(a => !a.isPlayer);
-
-    // Sort remaining available NPCs by level descending to maximize success chance
-    availableNPCs.sort((x, y) => y.level - x.level);
-
-    // Group formation for player contracts only
-    let changed = true;
-    let assignedCount = 0;
-    while (changed) {
-      changed = false;
-      for (const c of resetContracts) {
-        if (c.clanId === 'clan_guild') continue; // Skip Guild contracts, ONLY player contracts!
-        const targetSize = getContractTargetPartySize(c, state.missions);
-        if (c.partyAdvIds.length < targetSize) {
-          const eligibleNPCIndex = availableNPCs.findIndex(a => a.level <= c.contractLevel);
-          if (eligibleNPCIndex >= 0) {
-            const adv = availableNPCs[eligibleNPCIndex];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(eligibleNPCIndex, 1);
-            changed = true;
-            assignedCount++;
-            logs.push(`⚔️ [ГРУППА] ${adv.name} (Ур.${adv.level}) добавлен в отряд контракта "${c.title}".`);
-          }
-        }
-      }
-    }
-
     updateState({
-      contracts: resetContracts,
-      lastDistributionLogs: logs
+      contracts: updatedContracts,
+      distributionReport: result.report,
+      lastDistributionLogs: result.report.logs,
+      isGuildActionsCompleted: false
     });
 
-    showToast(`🧙‍♂️ Назначено свободных NPC-приключенцев по контрактам игроков: ${assignedCount}.`);
+    showToast(`Рынок контрактов завершён: нанято ${result.report.assignedAdventurers}, в резерве ${result.report.unassignedAdventurers}.`);
   };
 
   // Phase 3: Autonomous Guild Actions (Honest resource spending/buying)
   const handleGuildActionsPhase3 = () => {
+    if (state.isGuildActionsCompleted) {
+      showToast('Действия Гильдии в этом дне уже завершены.', true);
+      return;
+    }
+
+    const result = performGuildActions({
+      clans: state.clans,
+      adventurers: state.adventurers,
+      missions: state.missions,
+      contracts: state.contracts,
+      hCost: state.hCost
+    });
+
+    updateState({
+      clans: result.clans,
+      missions: result.missions,
+      contracts: result.contracts,
+      lastDistributionLogs: result.logs,
+      isGuildActionsCompleted: true
+    });
+    showToast(`Действия ${state.guildShortName} завершены: создано ${result.createdContracts}, назначено ${result.assignedAdventurers}.`);
+    return;
+
+    /* Старая реализация Совета оставлена только до полного разделения PhasesTab.
+       Она исключена из сборки и будет удалена вместе с монолитным симулятором.
     const logs: string[] = [];
     logs.push(`🏰 [АКТИВНОСТЬ ГИЛЬДИИ] Запущен тактический совет Гильдии в Фазе 3.`);
 
@@ -676,10 +716,15 @@ export default function PhasesTab({
     });
 
     showToast(`🏰 Действия Гильдии в Фазе 3 завершены! Создано контрактов: ${n}, распределено бойцов: ${npcAssigned}.`);
+    */
   };
 
   // Phase 3: Simulate Day!
   const handleSimulateDay = () => {
+    if (!state.isGuildActionsCompleted) {
+      showToast(`Сначала завершите действия ${state.guildShortName}.`, true);
+      return;
+    }
     const dayLogs: string[] = [];
     const reports: SimulationReport[] = [];
 
@@ -691,6 +736,8 @@ export default function PhasesTab({
 
     const tempContracts = JSON.parse(JSON.stringify(state.contracts)) as Contract[];
 
+    /* Старая повторная подготовка контрактов исключена: симуляция получает
+       уже зафиксированные отряды после рынка и отдельного действия Гильдии.
     // 1. Guild Council Formulation (ONLY in Phase 3!)
     // Find Guild Clan
     const guildClan = updatedClans.find(cl => cl.id === 'clan_guild');
@@ -699,14 +746,12 @@ export default function PhasesTab({
     const currentAssignedIds = new Set(tempContracts.flatMap(c => c.partyAdvIds));
     
     // Filter available READY NPC adventurers (non-players, unassigned)
-    let availableNPCs = updatedAdvs.filter(a => 
-      a.status === 'READY' && 
-      !a.isPlayer && 
-      !currentAssignedIds.has(a.id)
-    );
+    // Contracts and squads are fully fixed before simulation. The legacy
+    // simulator must not create contracts or distribute NPCs a second time.
+    let availableNPCs: Adventurer[] = [];
 
     // Calculate n = Floor(availableNPCs.length / 2)
-    const n = Math.floor(availableNPCs.length / 2);
+    const n = 0;
     dayLogs.push(`🏰 [СОВЕТ ГИЛЬДИИ] Свободных дееспособных NPC приключенцев: ${availableNPCs.length}. Совет решил заняться ${n} новыми донесениями.`);
 
     if (n > 0) {
@@ -803,11 +848,7 @@ export default function PhasesTab({
     // 2. Assign available ready non-player adventurers to ALL confirmed/active contracts
     let aiAssignedCount = 0;
     const assignedIds = new Set(tempContracts.flatMap(c => c.partyAdvIds));
-    availableNPCs = updatedAdvs.filter(a => 
-      a.status === 'READY' && 
-      !a.isPlayer && 
-      !assignedIds.has(a.id)
-    );
+    availableNPCs = [];
 
     // Step A: Assign exactly 1 adventurer to contracts that have auto-success key resources attached
     tempContracts.forEach(c => {
@@ -857,6 +898,7 @@ export default function PhasesTab({
     if (aiAssignedCount > 0) {
       showToast(`🏰 Распорядитель Гильдии распределил ${aiAssignedCount} свободных приключенцев по контрактам!`);
     }
+    */
 
     // Process each contract
     const simulatedContracts = tempContracts.map(c => {
@@ -988,18 +1030,12 @@ export default function PhasesTab({
           }
         });
 
-        // 15% guild commission
         const guild = updatedClans.find(g => g.id === 'clan_guild');
         if (guild) {
-          const comm = Math.round(c.paymentAmount * 0.15);
-          if (comm > 0) {
-            guild.gold += comm;
-            dayLogs.push(`🪙 [НАЛОГ] Гильдия получила комиссию 15% (${comm}г) от контракта "${c.title}".`);
-          }
-          // Also reward custom gold directly if specified!
-          if (mission.goldReward !== undefined && mission.goldReward > 0) {
+          // Commission was already transferred when the player contract was created.
+          if (c.clanId === 'clan_guild' && mission.goldReward !== undefined && mission.goldReward > 0) {
             guild.gold += mission.goldReward;
-            dayLogs.push(`🪙 [НАГРАДА] В казну Гильдии зачислено золото: +${mission.goldReward}г за успешное выполнение особого контракта.`);
+            dayLogs.push(`🪙 [НАГРАДА] В казну ${state.guildShortName} зачислено +${mission.goldReward}г.`);
           }
           // Reward special items
           if (mission.rewardSpecialItems && mission.rewardSpecialItems.length > 0) {
@@ -1212,7 +1248,10 @@ export default function PhasesTab({
     // Bug 2 Fix: Gold payout for clans according to rank
     // Rank 1: 12h, Rank 2: 20h, Rank 3: 35h
     const nextDayClans = state.clans.map(clan => {
-      if (clan.id === 'clan_guild') return clan;
+      if (clan.id === 'clan_guild') {
+        const playableClansCount = state.clans.filter(item => item.id !== 'clan_guild').length;
+        return { ...clan, gold: clan.gold + getGuildDailyFunding(playableClansCount, state.hCost) };
+      }
       const rank = clan.trustLevel || 1;
       let dailyPayout = 0;
       if (rank === 1) dailyPayout = 12 * state.hCost;
@@ -1220,7 +1259,7 @@ export default function PhasesTab({
       else if (rank >= 3) dailyPayout = 35 * state.hCost;
 
       // Also reset resource freeResourceBudget for shopping
-      const nextFreeRes = rank === 1 ? 2 : rank === 2 ? 4 : 6;
+      const nextFreeRes = rank === 1 ? 1 : rank === 2 ? 2 : 3;
 
       return {
         ...clan,
@@ -1295,10 +1334,12 @@ export default function PhasesTab({
       day: state.day + 1,
       currentPhase: 1, // Reset to formulation
       isDaySimulated: false,
+      isGuildActionsCompleted: false,
       adventurers: nextDayAdvs,
       clans: nextDayClans,
       missions: nextDayMissions,
-      contracts: nextDayContracts
+      contracts: nextDayContracts,
+      distributionReport: null
     });
 
     showToast(`☀️ Наступил День ${state.day + 1}! Казна кланов пополнена, раненые вылечились, новые донесения разнеслись по тавернам.`);
@@ -1574,24 +1615,65 @@ export default function PhasesTab({
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as BasicResourceKey[]).map(r => {
-                      const isAttached = attachedResources.includes(r);
+                      const selectedCount = attachedResources.filter(resource => resource === r).length;
+                      const isAttached = selectedCount > 0;
                       const selectedClan = playableClans.find(c => c.id === selectedClanId);
-                      const resourceCount = selectedClan ? (selectedClan.resources[r] || 0) : 0;
+                      const resourceCount = selectedClan ? Number(selectedClan.resources[r] || 0) : 0;
                       return (
                         <div
                           key={r}
-                          onClick={() => handleToggleResource(r)}
-                          className={`p-2.5 rounded border text-center cursor-pointer select-none transition-all ${isAttached ? 'bg-emerald-950/20 border-emerald-500 text-emerald-400 font-bold' : 'bg-black border-neutral-800 text-neutral-400 hover:border-neutral-700'}`}
+                          className={`p-2.5 rounded border text-center select-none transition-all ${isAttached ? 'bg-emerald-950/20 border-emerald-500 text-emerald-400 font-bold' : 'bg-black border-neutral-800 text-neutral-400'}`}
                         >
                           <span className="text-xs uppercase block">{getResourceNameRu(r)}</span>
                           <span className="text-[10px] text-neutral-500 block mt-1">
                             {selectedClan ? `Доступно: ${resourceCount} шт` : 'Выберите клан'}
                           </span>
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveResource(r)}
+                              disabled={selectedCount === 0}
+                              className="w-7 h-6 rounded border border-neutral-700 disabled:opacity-30 hover:border-rose-500 hover:text-rose-400 cursor-pointer"
+                            >
+                              −
+                            </button>
+                            <strong className="min-w-5 text-sm">{selectedCount}</strong>
+                            <button
+                              type="button"
+                              onClick={() => handleAddResource(r)}
+                              disabled={!selectedClan || selectedCount >= resourceCount || attachedResources.length >= maxPartySize}
+                              className="w-7 h-6 rounded border border-neutral-700 disabled:opacity-30 hover:border-emerald-500 hover:text-emerald-400 cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 </div>
+
+                {selectedClanId && (() => {
+                  const clan = playableClans.find(item => item.id === selectedClanId);
+                  if (!clan) return null;
+                  const commission = getGuildCommission(paymentAmount);
+                  const totalCharge = paymentAmount + commission;
+                  const paymentLimit = getTrustPaymentLimit(clan, state.hCost);
+                  const preparationValue = getAttachedResourcesValue(attachedResources, state.hCost);
+                  const isOverLimit = paymentAmount > paymentLimit;
+                  return (
+                    <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded border ${isOverLimit ? 'bg-rose-950/15 border-rose-500/40' : 'bg-amber-950/10 border-amber-500/20'}`}>
+                      <div><span className="block text-[9px] text-neutral-500 uppercase">Приключенцам</span><strong className="text-amber-400">{paymentAmount}г</strong></div>
+                      <div><span className="block text-[9px] text-neutral-500 uppercase">Комиссия 15%</span><strong className="text-amber-400">{commission}г</strong></div>
+                      <div><span className="block text-[9px] text-neutral-500 uppercase">Всего из казны</span><strong className={totalCharge > clan.gold ? 'text-rose-400' : 'text-white'}>{totalCharge}г</strong></div>
+                      <div><span className="block text-[9px] text-neutral-500 uppercase">Ценность подготовки</span><strong className="text-emerald-400">+{preparationValue}г</strong></div>
+                      <div className="col-span-2 md:col-span-4 text-[10px] text-neutral-400">
+                        Предел доверия: <strong className={isOverLimit ? 'text-rose-400' : 'text-emerald-400'}>{paymentLimit}г</strong> оплаты за контракт.
+                        {isOverLimit && ' Рекомендуемая оплата создаёт намеренный дефицит — уменьшите сумму для оформления.'}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex justify-end pt-3">
                   <button
@@ -1631,8 +1713,8 @@ export default function PhasesTab({
                       {/* Attached assets badge */}
                       {c.attachedResources && c.attachedResources.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {c.attachedResources.map(r => (
-                            <span key={r} className="px-1.5 py-0.5 bg-emerald-950/20 border border-emerald-500/30 rounded text-[9px] text-emerald-400 font-bold uppercase">
+                          {c.attachedResources.map((r, resourceIndex) => (
+                            <span key={`${r}-${resourceIndex}`} className="px-1.5 py-0.5 bg-emerald-950/20 border border-emerald-500/30 rounded text-[9px] text-emerald-400 font-bold uppercase">
                               {getResourceNameRu(r)}
                             </span>
                           ))}
@@ -1640,7 +1722,7 @@ export default function PhasesTab({
                       )}
 
                       <div className="text-[11px] text-neutral-500 flex justify-between pt-1 border-t border-neutral-900">
-                        <span>Сумма: <strong className="text-amber-500">{c.paymentAmount}г</strong></span>
+                        <span>Оплата: <strong className="text-amber-500">{c.paymentAmount}г</strong> + {c.guildCommission || 0}г комиссии</span>
                         <span>Уровень: <strong>{c.contractLevel}</strong></span>
                       </div>
 
@@ -1881,15 +1963,21 @@ export default function PhasesTab({
 
           </div>
 
-          {/* AI Logs block */}
-          {state.isDmMode && state.lastDistributionLogs && state.lastDistributionLogs.length > 0 && (
-            <div className="bg-[#090909] border border-emerald-500/10 p-4 rounded font-mono text-[10px] text-emerald-400 space-y-1">
-              <span className="text-xs font-bold uppercase block text-neutral-400 mb-1">📋 Терминал распределения ИИ Гильдии:</span>
-              <div className="max-h-24 overflow-y-auto space-y-0.5">
-                {state.lastDistributionLogs.map((logStr, idx) => (
-                  <div key={idx}>{logStr}</div>
-                ))}
+          {state.isDmMode && state.distributionReport && (
+            <div className="bg-[#090909] border border-emerald-500/15 p-4 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <strong className="text-xs font-mono uppercase text-neutral-300">Закрытый рапорт рынка</strong>
+                <p className="text-[10px] font-mono text-neutral-500 mt-1">
+                  Нанято: {state.distributionReport.assignedAdventurers} · В резерве: {state.distributionReport.unassignedAdventurers}
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsDistributionReportOpen(true)}
+                className="px-4 py-2 bg-emerald-950/20 border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 rounded font-mono text-xs font-bold uppercase cursor-pointer"
+              >
+                Открыть подробный рапорт
+              </button>
             </div>
           )}
 
@@ -1915,18 +2003,19 @@ export default function PhasesTab({
                   <button
                     type="button"
                     onClick={handleGuildActionsPhase3}
-                    disabled={state.contracts.some(c => c.clanId === 'clan_guild')}
-                    className={`px-6 py-3 font-mono text-xs font-bold uppercase rounded transition-all flex items-center gap-1.5 ${state.contracts.some(c => c.clanId === 'clan_guild') ? 'bg-neutral-900 border border-neutral-800 text-neutral-600 cursor-not-allowed' : 'bg-[#111] hover:bg-neutral-800 border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 cursor-pointer'}`}
+                    disabled={state.isGuildActionsCompleted}
+                    className={`px-6 py-3 font-mono text-xs font-bold uppercase rounded transition-all flex items-center gap-1.5 ${state.isGuildActionsCompleted ? 'bg-neutral-900 border border-neutral-800 text-neutral-600 cursor-not-allowed' : 'bg-[#111] hover:bg-neutral-800 border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 cursor-pointer'}`}
                   >
                     <RefreshCw className="w-4 h-4" />
-                    {state.contracts.some(c => c.clanId === 'clan_guild') ? 'Совет Гильдии проведен' : 'Действия Гильдии (ИИ)'}
+                    {state.isGuildActionsCompleted ? `Совет: ${state.guildShortName} завершила действия` : `Действия: ${state.guildShortName}`}
                   </button>
                   <button
                     type="button"
                     onClick={handleSimulateDay}
-                    className="px-10 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold uppercase tracking-widest rounded shadow-[0_0_20px_rgba(0,255,102,0.3)] hover:scale-105 transition-all cursor-pointer"
+                    disabled={!state.isGuildActionsCompleted}
+                    className="px-10 py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-neutral-800 disabled:text-neutral-600 disabled:shadow-none disabled:cursor-not-allowed text-black font-mono text-xs font-bold uppercase tracking-widest rounded shadow-[0_0_20px_rgba(0,255,102,0.3)] hover:enabled:scale-105 transition-all cursor-pointer"
                   >
-                    Запустить симуляцию
+                    {state.isGuildActionsCompleted ? 'Запустить симуляцию' : `Сначала действия: ${state.guildShortName}`}
                   </button>
                 </div>
               </div>
@@ -2262,6 +2351,15 @@ export default function PhasesTab({
         </div>
       )}
 
+      <DistributionReportModal
+        isOpen={state.isDmMode && isDistributionReportOpen}
+        onClose={() => setIsDistributionReportOpen(false)}
+        report={state.distributionReport}
+        contracts={state.contracts}
+        adventurers={state.adventurers}
+        clans={state.clans}
+        hCost={state.hCost}
+      />
     </div>
   );
 }

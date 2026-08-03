@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { Adventurer, Contract, Mission } from '../types';
+import type { Adventurer, Clan, Contract, Mission } from '../types';
 import {
   canPaymentSupportParty,
   clampRelation,
@@ -8,6 +8,7 @@ import {
   getDefaultContractPayment
 } from './economy';
 import { distributePlayerContracts } from './distribution';
+import { performGuildActions } from './guild';
 import { hasFullPreparation, hasNoPreparation } from './missions';
 
 function adventurer(overrides: Partial<Adventurer> = {}): Adventurer {
@@ -138,4 +139,47 @@ test('герой не принимает контракт выше допуст�
   });
   assert.equal(result.report.assignedAdventurers, 0);
   assert.equal(result.report.unassignedAdventurers, 1);
+});
+
+test('Гильдия тратит разведданные и оплачивает назначенный отряд', () => {
+  const guild: Clan = {
+    id: 'clan_guild',
+    name: 'Гильдия Авантюристов',
+    trustLevel: 5,
+    gold: 100,
+    resources: { Supplies: 0, Equipment: 0, Intelligence: 1, Alchemy: 0 }
+  };
+  const guildMission = mission({ type: 'DUMMY', checks: [], reqResource: 'None' });
+  const heroes = [1, 2, 3, 4].map(index => adventurer({ id: `adv-${index}` }));
+  const result = performGuildActions({
+    clans: [guild],
+    adventurers: heroes,
+    missions: [guildMission],
+    contracts: [],
+    hCost: 10
+  });
+  assert.equal(result.createdContracts, 1);
+  assert.equal(result.assignedAdventurers, 1);
+  assert.equal(result.clans[0].gold, 90);
+  assert.equal(result.clans[0].resources.Intelligence, 0);
+  assert.equal(result.missions[0].intelRevealed, true);
+});
+
+test('Гильдия не раскрывает и не принимает событие без доступной разведки', () => {
+  const guild: Clan = {
+    id: 'clan_guild',
+    name: 'Гильдия Авантюристов',
+    trustLevel: 5,
+    gold: 0,
+    resources: { Supplies: 0, Equipment: 0, Intelligence: 0, Alchemy: 0 }
+  };
+  const result = performGuildActions({
+    clans: [guild],
+    adventurers: [1, 2].map(index => adventurer({ id: `adv-${index}` })),
+    missions: [mission({ type: 'DUMMY', checks: [], reqResource: 'None', intelRevealed: false })],
+    contracts: [],
+    hCost: 10
+  });
+  assert.equal(result.createdContracts, 0);
+  assert.equal(result.missions[0].intelRevealed, false);
 });
