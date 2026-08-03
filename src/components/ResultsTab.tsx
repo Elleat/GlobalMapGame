@@ -5,7 +5,8 @@
 
 import React, { useState } from 'react';
 import { Calendar, CheckCircle, XCircle, Search, Clock, Shield, Coins, AlertTriangle, Edit2, Check, X } from 'lucide-react';
-import { GameState, SimulationReport } from '../types';
+import { Contract, GameState, SimulationReport } from '../types';
+import { recalculateReportEffects } from '../domain/reportEffects';
 
 interface ResultsTabProps {
   state: GameState;
@@ -52,86 +53,68 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
 
   const handleApplyChanges = (idx: number, originalRep: SimulationReport) => {
     if (!selectedDay) return;
+    const context = originalRep.context;
+    if (!context || originalRep.isExpired) {
+      showToast('Этот старый или просроченный рапорт не содержит данных для безопасного пересчёта.', true);
+      return;
+    }
 
-    // Recalculate total roll if not auto-success
-    const calculatedTotal = editRoll + editBonus;
-    const finalSuccess = editAutoSuccess ? true : (calculatedTotal >= editDc);
-
-    // Form updated report
-    const updatedRep: SimulationReport = {
+    const activeContract = state.contracts.find(contract => contract.missionId === originalRep.missionId);
+    const reportContract: Contract = activeContract ?? {
+      missionId: originalRep.missionId,
+      title: originalRep.missionTitle,
+      clanId: context.clanId,
+      confirmed: true,
+      contractLevel: context.contractLevel,
+      paymentAmount: 0,
+      maxPartySize: context.maxPartySize,
+      attachedResources: [...context.attachedResources],
+      partyAdvIds: [...originalRep.squadAdvIds]
+    };
+    const finalSuccess = editAutoSuccess ? true : editSuccess;
+    const editedReport: SimulationReport = {
       ...originalRep,
       isSuccess: finalSuccess,
       isResourceAutoSuccess: editAutoSuccess,
       autoSuccessReason: editAutoSuccess ? editAutoReason || 'Особое снаряжение' : null,
       roll: editRoll,
       partyBonus: editBonus,
-      totalRoll: calculatedTotal,
+      totalRoll: editRoll + editBonus,
       dc: editDc,
       goldReward: editGold,
       damageDealt: editDamage,
       squadAdvIds: editSquadIds,
-      squadNames: state.adventurers.filter(a => editSquadIds.includes(a.id)).map(a => a.name),
-      attachedResourcesUsed: editResources
+      attachedResourcesUsed: editResources,
+      baseObjectiveCompleted: finalSuccess !== originalRep.isSuccess
+        ? finalSuccess
+        : (originalRep.baseObjectiveCompleted ?? finalSuccess)
     };
-
-    // Calculate HP adjustments for adventurers
-    const damageDiff = originalRep.damageDealt - editDamage; // Positive means we reduced damage (heal), negative means we increased damage
-    const updatedAdvs = state.adventurers.map(adv => {
-      if (editSquadIds.includes(adv.id)) {
-        let nextHp = adv.hp + damageDiff;
-        let nextStatus = adv.status;
-
-        if (nextHp > adv.maxHp) nextHp = adv.maxHp;
-        if (nextHp <= 0) {
-          nextHp = 0;
-          nextStatus = 'DEAD';
-        } else {
-          if (nextStatus === 'DEAD') nextStatus = 'READY';
-          if (nextHp < adv.maxHp && nextStatus === 'READY') {
-            nextStatus = 'WOUNDED';
-          } else if (nextHp === adv.maxHp && nextStatus === 'WOUNDED') {
-            nextStatus = 'READY';
-          }
-        }
-
-        return {
-          ...adv,
-          hp: nextHp,
-          status: nextStatus
-        };
-      }
-      return adv;
+    const recalculated = recalculateReportEffects({
+      originalReport: originalRep,
+      editedReport,
+      contract: reportContract,
+      mission: context.mission,
+      adventurers: state.adventurers,
+      clans: state.clans,
+      day: selectedDay
     });
-
-    // Calculate Gold adjustment for clans
-    const goldDiff = editGold - originalRep.goldReward;
-    const updatedClans = state.clans.map(clan => {
-      if (clan.name === originalRep.clanName) {
-        return {
-          ...clan,
-          gold: Math.max(0, clan.gold + goldDiff)
-        };
-      }
-      return clan;
+    const updatedHistory = history.map(dayEntry => dayEntry.day !== selectedDay ? dayEntry : {
+      ...dayEntry,
+      reports: dayEntry.reports.map((report, reportIndex) => reportIndex === idx ? recalculated.report : report)
     });
-
-    // Update history day entry
-    const updatedHistory = history.map(dayEntry => {
-      if (dayEntry.day !== selectedDay) return dayEntry;
-      const updatedReports = dayEntry.reports.map((r, i) => (i === idx ? updatedRep : r));
-      return {
-        ...dayEntry,
-        reports: updatedReports
-      };
-    });
+    const updatedContracts = state.contracts.map(contract => contract.missionId === originalRep.missionId
+      ? { ...contract, simulationReport: recalculated.report }
+      : contract
+    );
 
     updateState({
-      adventurers: updatedAdvs,
-      clans: updatedClans,
+      adventurers: recalculated.adventurers,
+      clans: recalculated.clans,
+      contracts: updatedContracts,
       history: updatedHistory
     });
 
-    showToast('⚖️ Рапорт успешно изменен ГМом и показатели пересчитаны!');
+    showToast('Рапорт изменён: все игровые последствия пересчитаны.');
     setEditingReportIdx(null);
   };
 
@@ -340,6 +323,24 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                     <span className="text-[9px] bg-amber-500/10 text-amber-500 px-1 rounded">ИЗМЕНЕНИЕ ДАННЫХ</span>
                                   </div>
 
+                                  <div className="flex items-center justify-between gap-3 bg-neutral-950 border border-neutral-800 rounded p-3">
+                                    <div>
+                                      <span className="text-neutral-300 font-bold uppercase block">Финальный результат</span>
+                                      <small className="text-neutral-600">Пересчитывает опыт, отношения, HP, награды и ресурсы.</small>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const nextSuccess = !editSuccess;
+                                        setEditSuccess(nextSuccess);
+                                        if (!nextSuccess) setEditAutoSuccess(false);
+                                      }}
+                                      className={`px-3 py-1.5 rounded border font-bold uppercase cursor-pointer ${editSuccess ? 'text-emerald-400 border-emerald-500 bg-emerald-950/20' : 'text-rose-400 border-rose-500 bg-rose-950/20'}`}
+                                    >
+                                      {editSuccess ? 'Успех' : 'Провал'}
+                                    </button>
+                                  </div>
+
                                   {/* Row 1: DC and Auto-success */}
                                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     <div className="flex flex-col gap-1">
@@ -401,7 +402,10 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                         <input
                                           type="checkbox"
                                           checked={editAutoSuccess}
-                                          onChange={(e) => setEditAutoSuccess(e.target.checked)}
+                                          onChange={(e) => {
+                                            setEditAutoSuccess(e.target.checked);
+                                            if (e.target.checked) setEditSuccess(true);
+                                          }}
                                           className="w-4 h-4 cursor-pointer"
                                         />
                                         <span className="text-neutral-400">Задействовать ресурс</span>

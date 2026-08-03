@@ -307,7 +307,8 @@ export default function MapTab({
       y: storyY,
       region: 'СЮЖЕТНАЯ ЗОНА',
       pinned: true,
-      intelRevealed: true
+      intelRevealed: true,
+      storyStatus: 'AVAILABLE'
     };
 
     updateState({
@@ -469,6 +470,10 @@ export default function MapTab({
                   const mission = state.missions.find(m => m.id === c.missionId);
                   if (!mission) return null;
                   const hq = state.hqPos || { x: 50, y: 50 };
+                  const isDelayedStory = mission.type === 'STORY'
+                    && mission.storyStatus === 'AWAITING_REPORT'
+                    && mission.storyAcceptedDay !== undefined
+                    && state.day > mission.storyAcceptedDay;
                   return (
                     <line
                       key={c.missionId}
@@ -476,9 +481,9 @@ export default function MapTab({
                       y1={hq.y}
                       x2={mission.x}
                       y2={mission.y}
-                      stroke="#10b981"
-                      strokeWidth="0.8"
-                      strokeDasharray="2 1.5"
+                      stroke={isDelayedStory ? 'var(--story-delayed, #f59e0b)' : 'var(--contract-line, #10b981)'}
+                      strokeWidth={isDelayedStory ? '1.4' : '0.8'}
+                      strokeDasharray={isDelayedStory ? '0.8 0.8' : '2 1.5'}
                     >
                       <animate
                         attributeName="stroke-dashoffset"
@@ -564,6 +569,11 @@ export default function MapTab({
               {/* Draggable/Selectable Active Mission Pins */}
               {state.missions.map((m) => {
                 const isUrgent = willMissionExpireAfterDay(m);
+                const isStory = m.type === 'STORY';
+                const isDelayedStory = isStory
+                  && m.storyStatus === 'AWAITING_REPORT'
+                  && m.storyAcceptedDay !== undefined
+                  && state.day > m.storyAcceptedDay;
                 return (
                   <div
                     key={m.id}
@@ -593,15 +603,15 @@ export default function MapTab({
                       style={{ animationDuration: isUrgent ? '0.8s' : '2s' }}
                     >
                       {/* Pulsing halo */}
-                      <div className={`absolute inset-0 rounded-full animate-ping opacity-35 ${isUrgent ? 'bg-rose-500' : 'bg-emerald-400'}`} />
+                      <div className={`absolute inset-0 rounded-full animate-ping opacity-35 ${isDelayedStory ? 'bg-amber-400' : isUrgent ? 'bg-rose-500' : isStory ? 'bg-violet-400' : 'bg-emerald-400'}`} />
                       
                       {/* Floating pinpoint flag */}
-                      <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-125 ${isUrgent ? 'bg-rose-950 border-rose-500 text-rose-400' : 'bg-black/90 border-emerald-500 text-emerald-400'}`}>
-                        <MapPin className="w-4 h-4" />
+                      <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-125 ${isDelayedStory ? 'bg-amber-950 border-amber-400 text-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.7)]' : isUrgent ? 'bg-rose-950 border-rose-500 text-rose-400' : isStory ? 'bg-violet-950 border-violet-400 text-violet-300' : 'bg-black/90 border-emerald-500 text-emerald-400'}`}>
+                        {isStory ? <span className="text-base leading-none">◆</span> : <MapPin className="w-4 h-4" />}
                         
                         {/* Floating tooltip badge */}
                         <span className="absolute bottom-9 bg-black border border-emerald-500/40 text-neutral-200 text-[10px] font-mono px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                          {m.title} {m.intelRevealed && `(DC ${m.dc})`}
+                          {isDelayedStory ? '⏳ Сюжетная миссия ожидает рапорта · ' : isStory ? '◆ Сюжетная миссия · ' : ''}{m.title} {m.intelRevealed && `(DC ${m.dc})`}
                         </span>
                       </div>
                     </div>

@@ -129,11 +129,22 @@ export interface CheckResolution {
 export interface ParticipantOutcome {
   adventurerId: string;
   name: string;
+  levelBefore: number;
+  levelAfter: number;
   hpBefore: number;
   hpAfter: number;
+  maxHpBefore: number;
+  maxHpAfter: number;
   statusBefore: AdventurerStatus;
   statusAfter: AdventurerStatus;
+  woundedOnDayBefore?: number;
+  woundedOnDayAfter?: number;
+  successfulMissionsBefore: number;
+  successfulMissionsAfter: number;
+  totalMissionsBefore: number;
+  totalMissionsAfter: number;
   survived: boolean;
+  returned: boolean;
   relationDelta: number;
   successfulMissionsDelta: number;
   totalMissionsDelta: number;
@@ -149,6 +160,7 @@ export interface RetreatResolution {
   isSuccess: boolean;
   extraDamage: number;
   deadAdventurerIds: string[];
+  returnedAdventurerIds: string[];
 }
 
 export interface ResourceLedger {
@@ -176,6 +188,14 @@ export interface SimulationEffectLedger {
   unlockedMissionIds: string[];
 }
 
+export interface SimulationReportContext {
+  clanId: string | null;
+  attachedResources: BasicResourceKey[];
+  contractLevel: number;
+  maxPartySize: number;
+  mission: Mission;
+}
+
 export interface SimulationReport {
   isSuccess: boolean;
   isResourceAutoSuccess: boolean;
@@ -201,6 +221,9 @@ export interface SimulationReport {
   effects?: SimulationEffectLedger;
   wasManuallyResolved?: boolean;
   baseObjectiveCompleted?: boolean;
+  returnedAdventurerIds?: string[];
+  failedChecksCount?: number;
+  context?: SimulationReportContext;
 }
 
 export interface ContractCandidateDecision {

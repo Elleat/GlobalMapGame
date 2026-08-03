@@ -4,25 +4,17 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Play, CheckCircle, XCircle, ArrowRight, Shield, AlertTriangle, Coins, RefreshCw, Trash2, UserPlus } from 'lucide-react';
-import { GameState, Contract, Mission, Clan, Adventurer, SimulationReport, BasicResourceKey } from '../types';
+import { FileText, Users, Play, CheckCircle, XCircle, ArrowRight, Shield, Coins, RefreshCw, Trash2 } from 'lucide-react';
+import { GameState, Contract, SimulationReport, BasicResourceKey } from '../types';
 import {
   getContractTargetPartySize,
   getMaxContractLevelForClan,
-  calculatePartyBonus,
-  rollD20,
   getResourceNameRu,
   getStatusNameRu,
   getTypeRu,
   generateMissionsForDay
 } from '../utils';
-import {
-  decrementMissionLifespan,
-  getMissionUrgency,
-  isBasicResource,
-  isMissionExpired,
-  willMissionExpireAfterDay
-} from '../domain/missions';
+import { isBasicResource, willMissionExpireAfterDay } from '../domain/missions';
 import {
   getAttachedResourcesValue,
   getDefaultContractPayment,
@@ -34,6 +26,9 @@ import { distributePlayerContracts } from '../domain/distribution';
 import { createDaySeed, createSeededRandom } from '../domain/random';
 import DistributionReportModal from './DistributionReportModal';
 import { performGuildActions } from '../domain/guild';
+import { simulateDayContracts } from '../domain/simulation';
+import { advanceMissionLifecycle } from '../domain/day';
+import { recalculateReportEffects } from '../domain/reportEffects';
 
 interface PhasesTabProps {
   state: GameState;
@@ -374,6 +369,91 @@ export default function PhasesTab({
     }
   };
 
+  const handleStartStoryReport = (contract: Contract) => {
+    const mission = state.missions.find(item => item.id === contract.missionId);
+    if (!mission || mission.type !== 'STORY') return;
+    const clanName = state.clans.find(clan => clan.id === contract.clanId)?.name ?? 'Неизвестный заказчик';
+    const draft: SimulationReport = {
+      isSuccess: false,
+      isResourceAutoSuccess: false,
+      autoSuccessReason: null,
+      roll: 0,
+      partyBonus: 0,
+      totalRoll: 0,
+      dc: mission.dc,
+      narrativeText: 'Сюжетная миссия завершена по решению ГМа.',
+      damageDealt: 0,
+      goldReward: mission.goldReward ?? 0,
+      attachedResourcesUsed: [],
+      squadNames: [],
+      squadAdvIds: [],
+      clanName,
+      missionTitle: mission.title,
+      missionRegion: mission.region,
+      missionId: mission.id,
+      wasManuallyResolved: true,
+      baseObjectiveCompleted: false,
+      returnedAdventurerIds: [],
+      failedChecksCount: 0,
+      context: {
+        clanId: contract.clanId,
+        attachedResources: [...contract.attachedResources],
+        contractLevel: contract.contractLevel,
+        maxPartySize: contract.maxPartySize,
+        mission: structuredClone(mission)
+      }
+    };
+    setEditingMissionId(contract.missionId);
+    setEditingReportData(draft);
+  };
+
+  const toggleEditingParticipant = (adventurerId: string) => {
+    setEditingReportData(previous => {
+      if (!previous) return previous;
+      const squad = previous.squadAdvIds ?? [];
+      const returned = previous.returnedAdventurerIds ?? [];
+      const isSelected = squad.includes(adventurerId);
+      return {
+        ...previous,
+        squadAdvIds: isSelected ? squad.filter(id => id !== adventurerId) : [...squad, adventurerId],
+        returnedAdventurerIds: isSelected
+          ? returned.filter(id => id !== adventurerId)
+          : [...new Set([...returned, adventurerId])]
+      };
+    });
+  };
+
+  const toggleEditingReturn = (adventurerId: string) => {
+    setEditingReportData(previous => {
+      if (!previous?.squadAdvIds?.includes(adventurerId)) return previous;
+      const returned = previous.returnedAdventurerIds ?? [];
+      return {
+        ...previous,
+        returnedAdventurerIds: returned.includes(adventurerId)
+          ? returned.filter(id => id !== adventurerId)
+          : [...returned, adventurerId]
+      };
+    });
+  };
+
+  const adjustEditingResource = (resource: BasicResourceKey, delta: 1 | -1) => {
+    const contract = state.contracts.find(item => item.missionId === editingMissionId);
+    if (!contract) return;
+    setEditingReportData(previous => {
+      if (!previous) return previous;
+      const used = (previous.attachedResourcesUsed ?? []).filter(isBasicResource);
+      if (delta < 0) {
+        const index = used.lastIndexOf(resource);
+        if (index < 0) return previous;
+        return { ...previous, attachedResourcesUsed: used.filter((_, itemIndex) => itemIndex !== index) };
+      }
+      const availableCount = contract.attachedResources.filter(item => item === resource).length;
+      const usedCount = used.filter(item => item === resource).length;
+      if (usedCount >= availableCount) return previous;
+      return { ...previous, attachedResourcesUsed: [...used, resource] };
+    });
+  };
+
   const updateEditingField = (field: keyof SimulationReport, value: any) => {
     setEditingReportData(prev => prev ? { ...prev, [field]: value } : null);
   };
@@ -383,98 +463,75 @@ export default function PhasesTab({
     
     // Find the original contract/report
     const originalContract = state.contracts.find(c => c.missionId === missionId);
-    if (!originalContract || !originalContract.simulationReport) return;
-    const originalRep = originalContract.simulationReport;
+    if (!originalContract) return;
+    const originalRep = originalContract.simulationReport ?? null;
 
-    // Recalculate success dynamically
-    const finalRoll = editingReportData.roll ?? 0;
-    const finalBonus = editingReportData.partyBonus ?? 0;
-    const finalTotal = finalRoll + finalBonus;
-    const finalDc = editingReportData.dc ?? 0;
-    const finalAutoSuccess = editingReportData.isResourceAutoSuccess ?? false;
-    
-    const finalSuccess = finalAutoSuccess ? true : (finalTotal >= finalDc);
-
-    const updatedReport: SimulationReport = {
-      ...editingReportData as SimulationReport,
-      isSuccess: finalSuccess,
-      isResourceAutoSuccess: finalAutoSuccess,
-      autoSuccessReason: finalAutoSuccess ? (editingReportData.autoSuccessReason || 'Особое снаряжение') : null,
-      totalRoll: finalTotal
-    };
-
-    // Calculate HP adjustments for adventurers in the squad
-    const damageDiff = originalRep.damageDealt - (editingReportData.damageDealt ?? 0);
-    const updatedAdvs = state.adventurers.map(adv => {
-      if (updatedReport.squadAdvIds?.includes(adv.id)) {
-        let nextHp = adv.hp + damageDiff;
-        let nextStatus = adv.status;
-
-        if (nextHp > adv.maxHp) nextHp = adv.maxHp;
-        if (nextHp <= 0) {
-          nextHp = 0;
-          nextStatus = 'DEAD';
-        } else {
-          if (nextStatus === 'DEAD') nextStatus = 'READY';
-          if (nextHp < adv.maxHp && nextStatus === 'READY') {
-            nextStatus = 'WOUNDED';
-          } else if (nextHp === adv.maxHp && nextStatus === 'WOUNDED') {
-            nextStatus = 'READY';
-          }
-        }
-        return {
-          ...adv,
-          hp: nextHp,
-          status: nextStatus
-        };
+    {
+      const mission = state.missions.find(item => item.id === missionId)
+        ?? state.allMissions?.find(item => item.id === missionId);
+      if (!mission) {
+        showToast('Исходное событие для рапорта не найдено.', true);
+        return;
       }
-      return adv;
-    });
-
-    // Calculate Gold adjustment for clans
-    const goldDiff = (editingReportData.goldReward ?? 0) - originalRep.goldReward;
-    const updatedClans = state.clans.map(clan => {
-      if (clan.name === originalRep.clanName) {
-        return {
-          ...clan,
-          gold: Math.max(0, clan.gold + goldDiff)
-        };
-      }
-      return clan;
-    });
-
-    // 1. Update contracts state
-    const updatedContracts = state.contracts.map(c => {
-      if (c.missionId === missionId) {
-        return { ...c, simulationReport: updatedReport };
-      }
-      return c;
-    });
-
-    // 2. Update history state (the latest entry's reports)
-    const updatedHistory = [...state.history];
-    if (updatedHistory.length > 0) {
-      const lastIndex = updatedHistory.length - 1;
-      const lastEntry = { ...updatedHistory[lastIndex] };
-      lastEntry.reports = lastEntry.reports.map(rep => {
-        if (rep.missionId === missionId) {
-          return updatedReport;
-        }
-        return rep;
+      const sourceReport = originalRep ?? editingReportData as SimulationReport;
+      const editedSuccess = editingReportData.isSuccess ?? sourceReport.isSuccess;
+      const editedReport = {
+        ...sourceReport,
+        ...editingReportData,
+        isSuccess: editedSuccess,
+        totalRoll: (editingReportData.roll ?? sourceReport.roll) + (editingReportData.partyBonus ?? sourceReport.partyBonus),
+        baseObjectiveCompleted: editedSuccess !== sourceReport.isSuccess
+          ? editedSuccess
+          : (editingReportData.baseObjectiveCompleted ?? sourceReport.baseObjectiveCompleted ?? editedSuccess)
+      } as SimulationReport;
+      const recalculated = recalculateReportEffects({
+        originalReport: originalRep,
+        editedReport,
+        contract: originalContract,
+        mission,
+        adventurers: state.adventurers,
+        clans: state.clans,
+        day: state.day
       });
-      updatedHistory[lastIndex] = lastEntry;
+      const updatedContracts = state.contracts.map(contract => contract.missionId === missionId
+        ? {
+            ...contract,
+            partyAdvIds: [...recalculated.report.squadAdvIds],
+            actualSquadAdvIds: [...recalculated.report.squadAdvIds],
+            simulationReport: recalculated.report
+          }
+        : contract
+      );
+      let reportPlacedInHistory = false;
+      const updatedHistory = state.history.map(entry => {
+        const containsReport = entry.reports.some(report => report.missionId === missionId);
+        if (containsReport) reportPlacedInHistory = true;
+        if (!containsReport && !(state.isDaySimulated && entry.day === state.day && mission.type === 'STORY')) return entry;
+        if (!containsReport) reportPlacedInHistory = true;
+        return {
+          ...entry,
+          reports: containsReport
+            ? entry.reports.map(report => report.missionId === missionId ? recalculated.report : report)
+            : [...entry.reports, recalculated.report]
+        };
+      });
+      const updatedMissions = state.missions.map(item => item.id === missionId && item.type === 'STORY'
+        ? { ...item, storyStatus: 'RESOLVED' as const }
+        : item
+      );
+      updateState({
+        adventurers: recalculated.adventurers,
+        clans: recalculated.clans,
+        contracts: updatedContracts,
+        missions: updatedMissions,
+        history: reportPlacedInHistory ? updatedHistory : state.history
+      });
+      setEditingMissionId(null);
+      setEditingReportData(null);
+      showToast('Рапорт изменён: HP, опыт, отношения, золото и ресурсы пересчитаны из исходного состояния.');
+      return;
     }
 
-    updateState({
-      adventurers: updatedAdvs,
-      clans: updatedClans,
-      contracts: updatedContracts,
-      history: updatedHistory
-    });
-
-    setEditingMissionId(null);
-    setEditingReportData(null);
-    showToast('⚖️ Рапорт успешно изменен ГМом и показатели пересчитаны!');
   };
 
   const handleAutoAssign = () => {
@@ -528,195 +585,6 @@ export default function PhasesTab({
     showToast(`Действия ${state.guildShortName} завершены: создано ${result.createdContracts}, назначено ${result.assignedAdventurers}.`);
     return;
 
-    /* Старая реализация Совета оставлена только до полного разделения PhasesTab.
-       Она исключена из сборки и будет удалена вместе с монолитным симулятором.
-    const logs: string[] = [];
-    logs.push(`🏰 [АКТИВНОСТЬ ГИЛЬДИИ] Запущен тактический совет Гильдии в Фазе 3.`);
-
-    // 1. Find all currently assigned adventurer IDs in existing contracts
-    const currentAssignedIds = new Set(state.contracts.flatMap(c => c.partyAdvIds));
-
-    // 2. Filter available READY NPC adventurers (unassigned non-players)
-    let availableNPCs = state.adventurers.filter(a => 
-      a.status === 'READY' && 
-      !a.isPlayer && 
-      !currentAssignedIds.has(a.id)
-    );
-
-    // 3. Compute n = Floor(availableNPCs.length / 2)
-    const n = Math.floor(availableNPCs.length / 2);
-    logs.push(`ℹ️ Свободных дееспособных NPC приключенцев: ${availableNPCs.length}. Совет сформирует ${n} контрактов Гильдии.`);
-
-    let updatedClans = JSON.parse(JSON.stringify(state.clans)) as Clan[];
-    let updatedMissions = JSON.parse(JSON.stringify(state.missions)) as Mission[];
-    let updatedContracts = JSON.parse(JSON.stringify(state.contracts)) as Contract[];
-
-    const guildClan = updatedClans.find(cl => cl.id === 'clan_guild');
-    if (!guildClan) {
-      showToast('Ошибка: Клан Гильдии не найден!', true);
-      return;
-    }
-
-    const multipliers: Record<string, number> = {
-      'Supplies': 0.5,
-      'Equipment': 1.0,
-      'Intelligence': 1.0,
-      'Alchemy': 1.5
-    };
-
-    if (n > 0) {
-      // Find uncontracted missions
-      const contractedMissionIds = new Set(updatedContracts.map(c => c.missionId));
-      const uncontractedMissions = updatedMissions.filter(m => !contractedMissionIds.has(m.id));
-
-      // Sort uncontracted missions by urgency (lifespan ascending)
-      const urgentMissions = [...uncontractedMissions].sort((a, b) => getMissionUrgency(a) - getMissionUrgency(b));
-
-      // Select top n missions
-      const selectedMissionsForGuild = urgentMissions.slice(0, n);
-
-      selectedMissionsForGuild.forEach(m => {
-        // Check special item requirement if present
-        if (m.requiredSpecialItem) {
-          const guildItems = guildClan.resources.specialItems || [];
-          const hasItem = guildItems.includes(m.requiredSpecialItem) || guildClan.resources.AncientText === m.requiredSpecialItem;
-          if (!hasItem) {
-            logs.push(`⚠️ [ОСОБЫЙ ПРЕДМЕТ] У Гильдии нет предметa "${m.requiredSpecialItem}" для сдачи контракта "${m.title}".`);
-            return;
-          }
-        }
-
-        // Pick adventurer FIRST
-        const chosenAdv = availableNPCs.shift();
-        const contractLvl = chosenAdv ? chosenAdv.level : 1;
-
-        // Spend or buy Intelligence to reveal intel!
-        const intelPrice = Math.round(state.hCost);
-        if ((guildClan.resources.Intelligence || 0) >= 1) {
-          guildClan.resources.Intelligence = (guildClan.resources.Intelligence || 0) - 1;
-          logs.push(`🔍 [РАЗВЕДКА] Гильдия потратила 1 Intelligence со склада для раскрытия донесения "${m.title}".`);
-        } else if (guildClan.gold >= intelPrice) {
-          guildClan.gold -= intelPrice;
-          logs.push(`🛒 [ЗАКУПКА РАЗВЕДКИ] Гильдия за золото (${intelPrice}г) приобрела 1 Intelligence для раскрытия донесения "${m.title}".`);
-        } else {
-          logs.push(`⚠️ [РАЗВЕДКА] У Гильдии нет Intelligence и не хватает золота (${guildClan.gold}г) для закупки! Донесение "${m.title}" исследуется вслепую.`);
-        }
-
-        // Reveal intel
-        updatedMissions = updatedMissions.map(mi => {
-          if (mi.id === m.id) {
-            return { ...mi, intelRevealed: true };
-          }
-          return mi;
-        });
-
-        const attachedResources: BasicResourceKey[] = [];
-
-        if (m.type === 'DUMMY') {
-          // Dummy mission requires no resources
-        } else {
-          // Gather all required stage resources
-          const checksList = m.checks && m.checks.length > 0 
-            ? m.checks 
-            : [{ reqResource: m.reqResource, dc: m.dc }];
-
-          let reqResourcesList = checksList
-            .map(ch => ch.reqResource)
-            .filter(isBasicResource);
-
-          if (reqResourcesList.length === 0) {
-            reqResourcesList.push('Supplies');
-          }
-
-          reqResourcesList.forEach(resType => {
-            if ((guildClan.resources[resType] || 0) >= 1) {
-              guildClan.resources[resType] = (guildClan.resources[resType] || 0) - 1;
-              attachedResources.push(resType);
-              logs.push(`✨ [РЕСУРС] Выделен ресурс "${getResourceNameRu(resType)}" из хранилища для контракта "${m.title}".`);
-            } else {
-              const price = Math.round((multipliers[resType] || 1.0) * state.hCost);
-              if (guildClan.gold >= price) {
-                guildClan.gold -= price;
-                attachedResources.push(resType);
-                logs.push(`🛒 [ЗАКУПКА] Куплен ресурс "${getResourceNameRu(resType)}" за ${price}г для контракта "${m.title}".`);
-              } else {
-                logs.push(`⚠️ [РЕСУРСЫ] Не удалось закупить "${getResourceNameRu(resType)}" (нужно ${price}г, у Гильдии ${guildClan.gold}г).`);
-              }
-            }
-          });
-        }
-
-        updatedContracts.push({
-          missionId: m.id,
-          title: m.title,
-          clanId: 'clan_guild',
-          confirmed: true,
-          contractLevel: contractLvl,
-          paymentAmount: 0,
-          paidAmount: 0,
-          maxPartySize: 5,
-          attachedResources,
-          partyAdvIds: chosenAdv ? [chosenAdv.id] : []
-        });
-      });
-    }
-
-    // Now, assign adventurers:
-    // "Сначала гильдия формирует контракты, которые могут быть выполнены автоматически с помощью ресурсов, гильдия отправлят туда ровно столько приключенцев, сколько нужно для донесения ресурсов."
-    updatedContracts.forEach(c => {
-      if (c.clanId === 'clan_guild' && c.confirmed) {
-        const neededForRes = c.attachedResources ? c.attachedResources.length : 0;
-        while (c.partyAdvIds.length < neededForRes && availableNPCs.length > 0) {
-          const eligibleIdx = availableNPCs.findIndex(a => a.level <= c.contractLevel);
-          if (eligibleIdx >= 0) {
-            const adv = availableNPCs[eligibleIdx];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(eligibleIdx, 1);
-            logs.push(`🗡️ [НАЗНАЧЕНИЕ (РЕСУРСЫ)] ${adv.name} (Ур.${adv.level}) отправлен доставить ресурсы на "${c.title}".`);
-          } else if (availableNPCs.length > 0) {
-            const adv = availableNPCs[0];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(0, 1);
-            logs.push(`🗡️ [НАЗНАЧЕНИЕ (РЕСУРСЫ)] ${adv.name} (Ур.${adv.level}) отправлен доставить ресурсы на "${c.title}".`);
-          }
-        }
-      }
-    });
-
-    // "Потом она распределяет оставшихся НЕРАСПРЕДЕЛЕННЫХ приключенцев так, чтобы иметь наибольший шансы выполнения оставшихся контрактов."
-    // Let's fill ALL confirmed contracts up to their target party size with the remaining available NPCs.
-    availableNPCs.sort((x, y) => y.level - x.level);
-
-    let changed = true;
-    let npcAssigned = 0;
-    while (changed) {
-      changed = false;
-      for (const c of updatedContracts) {
-        if (!c.confirmed) continue;
-        const targetSize = getContractTargetPartySize(c, updatedMissions);
-        if (c.partyAdvIds.length < targetSize) {
-          const eligibleIdx = availableNPCs.findIndex(a => a.level <= c.contractLevel);
-          if (eligibleIdx >= 0) {
-            const adv = availableNPCs[eligibleIdx];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(eligibleIdx, 1);
-            npcAssigned++;
-            logs.push(`⚔️ [ГРУППА] ${adv.name} (Ур.${adv.level}) добавлен в отряд контракта "${c.title}".`);
-            changed = true;
-          }
-        }
-      }
-    }
-
-    updateState({
-      clans: updatedClans,
-      missions: updatedMissions,
-      contracts: updatedContracts,
-      lastDistributionLogs: logs
-    });
-
-    showToast(`🏰 Действия Гильдии в Фазе 3 завершены! Создано контрактов: ${n}, распределено бойцов: ${npcAssigned}.`);
-    */
   };
 
   // Phase 3: Simulate Day!
@@ -725,625 +593,152 @@ export default function PhasesTab({
       showToast(`Сначала завершите действия ${state.guildShortName}.`, true);
       return;
     }
-    const dayLogs: string[] = [];
-    const reports: SimulationReport[] = [];
-
-    dayLogs.push(`--- ДЕНЬ ${state.day}: ЗАПУСК ТАКТИЧЕСКОЙ СИМУЛЯЦИИ ---`);
-
-    const updatedAdvs = JSON.parse(JSON.stringify(state.adventurers)) as Adventurer[];
-    const updatedClans = JSON.parse(JSON.stringify(state.clans)) as Clan[];
-    let updatedMissions = JSON.parse(JSON.stringify(state.missions)) as Mission[];
-
-    const tempContracts = JSON.parse(JSON.stringify(state.contracts)) as Contract[];
-
-    /* Старая повторная подготовка контрактов исключена: симуляция получает
-       уже зафиксированные отряды после рынка и отдельного действия Гильдии.
-    // 1. Guild Council Formulation (ONLY in Phase 3!)
-    // Find Guild Clan
-    const guildClan = updatedClans.find(cl => cl.id === 'clan_guild');
-    
-    // Find currently assigned adventurer IDs (players or others from previous settings)
-    const currentAssignedIds = new Set(tempContracts.flatMap(c => c.partyAdvIds));
-    
-    // Filter available READY NPC adventurers (non-players, unassigned)
-    // Contracts and squads are fully fixed before simulation. The legacy
-    // simulator must not create contracts or distribute NPCs a second time.
-    let availableNPCs: Adventurer[] = [];
-
-    // Calculate n = Floor(availableNPCs.length / 2)
-    const n = 0;
-    dayLogs.push(`🏰 [СОВЕТ ГИЛЬДИИ] Свободных дееспособных NPC приключенцев: ${availableNPCs.length}. Совет решил заняться ${n} новыми донесениями.`);
-
-    if (n > 0) {
-      // Find uncontracted missions
-      const contractedMissionIds = new Set(tempContracts.map(c => c.missionId));
-      const uncontractedMissions = updatedMissions.filter(m => !contractedMissionIds.has(m.id));
-      
-      // Sort uncontracted missions by urgency (lifespan ascending)
-      const urgentMissions = [...uncontractedMissions].sort((a, b) => getMissionUrgency(a) - getMissionUrgency(b));
-      
-      // Select top n missions
-      const selectedMissionsForGuild = urgentMissions.slice(0, n);
-      const selectedMissionsIds = new Set(selectedMissionsForGuild.map(m => m.id));
-
-      // Update these missions to have intelRevealed = true
-      updatedMissions = updatedMissions.map(m => {
-        if (selectedMissionsIds.has(m.id)) {
-          return { ...m, intelRevealed: true };
-        }
-        return m;
-      });
-
-      // Formulate Guild contracts for these missions and honestly spend/buy resources
-      const multipliers: Record<string, number> = {
-        'Supplies': 0.5,
-        'Equipment': 1.0,
-        'Intelligence': 1.0,
-        'Alchemy': 1.5
-      };
-
-      selectedMissionsForGuild.forEach(m => {
-        if (m.requiredSpecialItem && guildClan) {
-          const guildItems = guildClan.resources.specialItems || [];
-          const hasItem = guildItems.includes(m.requiredSpecialItem) || guildClan.resources.AncientText === m.requiredSpecialItem;
-          if (!hasItem) {
-            dayLogs.push(`⚠️ [ОСОБЫЙ ПРЕДМЕТ] У Гильдии нет предмета "${m.requiredSpecialItem}" для сдачи контракта "${m.title}".`);
-            return;
-          }
-        }
-
-        const chosenAdv = availableNPCs.shift();
-        const contractLvl = chosenAdv ? chosenAdv.level : 1;
-        const attachedResources: BasicResourceKey[] = [];
-
-        if (m.type === 'DUMMY') {
-          // Dummy mission requires no resources
-        } else {
-          // Gather all required stage resources
-          const checksList = m.checks && m.checks.length > 0 
-            ? m.checks 
-            : [{ reqResource: m.reqResource, dc: m.dc }];
-
-          let reqResourcesList = checksList
-            .map(ch => ch.reqResource)
-            .filter(isBasicResource);
-
-          if (reqResourcesList.length === 0) {
-            reqResourcesList.push('Supplies');
-          }
-
-          reqResourcesList.forEach(resType => {
-            if (guildClan && (guildClan.resources[resType] || 0) > 0) {
-              guildClan.resources[resType] = (guildClan.resources[resType] || 1) - 1;
-              attachedResources.push(resType);
-              dayLogs.push(`✨ [РЕСУРС] Гильдия выделила ресурс "${getResourceNameRu(resType)}" из хранилища для миссии "${m.title}".`);
-            } else {
-              const price = Math.round((multipliers[resType] || 1.0) * state.hCost);
-              if (guildClan && guildClan.gold >= price) {
-                guildClan.gold -= price;
-                attachedResources.push(resType);
-                dayLogs.push(`🛒 [ЗАКУПКА] Гильдия за золото (${price}г) купила ресурс "${getResourceNameRu(resType)}" для миссии "${m.title}".`);
-              } else {
-                dayLogs.push(`⚠️ [РЕСУРСЫ] У Гильдии нет ресурса "${getResourceNameRu(resType)}" и не хватает золота для закупки!`);
-              }
-            }
-          });
-        }
-
-        tempContracts.push({
-          missionId: m.id,
-          title: m.title,
-          clanId: 'clan_guild',
-          confirmed: true,
-          contractLevel: contractLvl,
-          paymentAmount: 0,
-          paidAmount: 0,
-          maxPartySize: 5,
-          attachedResources,
-          partyAdvIds: chosenAdv ? [chosenAdv.id] : []
-        });
-      });
+    if (state.isDaySimulated) {
+      showToast('Этот день уже просчитан.', true);
+      return;
     }
 
-    // 2. Assign available ready non-player adventurers to ALL confirmed/active contracts
-    let aiAssignedCount = 0;
-    const assignedIds = new Set(tempContracts.flatMap(c => c.partyAdvIds));
-    availableNPCs = [];
-
-    // Step A: Assign exactly 1 adventurer to contracts that have auto-success key resources attached
-    tempContracts.forEach(c => {
-      if (c.confirmed) {
-        const neededForRes = c.attachedResources ? c.attachedResources.length : 0;
-        while (c.partyAdvIds.length < neededForRes && availableNPCs.length > 0) {
-          const eligibleIdx = availableNPCs.findIndex(a => a.level <= c.contractLevel);
-          if (eligibleIdx >= 0) {
-            const adv = availableNPCs[eligibleIdx];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(eligibleIdx, 1);
-            dayLogs.push(`🗡️ [НАЗНАЧЕНИЕ] ${adv.name} (Ур.${adv.level}) отправлен доставить ресурсы на "${c.title}".`);
-            aiAssignedCount++;
-          } else if (availableNPCs.length > 0) {
-            const adv = availableNPCs[0];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(0, 1);
-            dayLogs.push(`🗡️ [НАЗНАЧЕНИЕ] ${adv.name} (Ур.${adv.level}) отправлен доставить ресурсы на "${c.title}".`);
-            aiAssignedCount++;
-          }
-        }
-      }
+    const simulationSeed = createDaySeed(state.day);
+    const simulation = simulateDayContracts({
+      contracts: state.contracts,
+      missions: state.missions,
+      adventurers: state.adventurers,
+      clans: state.clans,
+      day: state.day,
+      random: createSeededRandom(simulationSeed)
     });
-
-    // Step B: Fill other contracts up to target size
-    availableNPCs.sort((x, y) => y.level - x.level);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const c of tempContracts) {
-        if (!c.confirmed) continue;
-        const targetSize = getContractTargetPartySize(c, updatedMissions);
-        if (c.partyAdvIds.length < targetSize) {
-          const eligibleIdx = availableNPCs.findIndex(a => a.level <= c.contractLevel);
-          if (eligibleIdx >= 0) {
-            const adv = availableNPCs[eligibleIdx];
-            c.partyAdvIds.push(adv.id);
-            availableNPCs.splice(eligibleIdx, 1);
-            dayLogs.push(`⚔️ [ГРУППА] ${adv.name} (Ур.${adv.level}) добавлен в отряд контракта "${c.title}".`);
-            aiAssignedCount++;
-            changed = true;
-          }
-        }
-      }
-    }
-
-    if (aiAssignedCount > 0) {
-      showToast(`🏰 Распорядитель Гильдии распределил ${aiAssignedCount} свободных приключенцев по контрактам!`);
-    }
-    */
-
-    // Process each contract
-    const simulatedContracts = tempContracts.map(c => {
-      if (!c.confirmed) return c;
-
-      const mission = updatedMissions.find(m => m.id === c.missionId);
-      if (!mission) return c;
-
-      const squad = (c.partyAdvIds || []).map(id => updatedAdvs.find(a => a.id === id)).filter(Boolean) as Adventurer[];
-      const clan = updatedClans.find(cl => cl.id === c.clanId);
-      const clanName = clan ? clan.name : 'Неизвестный Клан';
-
-      if (squad.length === 0) {
-        dayLogs.push(`⚠️ Контракт "${c.title}" провален: Ни один приключенец не отправился на миссию!`);
-        
-        const report: SimulationReport = {
-          isSuccess: false,
-          isResourceAutoSuccess: false,
-          autoSuccessReason: null,
-          roll: 0,
-          partyBonus: 0,
-          totalRoll: 0,
-          dc: mission.dc,
-          narrativeText: 'Провал: Отряд не собран!',
-          damageDealt: 0,
-          goldReward: 0,
-          attachedResourcesUsed: c.attachedResources || [],
-          squadNames: [],
-          squadAdvIds: [],
-          clanName,
-          missionTitle: c.title,
-          missionRegion: mission.region,
-          missionId: mission.id
-        };
-
-        return { ...c, simulationReport: report };
-      }
-
-      let isSuccess = true;
-      let isResourceAutoSuccess = false;
-      let autoSuccessReason = null;
-      let roll = 0;
-      let partyBonus = calculatePartyBonus(squad);
-      let totalRoll = 0;
-      const checkResults: string[] = [];
-
-      if (mission.type === 'DUMMY') {
-        isSuccess = true;
-        isResourceAutoSuccess = true;
-        autoSuccessReason = 'Ложная миссия: проверенный район оказался спокоен, угрозы не было.';
-        roll = rollD20();
-        totalRoll = roll + partyBonus;
-        dayLogs.push(`ℹ️ [ЛОЖНАЯ МИССИЯ] Контракт "${c.title}" (${clanName}): Донесение оказалось ложным. Отряд без потерь возвращается на базу.`);
-      } else {
-        // Multi-check and Auto-Success check
-        const checksToRun = mission.checks && mission.checks.length > 0 
-          ? mission.checks 
-          : [{ reqResource: mission.reqResource, dc: mission.dc }];
-
-        let resourcesBypassedCount = 0;
-        const maxCarried = squad.length > 0 ? squad.length : 1;
-        let availableRes = (c.attachedResources || []).slice(0, maxCarried);
-
-        if ((c.attachedResources || []).length > maxCarried) {
-          dayLogs.push(`⚠️ [ЛИМИТ СНАРЯЖЕНИЯ] Отряд из ${squad.length} чел. смог взять только ${maxCarried} рес. из ${c.attachedResources.length} выданных.`);
-        }
-
-        checksToRun.forEach((ch, idx) => {
-          const reqRes = ch.reqResource;
-          const resIdx = reqRes && reqRes !== 'None' ? availableRes.indexOf(reqRes) : -1;
-
-          if (resIdx !== -1) {
-            // Consume resource for THIS stage
-            availableRes.splice(resIdx, 1);
-            resourcesBypassedCount++;
-            checkResults.push(`Этап #${idx + 1} (DC ${ch.dc}, требуется ${getResourceNameRu(reqRes || '')}): ✨ АВТО-УСПЕХ (задействован ресурс)`);
-          } else {
-            const checkRoll = rollD20();
-            if (roll === 0) {
-              roll = checkRoll;
-              totalRoll = checkRoll + partyBonus;
-            }
-            const checkTotal = checkRoll + partyBonus;
-            const checkPassed = checkTotal >= ch.dc;
-            if (!checkPassed) {
-              isSuccess = false;
-            }
-            checkResults.push(`Этап #${idx + 1} (DC ${ch.dc}${reqRes && reqRes !== 'None' ? `, требуется ${getResourceNameRu(reqRes)}` : ''}): 🎲 d20=${checkRoll} + Бонус=+${partyBonus} = Итого: ${checkTotal}. ${checkPassed ? 'УСПЕХ' : 'ПРОВАЛ'}`);
-          }
-        });
-
-        if (roll === 0) {
-          roll = rollD20();
-          totalRoll = roll + partyBonus;
-        }
-
-        if (isSuccess) {
-          if (resourcesBypassedCount === checksToRun.length) {
-            isResourceAutoSuccess = true;
-            autoSuccessReason = `Особая подготовка: все этапы (${checksToRun.length}) пройдены с использованием ресурсов.`;
-          }
-          dayLogs.push(`✨ [УСПЕХ] Контракт "${c.title}" (${clanName}) успешно завершен!\n - ${checkResults.join('\n - ')}`);
-        } else {
-          dayLogs.push(`❌ [ПРОВАЛ] Контракт "${c.title}" (${clanName}) провален!\n - ${checkResults.join('\n - ')}`);
-        }
-      }
-
-      let dmgDealt = 0;
-      let goldReward = mission.goldReward !== undefined ? mission.goldReward : (c.paymentAmount || 100);
-
-      if (isSuccess) {
-        // Success: reward adventurers with relations and XP
-        squad.forEach(adv => {
-          adv.successfulMissions += 1;
-          adv.totalMissions += 1;
-          
-          // Increment relations with customer clan
-          if (c.clanId) {
-            adv.relations[c.clanId] = (adv.relations[c.clanId] || 0) + 1;
-          }
-
-          // Level up logic (XP milestone)
-          const lvlUpNeeded = adv.level === 1 ? 1 : adv.level === 2 ? 3 : adv.level === 3 ? 6 : adv.level === 4 ? 10 : 999;
-          if (adv.successfulMissions >= lvlUpNeeded && adv.level < 5) {
-            adv.level += 1;
-            adv.maxHp = adv.level === 1 ? 1 : adv.level === 2 ? 2 : adv.level === 3 ? 2 : adv.level === 4 ? 3 : 4;
-            adv.hp = adv.maxHp; // Heal to full on level up
-            dayLogs.push(`🎖️ [ПОВЫШЕНИЕ] Герой ${adv.name} достиг Уровня ${adv.level}! HP увеличены.`);
-          }
-        });
-
-        const guild = updatedClans.find(g => g.id === 'clan_guild');
-        if (guild) {
-          // Commission was already transferred when the player contract was created.
-          if (c.clanId === 'clan_guild' && mission.goldReward !== undefined && mission.goldReward > 0) {
-            guild.gold += mission.goldReward;
-            dayLogs.push(`🪙 [НАГРАДА] В казну ${state.guildShortName} зачислено +${mission.goldReward}г.`);
-          }
-          // Reward special items
-          if (mission.rewardSpecialItems && mission.rewardSpecialItems.length > 0) {
-            if (!guild.resources.specialItems) {
-              guild.resources.specialItems = [];
-            }
-            mission.rewardSpecialItems.forEach(item => {
-              if (!guild.resources.specialItems?.includes(item)) {
-                guild.resources.specialItems?.push(item);
-              }
-              dayLogs.push(`💎 [НАГРАДА] Получен особый предмет: "${item}"!`);
-            });
-          }
-        }
-      } else {
-        // Failure: Damage & Casualties
-        dmgDealt = Math.floor(Math.random() * 2) + 1; // 1 or 2 HP damage
-        dayLogs.push(`💥 [УРОН] Отряд понес урон -${dmgDealt} HP из-за провала контракта "${c.title}".`);
-
-        let anyHeroDown = false;
-        squad.forEach(adv => {
-          adv.totalMissions += 1;
-          adv.hp -= dmgDealt;
-          if (adv.hp <= 0) {
-            anyHeroDown = true;
-          }
-        });
-
-        if (anyHeroDown) {
-          const hasSupplies = c.attachedResources?.includes('Supplies');
-          let isEscapeSuccess = false;
-          let escapeRoll = 0;
-          let escapeBonus = 0;
-          let escapeTotal = 0;
-
-          if (hasSupplies) {
-            isEscapeSuccess = true;
-            dayLogs.push(`📦 [ОТСТУПЛЕНИЕ] Благодаря выделенным припасам (Supplies) отряд совершил автоматическое успешное бегство!`);
-          } else {
-            escapeRoll = Math.floor(Math.random() * 20) + 1;
-            // Party bonus from members who still have HP > 0 AFTER taking damage
-            const survivingMembers = squad.filter(a => a.hp > 0);
-            escapeBonus = calculatePartyBonus(survivingMembers);
-            escapeTotal = escapeRoll + escapeBonus;
-            isEscapeSuccess = escapeTotal >= 10;
-            dayLogs.push(`🎲 [ПОПЫТКА БЕГСТВА] Бросок спасения отряда: d20(${escapeRoll}) + Бонус(${escapeBonus}) = ${escapeTotal} vs Сложность 10.`);
-          }
-
-          squad.forEach(adv => {
-            if (adv.hp <= 0) {
-              if (isEscapeSuccess) {
-                adv.hp = 1;
-                adv.status = 'WOUNDED';
-                adv.woundedOnDay = state.day;
-                dayLogs.push(`🏃‍♂️ [БЕГСТВО: СПАСЕН] ${adv.name} потерял все ОЗ, но отряд успешно сбежал! Герой выжил, но тяжело ранен.`);
-              } else {
-                adv.hp = 0;
-                adv.status = 'DEAD';
-                dayLogs.push(`💀 [ГЕРОЙ ПОГИБ] Бегство провалилось! Тяжело раненый ${adv.name} не сумел спастись и погиб на поле боя!`);
-              }
-            } else {
-              adv.status = 'WOUNDED';
-              adv.woundedOnDay = state.day;
-            }
-          });
-        } else {
-          // No one is down, they just take damage and are wounded
-          squad.forEach(adv => {
-            adv.status = 'WOUNDED';
-            adv.woundedOnDay = state.day;
-          });
-        }
-
-        goldReward = 0; // No gold payout for fail
-      }
-
-      // Mark assigned adventurers status
-      squad.forEach(adv => {
-        if (adv.status !== 'DEAD' && adv.status !== 'WOUNDED') {
-          adv.status = 'ON_MISSION';
-        }
-      });
-
-      const report: SimulationReport = {
-        isSuccess,
-        isResourceAutoSuccess,
-        autoSuccessReason,
-        roll,
-        partyBonus,
-        totalRoll,
+    const simulationLogs = [
+      `--- ДЕНЬ ${state.day}: ПОСЛЕДОВАТЕЛЬНАЯ СИМУЛЯЦИЯ ---`,
+      ...simulation.logs
+    ];
+    const expirationReports: SimulationReport[] = simulation.missions
+      .filter(mission => {
+        const isAssigned = simulation.contracts.some(contract => contract.confirmed && contract.missionId === mission.id);
+        return !isAssigned && willMissionExpireAfterDay(mission);
+      })
+      .map(mission => ({
+        isSuccess: false,
+        isResourceAutoSuccess: false,
+        autoSuccessReason: null,
+        roll: 0,
+        partyBonus: 0,
+        totalRoll: 0,
         dc: mission.dc,
-        narrativeText: isSuccess ? mission.successText || 'Миссия успешно выполнена!' : mission.failText || 'Экспедиция потерпела крах.',
-        damageDealt: dmgDealt,
-        goldReward: isSuccess ? goldReward : 0,
-        attachedResourcesUsed: c.attachedResources || [],
-        squadNames: squad.map(a => a.name),
-        squadAdvIds: squad.map(a => a.id),
-        clanName,
-        missionTitle: c.title,
+        narrativeText: 'Донесение просрочено и исчезло.',
+        damageDealt: 0,
+        goldReward: 0,
+        attachedResourcesUsed: [],
+        squadNames: [],
+        squadAdvIds: [],
+        clanName: state.guildName,
+        missionTitle: mission.title,
         missionRegion: mission.region,
         missionId: mission.id,
-        checkResults
-      };
-
-      reports.push(report);
-      return { ...c, simulationReport: report };
+        isExpired: true,
+        baseObjectiveCompleted: false,
+        returnedAdventurerIds: [],
+        failedChecksCount: 0
+      }));
+    expirationReports.forEach(report => {
+      simulationLogs.push(`Донесение «${report.missionTitle}» просрочено и исчезнет с карты.`);
     });
-
-    // Check for expired unconfirmed missions (lifespan <= 1)
-    updatedMissions.forEach(m => {
-      const isAssigned = simulatedContracts.some(c => c.missionId === m.id && c.confirmed);
-      if (!isAssigned && willMissionExpireAfterDay(m)) {
-        dayLogs.push(`⏳ [ПРОСРОЧЕНО] Донесение "${m.title}" в регионе ${m.region} осталось без внимания и бесследно исчезло.`);
-        reports.push({
-          isSuccess: false,
-          isResourceAutoSuccess: false,
-          autoSuccessReason: null,
-          roll: 0,
-          partyBonus: 0,
-          totalRoll: 0,
-          dc: m.dc,
-          narrativeText: 'Донесение просрочено и исчезло.',
-          damageDealt: 0,
-          goldReward: 0,
-          attachedResourcesUsed: [],
-          squadNames: [],
-          squadAdvIds: [],
-          clanName: 'Гильдия',
-          missionTitle: m.title,
-          missionRegion: m.region,
-          missionId: m.id,
-          isExpired: true
-        });
-      }
-    });
-
-    // Append to logs
-    const finalActiveContractsCount = simulatedContracts.filter(c => c.confirmed).length;
-    const newHistoryEntry = {
-      day: state.day,
-      contractsCount: finalActiveContractsCount,
-      reports,
-      logs: dayLogs
-    };
+    const newReports = [...simulation.reports, ...expirationReports];
 
     updateState({
-      adventurers: updatedAdvs,
-      clans: updatedClans,
-      contracts: simulatedContracts,
+      adventurers: simulation.adventurers,
+      clans: simulation.clans,
+      contracts: simulation.contracts,
+      missions: simulation.missions,
       isDaySimulated: true,
-      missions: updatedMissions,
-      history: [...state.history, newHistoryEntry]
+      history: [...state.history, {
+        day: state.day,
+        randomSeed: simulationSeed,
+        contractsCount: simulation.contracts.filter(contract => contract.confirmed).length,
+        reports: newReports,
+        logs: simulationLogs
+      }]
     });
 
-    showToast(`🔥 Симуляция дня завершена! Сводка логов сохранена в архивах.`);
+    const storySuffix = simulation.awaitingStoryMissionIds.length > 0
+      ? ` Сюжетных миссий ожидают рапорта ГМа: ${simulation.awaitingStoryMissionIds.length}.`
+      : '';
+    showToast(`Симуляция дня завершена. Обычных рапортов: ${simulation.reports.length}.${storySuffix}`);
+    return;
+
   };
 
   // Switch to next day
   const handleNextDay = () => {
-    // Keep contracts that were NOT successful AND whose missions still exist and have lifespan > 1
-    const nextDayContracts = state.contracts
-      .filter(c => {
-        if (c.simulationReport && c.simulationReport.isSuccess) {
-          return false; // Successful contract completes
-        }
-        const m = state.missions.find(mi => mi.id === c.missionId);
-        if (!m || willMissionExpireAfterDay(m)) {
-          return false; // Mission deleted or expired
-        }
-        return true;
-      })
-      .map(c => {
-        // Reset contract daily values for reassignment
-        return {
-          ...c,
-          confirmed: false,
-          clanId: null,
-          attachedResources: [],
-          partyAdvIds: [],
-          simulationReport: undefined
-        };
-      });
+    if (!state.isDaySimulated) {
+      showToast('Сначала завершите симуляцию текущего дня.', true);
+      return;
+    }
 
-    // Handle wounded healing & clear ON_MISSION status back to READY
-    const nextDayAdvs = state.adventurers.map(adv => {
-      if (adv.status === 'WOUNDED') {
-        if (adv.woundedOnDay !== undefined && adv.woundedOnDay === state.day) {
-          // Just got wounded on the day being simulated. Do NOT heal yet.
-          // They must remain resting for the entire next day.
-          return adv;
-        } else {
-          // They rested for at least 1 full day, so they now heal to full!
+    {
+      const nextDay = state.day + 1;
+      const lifecycle = advanceMissionLifecycle({
+        missions: state.missions,
+        contracts: state.contracts,
+        allMissions: state.allMissions,
+        completedMissionIds: state.completedMissionIds,
+        nextDay
+      });
+      const nextDayMissions = [...lifecycle.missions];
+      if (!lifecycle.scenarioDriven) {
+        const generated = generateMissionsForDay(state.nClans, nextDay, state.spawnPolygon);
+        const existingIds = new Set(nextDayMissions.map(mission => mission.id));
+        nextDayMissions.push(...generated.filter(mission => !existingIds.has(mission.id)));
+      }
+
+      const nextDayAdventurers = state.adventurers.map(adventurer => {
+        if (adventurer.status === 'WOUNDED') {
+          if (adventurer.woundedOnDay === state.day) return adventurer;
           return {
-            ...adv,
-            hp: adv.maxHp,
+            ...adventurer,
+            hp: adventurer.maxHp,
             status: 'READY' as const,
             woundedOnDay: undefined
           };
         }
-      }
-      if (adv.status === 'ON_MISSION') {
-        return {
-          ...adv,
-          status: 'READY' as const
-        };
-      }
-      return adv;
-    });
+        if (adventurer.status === 'ON_MISSION') return { ...adventurer, status: 'READY' as const };
+        return adventurer;
+      });
 
-    // Bug 2 Fix: Gold payout for clans according to rank
-    // Rank 1: 12h, Rank 2: 20h, Rank 3: 35h
-    const nextDayClans = state.clans.map(clan => {
-      if (clan.id === 'clan_guild') {
-        const playableClansCount = state.clans.filter(item => item.id !== 'clan_guild').length;
-        return { ...clan, gold: clan.gold + getGuildDailyFunding(playableClansCount, state.hCost) };
-      }
-      const rank = clan.trustLevel || 1;
-      let dailyPayout = 0;
-      if (rank === 1) dailyPayout = 12 * state.hCost;
-      else if (rank === 2) dailyPayout = 20 * state.hCost;
-      else if (rank >= 3) dailyPayout = 35 * state.hCost;
-
-      // Also reset resource freeResourceBudget for shopping
-      const nextFreeRes = rank === 1 ? 1 : rank === 2 ? 2 : 3;
-
-      return {
-        ...clan,
-        gold: clan.gold + dailyPayout,
-        freeResourceBudget: nextFreeRes,
-        freeSuppliesBudget: nextFreeRes // back-compat
-      };
-    });
-
-    // Reduce mission lifespan & filter out simulated (completed/failed) or expired missions
-    const simulatedMissionIds = new Set(
-      state.contracts
-        .filter(c => c.confirmed && c.simulationReport)
-        .map(c => c.missionId)
-    );
-
-    const nextDayMissions = state.missions
-      .filter(m => !simulatedMissionIds.has(m.id))
-      .map(decrementMissionLifespan)
-      .filter(m => !isMissionExpired(m));
-
-    // 1. Process Quest Chain Unlocks:
-    const unlockedMissionsToSpawn: Mission[] = [];
-    state.contracts.forEach(c => {
-      if (c.confirmed && c.simulationReport && c.simulationReport.isSuccess) {
-        const originalM = state.missions.find(m => m.id === c.missionId) || (state.allMissions || []).find(m => m.id === c.missionId);
-        if (originalM && originalM.unlocksMissionIds) {
-          originalM.unlocksMissionIds.forEach(uId => {
-            const targetM = (state.allMissions || []).find(m => m.id === uId);
-            if (targetM) {
-              // Avoid duplicate spawning if already in active missions
-              if (!nextDayMissions.some(m => m.id === targetM.id)) {
-                unlockedMissionsToSpawn.push({
-                  ...targetM,
-                  startDay: state.day + 1, // dynamically unlock for the next day
-                  lifespan: targetM.lifespan !== undefined ? targetM.lifespan : 3,
-                  maxLifespan: targetM.maxLifespan !== undefined ? targetM.maxLifespan : (targetM.lifespan || 3)
-                });
-              }
-            }
-          });
+      const playableClansCount = state.clans.filter(clan => clan.id !== 'clan_guild').length;
+      const nextDayClans = state.clans.map(clan => {
+        if (clan.id === 'clan_guild') {
+          return { ...clan, gold: clan.gold + getGuildDailyFunding(playableClansCount, state.hCost) };
         }
-      }
-    });
+        const trust = Math.max(1, Math.min(3, clan.trustLevel || 1));
+        const dailyGoldH = trust === 1 ? 12 : trust === 2 ? 20 : 35;
+        const freeResources = trust;
+        return {
+          ...clan,
+          gold: clan.gold + dailyGoldH * state.hCost,
+          freeResourceBudget: freeResources,
+          freeSuppliesBudget: freeResources
+        };
+      });
 
-    // 2. Process Scenario Days:
-    // If we have imported missions for the next day:
-    const scenarioMissionsForNextDay = (state.allMissions || [])
-      .filter(m => m.startDay === state.day + 1)
-      .map(m => ({
-        ...m,
-        lifespan: m.lifespan !== undefined ? m.lifespan : 3,
-        maxLifespan: m.maxLifespan !== undefined ? m.maxLifespan : (m.lifespan || 3)
-      }));
-
-    const nextDayScenarioMissions = [...scenarioMissionsForNextDay, ...unlockedMissionsToSpawn];
-
-    // Check if we are running a scenario or have unlocked missions
-    const isRunningScenario = (state.allMissions || []).some(m => m.startDay !== undefined && m.startDay > 1) || unlockedMissionsToSpawn.length > 0;
-
-    if (isRunningScenario) {
-      // Add pre-defined or unlocked missions only! Avoid random spawning to keep balancing intact!
-      nextDayMissions.push(...nextDayScenarioMissions);
-    } else {
-      // Spawn new random missions: count = number of clans
-      const clansCount = state.clans.filter(c => c.id !== 'clan_guild').length || state.nClans || 6;
-      const spawnedMissions = generateMissionsForDay(clansCount, state.day + 1, state.spawnPolygon);
-      nextDayMissions.push(...spawnedMissions);
+      updateState({
+        day: nextDay,
+        currentPhase: 1,
+        isDaySimulated: false,
+        isGuildActionsCompleted: false,
+        adventurers: nextDayAdventurers,
+        clans: nextDayClans,
+        missions: nextDayMissions,
+        contracts: lifecycle.contracts,
+        completedMissionIds: lifecycle.completedMissionIds,
+        distributionReport: null,
+        lastDistributionLogs: []
+      });
+      setIsDistributionReportOpen(false);
+      showToast(`Наступил день ${nextDay}. Проваленные события сохранены, ожидающие сюжетные миссии остаются за заказчиками.`);
+      onRedirectToReports?.();
+      return;
     }
 
-    updateState({
-      day: state.day + 1,
-      currentPhase: 1, // Reset to formulation
-      isDaySimulated: false,
-      isGuildActionsCompleted: false,
-      adventurers: nextDayAdvs,
-      clans: nextDayClans,
-      missions: nextDayMissions,
-      contracts: nextDayContracts,
-      distributionReport: null
-    });
-
-    showToast(`☀️ Наступил День ${state.day + 1}! Казна кланов пополнена, раненые вылечились, новые донесения разнеслись по тавернам.`);
-    onRedirectToReports?.();
   };
 
   const handleNextPhase = () => {
@@ -2108,10 +1503,44 @@ export default function PhasesTab({
                 </button>
               </div>
 
+              {state.contracts.some(contract => {
+                const mission = state.missions.find(item => item.id === contract.missionId);
+                return mission?.type === 'STORY' && !contract.simulationReport;
+              }) && (
+                <div className="bg-amber-950/10 border border-amber-500/30 rounded-lg p-4 space-y-3">
+                  <div>
+                    <h3 className="text-amber-400 font-mono font-bold uppercase text-sm">Сюжетные миссии ожидают решения ГМа</h3>
+                    <p className="text-neutral-500 text-xs mt-1">Предложенные рынком NPC не считаются участниками. Укажите фактический состав в ручном рапорте.</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {state.contracts.filter(contract => {
+                      const mission = state.missions.find(item => item.id === contract.missionId);
+                      return mission?.type === 'STORY' && !contract.simulationReport;
+                    }).map(contract => (
+                      <div key={contract.missionId} className="bg-black/40 border border-amber-500/15 rounded p-3 flex items-center justify-between gap-3">
+                        <div>
+                          <strong className="text-neutral-200 text-sm block">{contract.title}</strong>
+                          <small className="text-neutral-500">Предложено NPC: {contract.suggestedSquadAdvIds?.length ?? 0}</small>
+                        </div>
+                        {state.isDmMode && (
+                          <button
+                            type="button"
+                            onClick={() => handleStartStoryReport(contract)}
+                            className="px-3 py-2 bg-amber-500/10 border border-amber-500/40 hover:bg-amber-500 hover:text-black text-amber-400 rounded font-mono text-xs font-bold uppercase cursor-pointer"
+                          >
+                            Заполнить рапорт
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Simulation Result Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {state.contracts.filter(c => c.confirmed).map((c, index) => {
-                  const r = c.simulationReport;
+                  const r = c.simulationReport ?? (editingMissionId === c.missionId ? editingReportData as SimulationReport : null);
                   if (!r) return null;
 
                   const isEditing = editingMissionId === c.missionId && editingReportData;
@@ -2129,19 +1558,24 @@ export default function PhasesTab({
                             <span className="text-[9px] bg-amber-500/10 text-amber-500 px-1 rounded">ИЗМЕНЕНИЕ ДАННЫХ</span>
                           </div>
 
-                          {/* Success outcome dynamically displayed */}
-                          {(() => {
-                            const curTotalRoll = (editingReportData.roll ?? 0) + (editingReportData.partyBonus ?? 0);
-                            const isSucc = editingReportData.isResourceAutoSuccess ? true : (curTotalRoll >= (editingReportData.dc ?? 0));
-                            return (
-                              <div className="flex items-center justify-between bg-black/20 p-2.5 rounded border border-neutral-900">
-                                <span className="text-neutral-400 uppercase text-[10px] font-bold">Итог (вычисляемый):</span>
-                                <span className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded border ${isSucc ? 'bg-emerald-950/20 border-emerald-500 text-emerald-400' : 'bg-rose-950/20 border-rose-500 text-rose-400'}`}>
-                                  {isSucc ? 'Успех' : 'Провал'}
-                                </span>
-                              </div>
-                            );
-                          })()}
+                          <div className="flex items-center justify-between gap-3 bg-black/20 p-2.5 rounded border border-neutral-900">
+                            <div>
+                              <span className="text-neutral-400 uppercase text-[10px] font-bold block">Итог ГМа:</span>
+                              <small className="text-neutral-600">Меняет все связанные последствия рапорта.</small>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setEditingReportData(previous => previous ? {
+                                ...previous,
+                                isSuccess: !previous.isSuccess,
+                                isResourceAutoSuccess: previous.isSuccess ? false : previous.isResourceAutoSuccess,
+                                autoSuccessReason: previous.isSuccess ? null : previous.autoSuccessReason
+                              } : previous)}
+                              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded border cursor-pointer ${editingReportData.isSuccess ? 'bg-emerald-950/20 border-emerald-500 text-emerald-400' : 'bg-rose-950/20 border-rose-500 text-rose-400'}`}
+                            >
+                              {editingReportData.isSuccess ? 'Успех' : 'Провал'}
+                            </button>
+                          </div>
 
                           {/* Narrative output */}
                           <div className="space-y-1">
@@ -2206,7 +1640,11 @@ export default function PhasesTab({
                                 <input
                                   type="checkbox"
                                   checked={editingReportData.isResourceAutoSuccess ?? false}
-                                  onChange={(e) => updateEditingField('isResourceAutoSuccess', e.target.checked)}
+                                  onChange={(e) => setEditingReportData(previous => previous ? {
+                                    ...previous,
+                                    isResourceAutoSuccess: e.target.checked,
+                                    isSuccess: e.target.checked ? true : previous.isSuccess
+                                  } : previous)}
                                   className="w-4 h-4 cursor-pointer"
                                 />
                                 <span className="text-neutral-500 text-[9px]">По ресурсу</span>
@@ -2226,6 +1664,56 @@ export default function PhasesTab({
                               />
                             </div>
                           )}
+
+                          <div className="space-y-2">
+                            <label className="text-neutral-400 uppercase text-[10px] font-bold block">Фактические участники:</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                              {state.adventurers.map(adventurer => {
+                                const selected = editingReportData.squadAdvIds?.includes(adventurer.id) ?? false;
+                                const returned = editingReportData.returnedAdventurerIds?.includes(adventurer.id) ?? false;
+                                return (
+                                  <div key={adventurer.id} className={`flex items-center justify-between gap-2 border rounded p-2 ${selected ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-neutral-800 bg-black/30'}`}>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleEditingParticipant(adventurer.id)}
+                                      className={`text-left flex-1 cursor-pointer ${selected ? 'text-emerald-300' : 'text-neutral-500'}`}
+                                    >
+                                      {adventurer.name} · ур. {adventurer.level}{adventurer.isPlayer ? ' · Игрок' : ''}
+                                    </button>
+                                    {selected && (
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleEditingReturn(adventurer.id)}
+                                        className={`px-2 py-1 rounded border text-[9px] uppercase cursor-pointer ${returned ? 'border-emerald-500/30 text-emerald-400' : 'border-rose-500/30 text-rose-400'}`}
+                                      >
+                                        {returned ? 'Вернулся' : 'Не вернулся'}
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-neutral-400 uppercase text-[10px] font-bold block">Фактически потраченные ресурсы:</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as BasicResourceKey[]).map(resource => {
+                                const attachedCount = c.attachedResources.filter(item => item === resource).length;
+                                const usedCount = (editingReportData.attachedResourcesUsed ?? []).filter(item => item === resource).length;
+                                return (
+                                  <div key={resource} className="bg-black/40 border border-neutral-800 rounded p-2 text-center">
+                                    <span className="block text-[9px] text-neutral-500">{getResourceNameRu(resource)} · {usedCount}/{attachedCount}</span>
+                                    <div className="flex items-center justify-center gap-2 mt-1">
+                                      <button type="button" disabled={usedCount === 0} onClick={() => adjustEditingResource(resource, -1)} className="px-2 border border-neutral-700 disabled:opacity-30 rounded cursor-pointer">−</button>
+                                      <strong>{usedCount}</strong>
+                                      <button type="button" disabled={usedCount >= attachedCount} onClick={() => adjustEditingResource(resource, 1)} className="px-2 border border-neutral-700 disabled:opacity-30 rounded cursor-pointer">+</button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
 
                           {/* Action Controls */}
                           <div className="flex justify-end gap-2 pt-2 border-t border-neutral-900">

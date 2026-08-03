@@ -7,8 +7,11 @@ export function getMissionRelationDelta(
   attachedResources: readonly BasicResourceKey[],
   isMissionSuccess: boolean
 ): -1 | 0 | 1 {
+  if (mission.type === 'DUMMY') return 0;
   if (hasNoPreparation(mission, attachedResources)) return -1;
-  if (isMissionSuccess && hasFullPreparation(mission, attachedResources)) return 1;
+  const hasRequiredResources = mission.checks?.some(check => check.reqResource && check.reqResource !== 'None')
+    ?? (mission.reqResource !== 'None');
+  if (hasRequiredResources && isMissionSuccess && hasFullPreparation(mission, attachedResources)) return 1;
   return 0;
 }
 
@@ -26,4 +29,3 @@ export function applyRelationDelta(
     }
   };
 }
-
