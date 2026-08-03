@@ -1,5 +1,12 @@
 [
   {
+    "id": "clan_guild",
+    "name": "Гильдия Авантюристов",
+    "trustLevel": 5,
+    "gold": 1000,
+    "resources": { "Supplies": 10, "Equipment": 10, "Intelligence": 10, "Alchemy": 10, "AncientText": "", "specialItems": [] }
+  },
+  {
     "id": "clan_1",
     "name": "Клан Красный Волк",
     "trustLevel": 1,
@@ -40,13 +47,5 @@
     "trustLevel": 1,
     "gold": 100,
     "resources": { "Supplies": 2, "Equipment": 2, "Intelligence": 4, "Alchemy": 0, "AncientText": "", "specialItems": [] }
-  },
-  {
-    "id": "clan_guild",
-    "name": "Гильдия Авантюристов",
-    "trustLevel": 5,
-    "gold": 1000,
-    "resources": { "Supplies": 10, "Equipment": 10, "Intelligence": 10, "Alchemy": 10, "AncientText": "", "specialItems": [] }
   }
 ]
-

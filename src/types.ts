@@ -128,6 +128,19 @@ export interface CheckResolution {
   damage: number;
 }
 
+/**
+ * An unresolved complication prepared for a story mission. Story missions are
+ * played at the table, so the application determines that the complication
+ * exists, its position and its mechanics, while the GM records the outcome in
+ * the manual report.
+ */
+export interface PendingStoryComplication {
+  id: string;
+  position: number;
+  reqResource: MissionResourceKey;
+  dc: number;
+}
+
 export interface ParticipantOutcome {
   adventurerId: string;
   name: string;
@@ -154,7 +167,7 @@ export interface ParticipantOutcome {
 
 export interface RetreatResolution {
   wasTriggered: boolean;
-  reason?: 'HERO_DOWN' | 'HALF_PARTY_WOUNDED';
+  reason?: 'HERO_DOWN' | 'HALF_PARTY_WOUNDED' | 'RETURN_COMPLICATION';
   usedSupplies: boolean;
   roll: number | null;
   bonus: number;
@@ -209,6 +222,11 @@ export interface SimulationReport {
   narrativeText: string;
   damageDealt: number;
   goldReward: number;
+  /** Whether the configured reward was actually transferred to the customer. */
+  rewardGranted?: boolean;
+  /** Actual amount transferred; kept separate from the displayed reward. */
+  rewardAwardedAmount?: number;
+  rewardRecipientClanId?: string | null;
   attachedResourcesUsed: string[];
   squadNames: string[];
   squadAdvIds: string[];
@@ -226,6 +244,9 @@ export interface SimulationReport {
   returnedAdventurerIds?: string[];
   failedChecksCount?: number;
   context?: SimulationReportContext;
+  /** A later report whose prerequisites became false remains in the archive, but its effects are reversed. */
+  invalidated?: boolean;
+  invalidationReason?: string;
 }
 
 export interface ContractCandidateDecision {
@@ -273,6 +294,9 @@ export interface Contract {
   paidCommission?: number;
   distributionCompleted?: boolean;
   isScoutedByGuild?: boolean;
+  pendingStoryComplications?: PendingStoryComplication[];
+  /** Non-consumable stage items locked for this contract until it closes. */
+  reservedSpecialItems?: string[];
   simulationReport?: SimulationReport;
 }
 
@@ -362,6 +386,10 @@ export interface GameState {
   contracts: Contract[];
   history: GameHistoryEntry[];
   completedMissionIds: string[];
+  /** Missions resolved by either success or failure; a failed mission is also terminal. */
+  closedMissionIds: string[];
+  /** Scenario missions that expired are terminal and must never be spawned again. */
+  expiredMissionIds: string[];
   selectedMissionId: string | null;
   lastDistributionLogs: string[];
   distributionReport?: DistributionReport | null;

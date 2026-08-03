@@ -1,6 +1,13 @@
 import type { Adventurer, BasicResourceKey, Clan, Contract, Mission } from '../types';
 import { getResourceGoldCost } from './economy';
-import { getMissionChecks, getMissionUrgency, getRequiredPreparationResources } from './missions';
+import {
+  clanHasSpecialItem,
+  getMissionChecks,
+  getMissionUrgency,
+  getReservedSpecialItems,
+  getRequiredPreparationResources,
+  getRequiredSpecialItems
+} from './missions';
 import { markMissionScouted } from './missionPresentation';
 
 export interface GuildActionInput {
@@ -91,13 +98,13 @@ export function performGuildActions(input: GuildActionInput): GuildActionResult 
   for (const mission of candidates) {
     if (createdContracts >= maximumContracts || available.length === 0) break;
 
-    if (mission.requiredSpecialItem) {
-      const items = guild.resources.specialItems || [];
-      const hasItem = items.includes(mission.requiredSpecialItem) || guild.resources.AncientText === mission.requiredSpecialItem;
-      if (!hasItem) {
-        logs.push(`«${mission.title}» пропущено: нет особого предмета «${mission.requiredSpecialItem}».`);
-        continue;
-      }
+    const requiredSpecialItems = getRequiredSpecialItems(mission);
+    const reservedSpecialItems = getReservedSpecialItems(contracts, guild.id, mission.id);
+    const missingSpecialItems = requiredSpecialItems
+      .filter(item => !clanHasSpecialItem(guild.resources, item) || reservedSpecialItems.has(item));
+    if (missingSpecialItems.length > 0) {
+      logs.push(`«${mission.title}» пропущено: нет особых предметов для этапов — ${missingSpecialItems.join(', ')}.`);
+      continue;
     }
 
     const trialGuild = structuredClone(guild);
@@ -146,6 +153,7 @@ export function performGuildActions(input: GuildActionInput): GuildActionResult 
       distributionCompleted: true,
       maxPartySize: targetSize,
       attachedResources,
+      reservedSpecialItems: requiredSpecialItems,
       partyAdvIds: party.map(adventurer => adventurer.id),
       isScoutedByGuild: true
     });

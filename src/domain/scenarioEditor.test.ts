@@ -1,7 +1,32 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import type { SimulationReport } from '../types';
 import { createInitialGameState } from './state';
 import { createScenarioMission, deleteScenarioMission, getScenarioMissions, saveScenarioMission } from './scenarioEditor';
+import { recalculateScenarioProgress } from './day';
+
+function report(missionId: string, isSuccess: boolean): SimulationReport {
+  return {
+    isSuccess,
+    isResourceAutoSuccess: false,
+    autoSuccessReason: null,
+    roll: 10,
+    partyBonus: 0,
+    totalRoll: 10,
+    dc: 10,
+    narrativeText: '',
+    damageDealt: 0,
+    goldReward: 0,
+    attachedResourcesUsed: [],
+    squadNames: [],
+    squadAdvIds: [],
+    clanName: 'Клан',
+    missionTitle: missionId,
+    missionRegion: 'Тест',
+    missionId,
+    baseObjectiveCompleted: isSuccess
+  };
+}
 
 test('scenario editor includes active missions missing from the definition list', () => {
   const state = createInitialGameState();
@@ -64,4 +89,45 @@ test('deleting a scenario mission removes contracts and dependency references', 
   const change = deleteScenarioMission(state, 'first');
   assert.equal(change.contracts?.length, 0);
   assert.deepEqual(change.allMissions?.find(item => item.id === 'second')?.prerequisiteMissionIds, []);
+});
+
+test('пересчёт архива повторно закрывает зависимую цепочку после отмены раннего успеха', () => {
+  const first = { ...createScenarioMission(1, []), id: 'first', startDay: 1 };
+  const second = {
+    ...createScenarioMission(2, ['first']),
+    id: 'second',
+    startDay: 2,
+    prerequisiteMissionIds: ['first']
+  };
+  const progress = recalculateScenarioProgress({
+    allMissions: [first, second],
+    missions: [second],
+    contracts: [],
+    history: [
+      { day: 1, contractsCount: 1, reports: [report('first', false)], logs: [] },
+      { day: 2, contractsCount: 1, reports: [report('second', true)], logs: [] }
+    ],
+    currentDay: 3
+  });
+  assert.deepEqual(progress.completedMissionIds, []);
+  assert.deepEqual(progress.missions.map(item => item.id), ['first']);
+});
+
+test('пересчёт архива открывает зависимое событие после исправления провала на успех', () => {
+  const first = { ...createScenarioMission(1, []), id: 'first', startDay: 1 };
+  const second = {
+    ...createScenarioMission(2, ['first']),
+    id: 'second',
+    startDay: 2,
+    prerequisiteMissionIds: ['first']
+  };
+  const progress = recalculateScenarioProgress({
+    allMissions: [first, second],
+    missions: [first],
+    contracts: [],
+    history: [{ day: 1, contractsCount: 1, reports: [report('first', true)], logs: [] }],
+    currentDay: 3
+  });
+  assert.deepEqual(progress.completedMissionIds, ['first']);
+  assert.deepEqual(progress.missions.map(item => item.id), ['second']);
 });

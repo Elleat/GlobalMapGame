@@ -6,6 +6,7 @@ import type {
   Contract,
   Mission,
   MissionResourceKey,
+  PendingStoryComplication,
   ParticipantOutcome,
   RelationChange,
   ResourceLedger,
@@ -17,6 +18,7 @@ import { BASIC_RESOURCE_KEYS } from '../types';
 import { calculateMaxHp, calculatePartyBonus, getResourceNameRu } from '../utils';
 import {
   getComplicationDc,
+  getComplicationSlots,
   getMissionChecks,
   getMissionComplicationSettings,
   hasFullPreparation
@@ -33,6 +35,7 @@ export interface ContractSimulationInput {
   adventurers: Adventurer[];
   clans: Clan[];
   day: number;
+  hCost?: number;
   random?: () => number;
 }
 
@@ -50,6 +53,7 @@ export interface DaySimulationInput {
   adventurers: Adventurer[];
   clans: Clan[];
   day: number;
+  hCost?: number;
   random?: () => number;
 }
 
@@ -78,6 +82,26 @@ function promoteAdventurer(adventurer: Adventurer): Adventurer {
 function getRandomComplicationResource(random: () => number): MissionResourceKey {
   const index = Math.min(COMPLICATION_RESOURCES.length - 1, Math.floor(random() * COMPLICATION_RESOURCES.length));
   return COMPLICATION_RESOURCES[index];
+}
+
+function generatePendingStoryComplications(
+  mission: Mission,
+  random: () => number
+): PendingStoryComplication[] {
+  const settings = getMissionComplicationSettings(mission);
+  if (!settings.enabled) return [];
+  const complications: PendingStoryComplication[] = [];
+  for (let position = 0; position < getComplicationSlots(mission); position += 1) {
+    if (random() >= settings.chancePerSlot) continue;
+    complications.push({
+      id: `${mission.id}-story-complication-${position}-${complications.length}`,
+      position,
+      reqResource: getRandomComplicationResource(random),
+      dc: getComplicationDc(mission)
+    });
+    if (!settings.allowMultiple) break;
+  }
+  return complications;
 }
 
 function shouldRetreat(party: Adventurer[]): RetreatResolution['reason'] | null {
@@ -309,6 +333,10 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     const required = getRandomComplicationResource(random);
     const success = resolveCheck('COMPLICATION', position, required, complicationDc, `Осложнение в позиции ${position}`);
     complicationSuccesses.push(success);
+    const returnPosition = mission.type === 'DUMMY' ? 1 : checks.length;
+    if (!success && position >= returnPosition && !retreat.wasTriggered) {
+      performRetreat('RETURN_COMPLICATION');
+    }
   };
 
   maybeRunComplication(0);
@@ -346,8 +374,8 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
   const returnedSet = new Set(returnedAdventurerIds);
 
   party.forEach(member => {
-    member.totalMissions += 1;
-    if (isSuccess) member.successfulMissions += 1;
+    if (mission.type !== 'DUMMY') member.totalMissions += 1;
+    if (mission.type !== 'DUMMY' && isSuccess) member.successfulMissions += 1;
     if (contract.clanId && relationDelta !== 0) {
       const before = member.relations?.[contract.clanId] ?? 0;
       const updated = applyRelationDelta(member, contract.clanId, relationDelta);
@@ -383,11 +411,12 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
   else resourceLedger.returned = [...availableResources, ...notCarriedResources];
   clans = addReturnedResources(clans, contract.clanId, resourceLedger.returned);
 
-  let goldReward = 0;
+  const goldReward = mission.type === 'DUMMY'
+    ? 0
+    : Math.max(0, mission.goldReward ?? (2 * (input.hCost ?? 10)));
   const awardedSpecialItems: string[] = [];
   const clanGoldDeltas: Record<string, number> = {};
   if (isSuccess && contract.clanId) {
-    goldReward = Math.max(0, mission.goldReward ?? 0);
     clans = clans.map(item => {
       if (item.id !== contract.clanId) return item;
       const specialItems = [...(item.resources.specialItems ?? [])];
@@ -429,8 +458,8 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
       survived: member.status !== 'DEAD',
       returned: returnedSet.has(member.id),
       relationDelta: relationChange ? relationChange.after - relationChange.before : 0,
-      successfulMissionsDelta: isSuccess ? 1 : 0,
-      totalMissionsDelta: 1
+      successfulMissionsDelta: mission.type !== 'DUMMY' && isSuccess ? 1 : 0,
+      totalMissionsDelta: mission.type !== 'DUMMY' ? 1 : 0
     };
   });
 
@@ -451,14 +480,18 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     && baseObjectiveCompleted;
   const narrativeText = isSuccess
     ? (mission.successText || (mission.type === 'DUMMY' ? 'Донесение оказалось пустышкой; отряд вернулся.' : 'Задание успешно выполнено.'))
-    : returnComplicationFailed
+    : returnComplicationFailed && returnedAdventurerIds.length < party.length
       ? 'Основная задача выполнена, но отряд не смог вернуться из-за осложнения.'
       : (mission.failText || 'Экспедиция потерпела неудачу.');
 
   const report: SimulationReport = {
     isSuccess,
     isResourceAutoSuccess: allChecksUsedResources || (mission.type === 'DUMMY' && resolutions.length === 0),
-    autoSuccessReason: allChecksUsedResources ? 'Все возникшие проверки закрыты подготовленными ресурсами.' : null,
+    autoSuccessReason: allChecksUsedResources
+      ? 'Все возникшие проверки закрыты подготовленными ресурсами.'
+      : mission.type === 'DUMMY' && resolutions.length === 0
+        ? 'Пустышка не требовала основной проверки.'
+        : null,
     roll: rolledResolution?.roll ?? 0,
     partyBonus,
     totalRoll: rolledResolution?.total ?? partyBonus,
@@ -466,6 +499,9 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     narrativeText,
     damageDealt: failedChecksCount + retreat.extraDamage,
     goldReward,
+    rewardGranted: isSuccess,
+    rewardAwardedAmount: isSuccess ? goldReward : 0,
+    rewardRecipientClanId: contract.clanId,
     attachedResourcesUsed: [...resourceLedger.used],
     squadNames: party.map(member => member.name),
     squadAdvIds: party.map(member => member.id),
@@ -532,11 +568,15 @@ export function simulateDayContracts(input: DaySimulationInput): DaySimulationRe
       const suggestedSquadAdvIds = contract.suggestedSquadAdvIds?.length
         ? [...contract.suggestedSquadAdvIds]
         : [...contract.partyAdvIds];
+      const pendingStoryComplications = contract.pendingStoryComplications
+        ? structuredClone(contract.pendingStoryComplications)
+        : generatePendingStoryComplications(mission, random);
       contracts.push({
         ...contract,
         suggestedSquadAdvIds,
         actualSquadAdvIds: [],
         partyAdvIds: [],
+        pendingStoryComplications,
         simulationReport: undefined
       });
       missions = missions.map(item => item.id === mission.id ? {
@@ -547,7 +587,16 @@ export function simulateDayContracts(input: DaySimulationInput): DaySimulationRe
         suggestedSquadAdvIds
       } : item);
       awaitingStoryMissionIds.push(mission.id);
-      logs.push(`Сюжетная миссия «${mission.title}» закреплена за заказчиком и ожидает ручного рапорта ГМа. Предложенные NPC возвращены в резерв.`);
+      logs.push(`Сюжетная миссия «${mission.title}» закреплена за заказчиком и ожидает ручного рапорта ГМа. Предложенные NPC возвращены в резерв. Осложнений подготовлено: ${pendingStoryComplications.length}.`);
+      return;
+    }
+
+    // An empty contract was never attempted. It remains active (and its
+    // payment/resources remain in escrow) until it receives a party, is
+    // cancelled, or expires together with the report.
+    if (contract.partyAdvIds.length === 0) {
+      contracts.push(contract);
+      logs.push(`«${contract.title}» не начато: ни один авантюрист не нанялся.`);
       return;
     }
 
@@ -557,6 +606,7 @@ export function simulateDayContracts(input: DaySimulationInput): DaySimulationRe
       adventurers,
       clans,
       day: input.day,
+      hCost: input.hCost,
       random
     });
     adventurers = result.adventurers;

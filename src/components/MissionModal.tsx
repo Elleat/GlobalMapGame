@@ -13,6 +13,7 @@ import {
   getScoutingClanNames
 } from '../domain/missionPresentation';
 import { getResourceNameRu, getTypeRu } from '../utils';
+import { getActivePlayerClans } from '../domain/clans';
 
 interface MissionModalProps {
   isOpen: boolean;
@@ -47,7 +48,8 @@ export default function MissionModal({
     : 'источник не указан';
 
   // Find clans with at least 1 intelligence
-  const eligibleClans = state.clans.filter(c => c.id !== 'clan_guild' && (c.resources.Intelligence || 0) >= 1);
+  const eligibleClans = getActivePlayerClans(state.clans, state.nClans)
+    .filter(clan => (clan.resources.Intelligence || 0) >= 1);
 
   const handleIntelConfirm = () => {
     const sel = document.getElementById('select-intel-clan') as HTMLSelectElement;
@@ -112,11 +114,14 @@ export default function MissionModal({
                     {m.checks.map((ch, idx) => (
                       <div key={idx} className="pl-2 border-l border-emerald-500/30 text-white flex justify-between items-center bg-black/25 px-2 py-1 rounded">
                         <span>Этап {idx + 1}: <span className="text-amber-400 font-bold">DC {ch.dc}</span></span>
-                        {ch.reqResource && ch.reqResource !== 'None' ? (
-                          <span className="text-neutral-400 text-[10px]">Ресурс: <span className="text-emerald-400 underline">{getResourceNameRu(ch.reqResource)}</span></span>
-                        ) : (
-                          <span className="text-neutral-500 text-[10px]">Ресурса обхода нет</span>
-                        )}
+                        <span className="text-right text-[10px]">
+                          {ch.reqResource && ch.reqResource !== 'None' ? (
+                            <span className="block text-neutral-400">Ресурс: <span className="text-emerald-400 underline">{getResourceNameRu(ch.reqResource)}</span></span>
+                          ) : (
+                            <span className="block text-neutral-500">Ресурса обхода нет</span>
+                          )}
+                          {ch.requiredSpecialItem && <span className="block text-amber-400">💎 {ch.requiredSpecialItem}</span>}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -129,12 +134,6 @@ export default function MissionModal({
                   </>
                 )}
                 
-                {m.requiredSpecialItem && (
-                  <div className="text-amber-400 font-bold col-span-2 bg-amber-950/20 border border-amber-500/30 p-2 rounded text-xs mt-1 flex items-center gap-1.5">
-                    <span>💎 Требуется особый предмет для старта: <strong className="text-amber-300 underline">{m.requiredSpecialItem}</strong></span>
-                  </div>
-                )}
-
                 <div className="text-neutral-400 col-span-2 mt-2 pt-2 border-t border-emerald-500/10">
                   Награда за успех: <span className="text-amber-500 font-bold">{m.type === 'DUMMY' ? '0г' : (m.goldReward !== undefined ? `${m.goldReward}г` : `${state.hCost * 2}г`)}</span>
                   {m.rewardSpecialItems && m.rewardSpecialItems.length > 0 && (

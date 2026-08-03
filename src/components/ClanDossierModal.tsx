@@ -93,7 +93,15 @@ export default function ClanDossierModal({
 
   const handleRemoveSpecialItem = (index: number) => {
     const updatedSpecialItems = [...specialItems];
-    const removedItem = updatedSpecialItems.splice(index, 1)[0];
+    const removedItem = updatedSpecialItems[index];
+    const isReserved = state.contracts.some(contract =>
+      contract.clanId === clan.id && (contract.reservedSpecialItems ?? []).includes(removedItem)
+    );
+    if (isReserved) {
+      showToast(`Особый предмет «${removedItem}» зарезервирован активным контрактом.`, true);
+      return;
+    }
+    updatedSpecialItems.splice(index, 1);
     
     const updatedClan: Clan = {
       ...clan,

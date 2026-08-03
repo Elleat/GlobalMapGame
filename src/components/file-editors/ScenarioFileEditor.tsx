@@ -53,7 +53,7 @@ export default function ScenarioFileEditor({ value, onChange, onImportAdventurer
       <EditorSection title="Экономика и карта" icon={<Boxes className="h-4 w-4" />}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <NumberField label="Стоимость h" value={value.hCost} min={1} onChange={hCost => patch({ hCost })} />
-          <NumberField label="Активных кланов" value={value.nClans} min={1} onChange={nClans => patch({ nClans })} />
+          <NumberField label="Активных кланов" value={value.nClans} min={1} max={Math.max(1, value.clans.filter(clan => clan.id !== 'clan_guild').length)} onChange={nClans => patch({ nClans })} />
           <NumberField label="Ширина карты" value={value.mapWidth} min={1} onChange={mapWidth => patch({ mapWidth })} />
           <NumberField label="Высота карты" value={value.mapHeight} min={1} onChange={mapHeight => patch({ mapHeight })} />
           <Field label="ID темы"><input value={value.themeId} onChange={event => patch({ themeId: event.target.value })} className="editor-input" /></Field>

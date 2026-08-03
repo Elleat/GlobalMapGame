@@ -7,6 +7,7 @@ import React from 'react';
 import { Shield, Coins, Star, Package, HelpCircle, Eye, ShoppingCart } from 'lucide-react';
 import { GameState, Clan } from '../types';
 import { getResourceNameRu, getMaxContractLevelForClan } from '../utils';
+import { getActivePlayerClans } from '../domain/clans';
 
 interface ClansTabProps {
   state: GameState;
@@ -20,8 +21,7 @@ export default function ClansTab({
   onOpenStore
 }: ClansTabProps) {
   const clans = state.clans || [];
-  // Limit shown clans to state.nClans, and also append 'clan_guild' if it isn't inside that slice
-  const activeClans = clans.slice(0, state.nClans).filter(c => c.id !== 'clan_guild');
+  const activeClans = getActivePlayerClans(clans, state.nClans);
   const guildClan = clans.find(c => c.id === 'clan_guild');
 
   const renderClanCard = (clan: Clan, isGuild: boolean = false) => {

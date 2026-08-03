@@ -198,6 +198,20 @@ test('оставшиеся ресурсы теряются, если весь о
   assert.equal(result.clans[0].resources.Alchemy, 0);
 });
 
+test('выполнение пустышки не даёт опыт и не увеличивает счётчики миссий', () => {
+  const result = simulateContract({
+    contract: contract(),
+    mission: mission({ type: 'DUMMY', checks: [], reqResource: 'None' }),
+    adventurers: [adventurer()],
+    clans: [clan()],
+    day: 1,
+    random: sequence([0.99])
+  });
+  assert.equal(result.adventurers[0].successfulMissions, 0);
+  assert.equal(result.adventurers[0].totalMissions, 0);
+  assert.equal(result.report.autoSuccessReason, 'Пустышка не требовала основной проверки.');
+});
+
 test('сюжетная миссия ждёт ручного рапорта, а предложенные NPC возвращаются в резерв', () => {
   const story = mission({ type: 'STORY', storyStatus: 'AVAILABLE' });
   const result = simulateDayContracts({
@@ -215,7 +229,28 @@ test('сюжетная миссия ждёт ручного рапорта, а �
   assert.equal(result.adventurers[0].status, 'READY');
 });
 
-test('проваленная операция остаётся на карте, а её завершённый контракт удаляется', () => {
+test('для сюжетной миссии заранее создаются обычные осложнения для ручной сессии', () => {
+  const story = mission({
+    type: 'STORY',
+    storyStatus: 'AVAILABLE',
+    checks: [{ reqResource: 'None', dc: 12 }],
+    complications: { enabled: true, chancePerSlot: 1, allowMultiple: true, baseDc: 12 }
+  });
+  const result = simulateDayContracts({
+    contracts: [contract()],
+    missions: [story],
+    adventurers: [adventurer()],
+    clans: [clan()],
+    day: 3,
+    random: sequence([0, 0, 0, 0.99])
+  });
+  assert.equal(result.contracts[0].pendingStoryComplications?.length, 2);
+  assert.deepEqual(result.contracts[0].pendingStoryComplications?.map(item => item.position), [0, 1]);
+  assert.deepEqual(result.contracts[0].pendingStoryComplications?.map(item => item.reqResource), ['None', 'Alchemy']);
+  assert.deepEqual(result.contracts[0].pendingStoryComplications?.map(item => item.dc), [13, 13]);
+});
+
+test('проваленная операция и её контракт закрываются окончательно', () => {
   const failedReport = simulateContract({
     contract: contract(),
     mission: mission({ lifespan: 3 }),
@@ -230,9 +265,9 @@ test('проваленная операция остаётся на карте, 
     completedMissionIds: [],
     nextDay: 2
   });
-  assert.equal(lifecycle.missions.length, 1);
-  assert.equal(lifecycle.missions[0].lifespan, 2);
+  assert.equal(lifecycle.missions.length, 0);
   assert.equal(lifecycle.contracts.length, 0);
+  assert.deepEqual(lifecycle.closedMissionIds, ['mission-1']);
 });
 
 test('сюжетная миссия без рапорта не стареет и сохраняет заказчика', () => {
@@ -302,7 +337,8 @@ test('редактор рапорта откатывает старые эффе
     clans: successful.clans,
     day: 1
   });
-  assert.equal(failed.report.goldReward, 0);
+  assert.equal(failed.report.goldReward, 20);
+  assert.equal(failed.report.rewardGranted, false);
   assert.equal(failed.adventurers[0].successfulMissions, 0);
   assert.equal(failed.adventurers[0].totalMissions, 1);
   assert.equal(failed.adventurers[0].relations['clan-1'], 5);
@@ -312,7 +348,7 @@ test('редактор рапорта откатывает старые эффе
 
   const restoredSuccess = recalculateReportEffects({
     originalReport: failed.report,
-    editedReport: { ...failed.report, isSuccess: true, goldReward: 20, damageDealt: 0 },
+    editedReport: { ...failed.report, isSuccess: true, rewardGranted: true, goldReward: 20, damageDealt: 0 },
     contract: signedContract,
     mission: operation,
     adventurers: failed.adventurers,
@@ -324,4 +360,33 @@ test('редактор рапорта откатывает старые эффе
   assert.equal(restoredSuccess.adventurers[0].relations['clan-1'], 6);
   assert.equal(restoredSuccess.clans.find(item => item.id === 'clan-1')?.gold, 120);
   assert.equal(restoredSuccess.clans.find(item => item.id === 'clan_guild')?.gold, 500);
+});
+
+test('редактирование старого рапорта сохраняет более поздний прогресс как дельту', () => {
+  const operation = mission({ goldReward: 20 });
+  const signedContract = contract();
+  const first = simulateContract({
+    contract: signedContract,
+    mission: operation,
+    adventurers: [adventurer()],
+    clans: [clan()],
+    day: 1,
+    random: sequence([0.99])
+  });
+  const afterLaterMission = first.adventurers.map(hero => ({
+    ...hero,
+    totalMissions: hero.totalMissions + 1,
+    successfulMissions: hero.successfulMissions + 1
+  }));
+  const edited = recalculateReportEffects({
+    originalReport: first.report,
+    editedReport: { ...first.report, isSuccess: false, rewardGranted: false, damageDealt: 1 },
+    contract: signedContract,
+    mission: operation,
+    adventurers: afterLaterMission,
+    clans: first.clans,
+    day: 1
+  });
+  assert.equal(edited.adventurers[0].totalMissions, 2);
+  assert.equal(edited.adventurers[0].successfulMissions, 1);
 });

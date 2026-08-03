@@ -2,8 +2,10 @@ import type { Adventurer, Clan, GameState, MapRegion, Mission } from '../types';
 import { DEFAULT_MAP_URL } from './constants';
 import { loadMapAssetBlob, saveMapBlob } from './mapAssets';
 import { getScenarioMissions } from './scenarioEditor';
-import { createInitialGameState } from './state';
+import { createInitialGameState, normalizeMission } from './state';
 import { normalizeMapRegion } from './mapRegions';
+import { clampActiveClanCount, orderClansGuildFirst } from './clans';
+import { DATA_FILE_VERSION, parseScenarioDataFile, SCENARIO_FILE_TYPE } from './dataFiles';
 
 const BUNDLE_FORMAT = 'global-map-scenario';
 const BUNDLE_VERSION = 1;
@@ -151,11 +153,24 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
   }
   if (!isBundle(parsed)) throw new Error('Это не поддерживаемый файл сценария .globalmap.');
 
-  const scenario = parsed.scenario;
+  if (!parsed.map.mimeType.startsWith('image/')) throw new Error('Вложение .globalmap не является изображением карты.');
+  const validated = parseScenarioDataFile({
+    type: SCENARIO_FILE_TYPE,
+    version: DATA_FILE_VERSION,
+    scenario: {
+      ...parsed.scenario,
+      mapRegions: parsed.scenario.mapRegions ?? [],
+      mapEffectsEnabled: parsed.scenario.mapEffectsEnabled ?? true,
+      events: parsed.scenario.missions
+    }
+  });
+  const scenario = { ...parsed.scenario, ...validated.scenario, missions: validated.scenario.events };
   const mapBlob = base64ToBlob(parsed.map.base64, parsed.map.mimeType);
   const mapAsset = await saveMapBlob(mapBlob);
   const initial = createInitialGameState({ isDmMode, clansCount: scenario.nClans });
-  const missions = structuredClone(scenario.missions);
+  const missions = structuredClone(scenario.missions).map(normalizeMission);
+  const clans = orderClansGuildFirst(structuredClone(scenario.clans))
+    .map(clan => clan.id === 'clan_guild' ? { ...clan, name: scenario.guildName } : clan);
 
   return {
     ...initial,
@@ -163,7 +178,7 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     guildName: scenario.guildName,
     guildShortName: scenario.guildShortName || scenario.guildName,
     hCost: Math.max(1, scenario.hCost || 10),
-    nClans: Math.max(1, scenario.nClans || scenario.clans.length),
+    nClans: clampActiveClanCount(clans, scenario.nClans),
     themeId: scenario.themeId || initial.themeId,
     mapBgUrl: DEFAULT_MAP_URL,
     mapAssetId: mapAsset.id,
@@ -173,7 +188,7 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     mapRegions: structuredClone(scenario.mapRegions ?? []).map(normalizeMapRegion),
     mapEffectsEnabled: scenario.mapEffectsEnabled ?? true,
     hqPos: scenario.hqPos ? { ...scenario.hqPos } : initial.hqPos,
-    clans: structuredClone(scenario.clans).map(clan => clan.id === 'clan_guild' ? { ...clan, name: scenario.guildName } : clan),
+    clans,
     adventurers: structuredClone(scenario.adventurers),
     allMissions: missions,
     missions: missions
@@ -182,6 +197,8 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     contracts: [],
     history: [],
     completedMissionIds: [],
+    closedMissionIds: [],
+    expiredMissionIds: [],
     selectedMissionId: null,
     distributionReport: null,
     lastDistributionLogs: []

@@ -17,7 +17,6 @@ import { getResourceNameRu } from '../utils';
 import RegionEditorPanel from './RegionEditorPanel';
 import {
   createMapRegion,
-  getFogDuration,
   getFogOpacity,
   getRegionClipPath
 } from '../domain/mapRegions';
@@ -264,7 +263,6 @@ export default function MapTab({
       const region = state.mapRegions.find(item => item.id === selectedRegionId);
       if (region) {
         updateRegion(region.id, { points: [...region.points, coords] });
-        setIsAddingRegionPoint(false);
         showToast(`📐 В регион «${region.name}» добавлена новая вершина.`);
       }
       return;
@@ -360,7 +358,7 @@ export default function MapTab({
     }
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
+  const handleWheel = (e: WheelEvent | React.WheelEvent) => {
     e.preventDefault();
     if (!mapContainerRef.current) return;
     const rect = mapContainerRef.current.getBoundingClientRect();
@@ -370,6 +368,22 @@ export default function MapTab({
     const delta = e.deltaY > 0 ? -15 : 15;
     applyZoomAtPoint(zoom + delta, focusX, focusY);
   };
+
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const listener = (event: WheelEvent) => handleWheel(event);
+    container.addEventListener('wheel', listener, { passive: false });
+    return () => container.removeEventListener('wheel', listener);
+  }, [zoom, panOffset, rotate, state.mapWidth, state.mapHeight]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsAddingRegionPoint(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -398,7 +412,6 @@ export default function MapTab({
       title,
       desc,
       reqResource: storyReq,
-      requiredSpecialItem: storySpecialItem.trim() || undefined,
       dc: storyDc,
       type: 'STORY',
       lifespan: storyLifespan,
@@ -410,7 +423,14 @@ export default function MapTab({
       pinned: true,
       intelRevealed: false,
       scoutedByClanIds: [],
-      storyStatus: 'AVAILABLE'
+      storyStatus: 'AVAILABLE',
+      checks: [{
+        id: `story-stage-${Date.now().toString(36)}`,
+        label: 'Сюжетный этап',
+        reqResource: storyReq,
+        requiredSpecialItem: storySpecialItem.trim() || undefined,
+        dc: storyDc
+      }]
     };
 
     updateState({
@@ -531,7 +551,6 @@ export default function MapTab({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
             onContextMenu={(e) => e.preventDefault()}
             className={`w-full h-full cursor-grab ${panning ? 'cursor-grabbing' : ''}`}
             style={{ position: 'relative' }}
@@ -570,7 +589,7 @@ export default function MapTab({
                 const editingView = state.isDmMode && isRegionEditorOpen && !isPlayerRegionPreview;
                 const fogIsVisible = region.fog.enabled && (editingView || region.visibleToPlayers);
                 if (!fogIsVisible) return null;
-                const duration = getFogDuration(region.fog.speed);
+                const playbackRate = region.fog.speed === 'FAST' ? 1.35 : region.fog.speed === 'SLOW' ? 0.65 : 1;
                 return (
                   <div
                     key={`fog-${region.id}`}
@@ -578,14 +597,20 @@ export default function MapTab({
                     style={{
                       zIndex: 4,
                       clipPath: getRegionClipPath(region.points),
-                      opacity: getFogOpacity(region.fog.density),
-                      '--region-fog-duration': `${duration}s`
+                      opacity: getFogOpacity(region.fog.density)
                     } as React.CSSProperties}
                     aria-hidden="true"
                   >
-                    <div className="region-fog-cloud region-fog-cloud-a" />
-                    <div className="region-fog-cloud region-fog-cloud-b" />
-                    <div className="region-fog-cloud region-fog-cloud-c" />
+                    <video
+                      className="region-fog-video"
+                      src="/effects/AmbientFog001_001_Loop_White_1200x1200.webm"
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      preload="metadata"
+                      onLoadedMetadata={event => { event.currentTarget.playbackRate = playbackRate; }}
+                    />
                   </div>
                 );
               })}

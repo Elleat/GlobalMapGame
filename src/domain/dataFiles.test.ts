@@ -12,6 +12,8 @@ import {
   parseScenarioDataFile
 } from './dataFiles';
 import { createMapRegion } from './mapRegions';
+import { chooseRandomStageResource } from '../utils';
+import { getActivePlayerClans } from './clans';
 
 test('файл авантюристов требует тип, версию и уникальные ID', () => {
   const state = createInitialGameState();
@@ -95,9 +97,26 @@ test('сценарий и отдельные наборы собирают но�
     adventurerFile: overrideAdventurers
   });
   assert.equal(campaign.guildName, 'Новая Гильдия');
+  assert.equal(campaign.guildShortName, 'Новая Гильдия');
+  assert.equal(campaign.clans[0].id, 'clan_guild');
+  assert.equal(campaign.clans[0].name, 'Новая Гильдия');
   assert.equal(campaign.hCost, 25);
   assert.equal(campaign.adventurers.length, 1);
   assert.equal(campaign.contracts.length, 0);
   assert.equal(campaign.day, 1);
   assert.equal(campaign.mapRegions[0].name, 'Туманные топи');
+});
+
+test('обычный этап имеет независимый 20-процентный вариант без ключевого ресурса', () => {
+  assert.equal(chooseRandomStageResource('Supplies', () => 0.199), 'None');
+  assert.equal(chooseRandomStageResource('Supplies', () => 0.2), 'Supplies');
+});
+
+test('N считает только активные игровые кланы, а Гильдия всегда стоит первой', () => {
+  const state = createInitialGameState({ clansCount: 2 });
+  assert.equal(state.clans[0].id, 'clan_guild');
+  assert.deepEqual(getActivePlayerClans(state.clans, state.nClans).map(clan => clan.id), ['clan_1', 'clan_2']);
+
+  const oversized = createInitialGameState({ clansCount: 999 });
+  assert.equal(oversized.nClans, oversized.clans.length - 1);
 });

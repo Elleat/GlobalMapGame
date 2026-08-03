@@ -15,11 +15,12 @@ import {
 import { clampRelation } from './economy';
 import { cleanMissionTitle } from './missionPresentation';
 import { normalizeMapRegion } from './mapRegions';
+import { clampActiveClanCount, orderClansGuildFirst } from './clans';
 
 export const GAME_STORAGE_KEY = 'adventurer_guild_state';
 
 function cloneClans(): Clan[] {
-  return structuredClone(DEFAULT_CLANS);
+  return orderClansGuildFirst(structuredClone(DEFAULT_CLANS));
 }
 
 function normalizeAdventurer(adventurer: Adventurer): Adventurer {
@@ -34,8 +35,22 @@ function normalizeAdventurer(adventurer: Adventurer): Adventurer {
 }
 
 export function normalizeMission(mission: Mission): Mission {
+  let checks = mission.checks?.map(check => ({ ...check }));
+  if (mission.requiredSpecialItem?.trim() && mission.type !== 'DUMMY') {
+    if (!checks?.length) {
+      checks = [{
+        reqResource: mission.reqResource,
+        dc: mission.dc,
+        requiredSpecialItem: mission.requiredSpecialItem.trim()
+      }];
+    } else if (!checks[0].requiredSpecialItem?.trim()) {
+      checks[0].requiredSpecialItem = mission.requiredSpecialItem.trim();
+    }
+  }
   return {
     ...mission,
+    checks,
+    requiredSpecialItem: undefined,
     title: cleanMissionTitle(mission.title),
     lifespan: mission.lifespan ?? null,
     maxLifespan: mission.maxLifespan ?? null,
@@ -67,8 +82,8 @@ export function createInitialGameState(options?: {
   isDmMode?: boolean;
   clansCount?: number;
 }): GameState {
-  const clansCount = options?.clansCount ?? 6;
   const clans = cloneClans();
+  const clansCount = clampActiveClanCount(clans, options?.clansCount ?? 6);
   const guild = clans.find(clan => clan.id === 'clan_guild');
   if (guild) guild.name = DEFAULT_GUILD_NAME;
 
@@ -99,6 +114,8 @@ export function createInitialGameState(options?: {
     contracts: [],
     history: [],
     completedMissionIds: [],
+    closedMissionIds: [],
+    expiredMissionIds: [],
     selectedMissionId: null,
     lastDistributionLogs: [],
     distributionReport: null,
@@ -114,14 +131,29 @@ export function parseStoredGameState(serialized: string): GameState | null {
   try {
     const parsed = JSON.parse(serialized) as Partial<GameState>;
     if (parsed.schemaVersion !== GAME_STATE_VERSION) return null;
-    if (typeof parsed.day !== 'number' || !Array.isArray(parsed.clans) || !Array.isArray(parsed.adventurers)) {
+    if (
+      typeof parsed.day !== 'number'
+      || !Number.isInteger(parsed.day)
+      || parsed.day < 1
+      || typeof parsed.nClans !== 'number'
+      || typeof parsed.hCost !== 'number'
+      || typeof parsed.guildName !== 'string'
+      || typeof parsed.isDmMode !== 'boolean'
+      || !Array.isArray(parsed.clans)
+      || !Array.isArray(parsed.adventurers)
+      || !Array.isArray(parsed.missions)
+      || !Array.isArray(parsed.contracts)
+      || !Array.isArray(parsed.history)
+    ) {
       return null;
     }
 
     const state = parsed as GameState;
     const guildName = state.guildName || DEFAULT_GUILD_NAME;
+    const clans = orderClansGuildFirst(state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan));
     return {
       ...state,
+      nClans: clampActiveClanCount(clans, state.nClans),
       guildName,
       guildShortName: state.guildShortName || DEFAULT_GUILD_SHORT_NAME,
       themeId: state.themeId || DEFAULT_THEME_ID,
@@ -130,11 +162,13 @@ export function parseStoredGameState(serialized: string): GameState | null {
       mapAssetId: state.mapAssetId ?? null,
       isGuildActionsCompleted: state.isGuildActionsCompleted ?? false,
       completedMissionIds: state.completedMissionIds ?? [],
+      closedMissionIds: state.closedMissionIds ?? state.completedMissionIds ?? [],
+      expiredMissionIds: state.expiredMissionIds ?? [],
       distributionReport: state.distributionReport ?? null,
       hqPos: state.hqPos ?? { x: 50, y: 50 },
       mapRegions: (state.mapRegions ?? []).map(normalizeMapRegion),
       mapEffectsEnabled: state.mapEffectsEnabled ?? true,
-      clans: state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan),
+      clans,
       adventurers: state.adventurers.map(normalizeAdventurer),
       missions: state.missions.map(normalizeMission),
       allMissions: state.allMissions?.map(normalizeMission),

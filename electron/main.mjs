@@ -85,6 +85,7 @@ const MIME_TYPES = {
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
+  '.webm': 'video/webm',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2'
 };

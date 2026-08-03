@@ -7,6 +7,9 @@ import React, { useRef, useState } from 'react';
 import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2, ImagePlus, FileArchive } from 'lucide-react';
 import { GameState, Mission, MissionCheck, MissionResourceKey, MissionType } from '../types';
 import { DEFAULT_GUILD_NAME, DEFAULT_MAP_URL } from '../domain/constants';
+import { clampActiveClanCount, getPlayerClans } from '../domain/clans';
+import { parseStoredGameState } from '../domain/state';
+import { formatDataFileError, parseAdventurerDataFile, parseEventDataFile, readJsonFile } from '../domain/dataFiles';
 
 interface GmOverlordModalProps {
   isOpen: boolean;
@@ -113,7 +116,10 @@ export default function GmOverlordModal({
 
   const handleCustomMissionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalChecks = mType === 'DUMMY' ? [] : mChecks;
+    const finalChecks = mType === 'DUMMY' ? [] : mChecks.map(check => ({ ...check }));
+    if (finalChecks[0] && mRequiredSpecialItem.trim()) {
+      finalChecks[0].requiredSpecialItem = mRequiredSpecialItem.trim();
+    }
     const firstCheck = finalChecks[0] || { reqResource: mReqResource, dc: mDc };
 
     onCreateCustomMission({
@@ -121,7 +127,6 @@ export default function GmOverlordModal({
       desc: mDesc.trim() || 'Поступили свежие сведения о происшествии.',
       region: mRegion.trim() || 'ДИКИЕ ЗЕМЛИ',
       reqResource: mType === 'DUMMY' ? 'None' : (firstCheck.reqResource || 'Supplies'),
-      requiredSpecialItem: mType === 'STORY' && mRequiredSpecialItem.trim() ? mRequiredSpecialItem.trim() : undefined,
       dc: mType === 'DUMMY' ? 0 : (firstCheck.dc || 12),
       type: mType,
       lifespan: Number(mLifespan) || 3,
@@ -158,7 +163,8 @@ export default function GmOverlordModal({
     const width = parseInt((document.getElementById('dm-input-mapwidth') as HTMLInputElement)?.value) || state.mapWidth;
     const height = parseInt((document.getElementById('dm-input-mapheight') as HTMLInputElement)?.value) || state.mapHeight;
     const day = parseInt((document.getElementById('dm-input-day') as HTMLInputElement)?.value) || state.day;
-    const nClans = parseInt((document.getElementById('dm-input-nclans') as HTMLInputElement)?.value) || state.nClans;
+    const requestedClanCount = parseInt((document.getElementById('dm-input-nclans') as HTMLInputElement)?.value) || state.nClans;
+    const nClans = clampActiveClanCount(state.clans, requestedClanCount);
     const hCost = parseInt((document.getElementById('dm-input-hcost') as HTMLInputElement)?.value) || state.hCost;
     const guildName = (document.getElementById('dm-input-guild-name') as HTMLInputElement)?.value.trim() || DEFAULT_GUILD_NAME;
     const mapUrlChanged = mapUrl !== state.mapBgUrl;
@@ -211,26 +217,16 @@ export default function GmOverlordModal({
   };
 
   // Import state from JSON
-  const handleImportStateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportStateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string) as GameState;
-        
-        if (parsed && typeof parsed.day === 'number' && Array.isArray(parsed.clans) && Array.isArray(parsed.adventurers)) {
-          onImportState(parsed);
-          showToast('💾 Игровое сохранение успешно загружено!');
-        } else {
-          showToast('Некорректная структура сейв-файла!', true);
-        }
-      } catch (err) {
-        showToast('Не удалось разобрать JSON файл сейва!', true);
-      }
-    };
-    reader.readAsText(file);
+    const parsed = parseStoredGameState(await file.text());
+    if (!parsed) {
+      showToast('Сейв повреждён, неполон или создан несовместимой версией.', true);
+      return;
+    }
+    onImportState(parsed);
+    showToast('💾 Игровое сохранение успешно загружено!');
   };
 
   const copyPolygonJson = () => {
@@ -242,104 +238,41 @@ export default function GmOverlordModal({
     });
   };
 
-  const handleImportEvents = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportEvents = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (Array.isArray(data)) {
-          const newMissions = data.map(item => ({
-            id: item.id || 'imported_' + Math.random().toString(36).substr(2, 6),
-            title: item.title || 'Импортированное событие',
-            desc: item.desc || 'Описание из сценария',
-            reqResource: item.reqResource || 'Supplies',
-            dc: item.dc || 12,
-            type: item.type || 'OPERATION',
-            lifespan: item.lifespan !== undefined ? item.lifespan : 3,
-            maxLifespan: item.lifespan !== undefined ? item.lifespan : 3,
-            startDay: item.startDay !== undefined ? item.startDay : state.day,
-            x: item.x !== undefined ? item.x : Math.floor(Math.random() * 70) + 15,
-            y: item.y !== undefined ? item.y : Math.floor(Math.random() * 70) + 15,
-            region: item.region || 'ИМПОРТ',
-            pinned: false,
-            checks: item.checks || undefined,
-            goldReward: item.goldReward !== undefined ? item.goldReward : undefined,
-            rewardSpecialItems: item.rewardSpecialItems || undefined,
-            unlocksMissionIds: item.unlocksMissionIds || undefined
-          }));
-
-          const hasPredefinedDays = data.some(item => item.startDay !== undefined);
-
-          if (hasPredefinedDays) {
-            // Reset game state to Day 1 with this balanced scenario!
-            const day1Missions = newMissions.filter(m => m.startDay === 1);
-            updateState({
-              day: 1,
-              currentPhase: 1,
-              isDaySimulated: false,
-              missions: day1Missions,
-              allMissions: newMissions,
-              contracts: []
-            });
-            showToast(`🎮 Загружен сбалансированный сценарий: ${newMissions.length} заданий (на 1-й день выставлено ${day1Missions.length})!`);
-          } else {
-            // Just append to current active missions
-            updateState({
-              missions: [...state.missions, ...newMissions],
-              allMissions: [...(state.allMissions || []), ...newMissions]
-            });
-            showToast(`Успешно импортировано ${data.length} событий!`);
-          }
-        } else {
-          showToast('JSON должен быть массивом событий', true);
-        }
-      } catch (err) {
-        showToast('Ошибка разбора сценария JSON', true);
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const data = parseEventDataFile(await readJsonFile(file));
+      const day1Missions = data.events.filter(mission => (mission.startDay ?? 1) <= 1 && (mission.prerequisiteMissionIds ?? []).length === 0);
+      updateState({
+        day: 1,
+        currentPhase: 1,
+        isDaySimulated: false,
+        isGuildActionsCompleted: false,
+        missions: day1Missions,
+        allMissions: data.events,
+        contracts: [],
+        history: [],
+        completedMissionIds: [],
+        closedMissionIds: [],
+        expiredMissionIds: []
+      });
+      showToast(`🎮 Загружен файл «${data.name}»: ${data.events.length} событий.`);
+    } catch (error) {
+      showToast(formatDataFileError(error).join(' '), true);
+    }
   };
 
-  const handleImportAdventurers = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportAdventurers = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (Array.isArray(data)) {
-          const newAdvs = data.map(adv => {
-            const lvl = adv.level || 1;
-            const mhp = lvl === 1 ? 1 : lvl === 2 ? 2 : lvl === 3 ? 2 : lvl === 4 ? 3 : 4;
-            return {
-              id: 'adv_' + Math.random().toString(36).substr(2, 6),
-              name: adv.name || 'Рекрут',
-              class: adv.class || 'Воин',
-              level: lvl,
-              hp: mhp,
-              maxHp: mhp,
-              status: 'READY' as const,
-              successfulMissions: adv.successfulMissions || 0,
-              totalMissions: adv.totalMissions || 0,
-              relations: adv.relations || {}
-            };
-          });
-
-          updateState({
-            adventurers: [...state.adventurers, ...newAdvs]
-          });
-
-          showToast(`Успешно импортировано ${data.length} приключенцев из adventurers.json!`);
-        } else {
-          showToast('JSON должен быть массивом приключенцев', true);
-        }
-      } catch (err) {
-        showToast('Ошибка разбора adventurers.json', true);
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const data = parseAdventurerDataFile(await readJsonFile(file));
+      updateState({ adventurers: data.adventurers });
+      showToast(`Загружен файл «${data.name}»: ${data.adventurers.length} авантюристов.`);
+    } catch (error) {
+      showToast(formatDataFileError(error).join(' '), true);
+    }
   };
 
   return (
@@ -515,14 +448,14 @@ export default function GmOverlordModal({
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-mono uppercase text-neutral-400">Кол-во Кланов (1-20):</label>
+                <label className="text-xs font-mono uppercase text-neutral-400">Активных игровых кланов:</label>
                 <input
                   type="number"
                   id="dm-input-nclans"
                   className="w-full bg-black border border-emerald-500/20 text-neutral-200 px-3 py-2 rounded font-mono text-sm focus:border-emerald-500 outline-none"
                   defaultValue={state.nClans}
                   min="1"
-                  max="20"
+                  max={Math.max(1, getPlayerClans(state.clans).length)}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -893,7 +826,7 @@ export default function GmOverlordModal({
 
               {mType === 'STORY' && (
                 <div className="flex flex-col gap-1">
-                  <label className="text-amber-400 uppercase text-[10px] font-bold">💎 Требуемый Особый Предмет (для старта):</label>
+                  <label className="text-amber-400 uppercase text-[10px] font-bold">💎 Особый предмет первого этапа:</label>
                   <input
                     type="text"
                     placeholder="Например: Древний Идол, Ключ от Сокровищницы"
@@ -901,7 +834,7 @@ export default function GmOverlordModal({
                     onChange={(e) => setMRequiredSpecialItem(e.target.value)}
                     className="w-full bg-black border border-amber-500/40 text-neutral-200 px-2.5 py-1.5 rounded focus:border-amber-400 outline-none"
                   />
-                  <span className="text-[10px] text-neutral-500">Контракт на эту сюжетную миссию сможет оформить только клан, у которого есть этот предмет.</span>
+                  <span className="text-[10px] text-neutral-500">Оформить контракт сможет только клан, у которого есть предметы, требуемые всеми этапами. Остальные этапы настраиваются отдельно выше.</span>
                 </div>
               )}
 

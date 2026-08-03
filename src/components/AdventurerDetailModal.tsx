@@ -7,6 +7,7 @@ import React from 'react';
 import { X, Heart, Shield, Award, Users, Plus, Minus, BookOpen } from 'lucide-react';
 import { Adventurer, Clan, GameState } from '../types';
 import { getStatusNameRu, getAdvClassIcon } from '../utils';
+import { getActiveClansGuildFirst } from '../domain/clans';
 
 interface AdventurerDetailModalProps {
   isOpen: boolean;
@@ -215,7 +216,7 @@ export default function AdventurerDetailModal({
             </p>
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {state.clans.map(clan => {
+              {getActiveClansGuildFirst(state.clans, state.nClans).map(clan => {
                 const currentRep = adv.relations?.[clan.id] || 0;
                 return (
                   <div

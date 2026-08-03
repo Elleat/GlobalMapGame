@@ -184,3 +184,36 @@ test('Гильдия не раскрывает и не принимает соб
   assert.equal(result.createdContracts, 0);
   assert.equal(result.missions[0].intelRevealed, false);
 });
+
+test('Гильдия проверяет особые предметы каждого отдельного этапа', () => {
+  const guild: Clan = {
+    id: 'clan_guild',
+    name: 'Гильдия Авантюристов',
+    trustLevel: 5,
+    gold: 100,
+    resources: { Supplies: 0, Equipment: 0, Intelligence: 2, Alchemy: 0, specialItems: ['Печать первого этапа'] }
+  };
+  const stagedMission = mission({
+    checks: [
+      { reqResource: 'None', dc: 12, requiredSpecialItem: 'Печать первого этапа' },
+      { reqResource: 'None', dc: 12, requiredSpecialItem: 'Ключ второго этапа' }
+    ]
+  });
+  const blocked = performGuildActions({
+    clans: [guild],
+    adventurers: [adventurer(), adventurer({ id: 'adv-2' })],
+    missions: [stagedMission],
+    contracts: [],
+    hCost: 10
+  });
+  assert.equal(blocked.createdContracts, 0);
+
+  const allowed = performGuildActions({
+    clans: [{ ...guild, resources: { ...guild.resources, specialItems: ['Печать первого этапа', 'Ключ второго этапа'] } }],
+    adventurers: [adventurer(), adventurer({ id: 'adv-2' })],
+    missions: [stagedMission],
+    contracts: [],
+    hCost: 10
+  });
+  assert.equal(allowed.createdContracts, 1);
+});

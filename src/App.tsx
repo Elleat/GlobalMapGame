@@ -42,6 +42,7 @@ import { deleteMapAsset, loadMapAssetUrl, saveMapAsset } from './domain/mapAsset
 import { DEFAULT_MAP_URL } from './domain/constants';
 import { createScenarioBundle, importScenarioBundle } from './domain/scenarioBundle';
 import { markMissionScouted } from './domain/missionPresentation';
+import { getActivePlayerClans } from './domain/clans';
 
 import MapTab from './components/MapTab';
 import PhasesTab from './components/PhasesTab';
@@ -290,7 +291,12 @@ export default function App() {
       region: missionData.region || 'ДИКИЕ ЗЕМЛИ',
       intelRevealed: missionData.intelRevealed !== undefined ? missionData.intelRevealed : false,
       goldReward: missionData.goldReward,
-      pinned: missionData.pinned || false
+      pinned: missionData.pinned || false,
+      checks: missionData.checks ? structuredClone(missionData.checks) : undefined,
+      complications: missionData.complications ? { ...missionData.complications } : undefined,
+      rewardSpecialItems: missionData.rewardSpecialItems ? [...missionData.rewardSpecialItems] : undefined,
+      prerequisiteMissionIds: missionData.prerequisiteMissionIds ? [...missionData.prerequisiteMissionIds] : [],
+      prerequisiteMode: missionData.prerequisiteMode ?? 'ALL'
     };
 
     updateState({
@@ -302,7 +308,7 @@ export default function App() {
   };
 
   const handleResetToDay1 = () => {
-    const newState = createInitialGameState({ isDmMode: state.isDmMode });
+    const newState = createInitialGameState({ isDmMode: state.isDmMode, clansCount: state.nClans });
     newState.guildName = state.guildName;
     newState.guildShortName = state.guildShortName;
     newState.themeId = state.themeId;
@@ -477,42 +483,6 @@ export default function App() {
     const clan = state.clans.find(c => c.id === clanId);
     if (!clan) return;
 
-    if (resourceType.startsWith('special-')) {
-      const idx = parseInt(resourceType.split('-')[1]);
-      const specialItems = clan.resources.specialItems || [];
-      const item = specialItems[idx];
-      if (!item) return;
-
-      const updatedClans = state.clans.map(c => {
-        if (c.id === clanId) {
-          const newSpecialItems = [...specialItems];
-          newSpecialItems.splice(idx, 1);
-          return {
-            ...c,
-            resources: {
-              ...c.resources,
-              specialItems: newSpecialItems
-            }
-          };
-        }
-        if (c.id === 'clan_guild') {
-          const guildSpecial = c.resources.specialItems || [];
-          return {
-            ...c,
-            resources: {
-              ...c.resources,
-              specialItems: [...guildSpecial, item]
-            }
-          };
-        }
-        return c;
-      });
-
-      updateState({ clans: updatedClans });
-      showToast(`🛒 Особый товар "${item}" перевезён в посольство «${state.guildName}».`);
-      return;
-    }
-
     const h = state.hCost;
     const multipliers: Record<string, number> = {
       'Supplies': 0.5,
@@ -563,6 +533,38 @@ export default function App() {
 
     updateState({ clans: updatedClans });
     showToast(`🛒 Закуплено: +1 ед. ресурсов (${resourceType}) для ${clan.name}.`);
+  };
+
+  const handleTransferSpecialItem = (fromClanId: string, itemIndex: number, toClanId: string) => {
+    if (!toClanId || fromClanId === toClanId) return;
+    const source = state.clans.find(clan => clan.id === fromClanId);
+    const target = state.clans.find(clan => clan.id === toClanId);
+    const item = source?.resources.specialItems?.[itemIndex];
+    if (!source || !target || !item) return;
+    const isReserved = state.contracts.some(contract =>
+      contract.clanId === fromClanId && (contract.reservedSpecialItems ?? []).includes(item)
+    );
+    if (isReserved) {
+      showToast(`Особый предмет «${item}» зарезервирован активным контрактом.`, true);
+      return;
+    }
+    updateState({
+      clans: state.clans.map(clan => {
+        if (clan.id === fromClanId) {
+          const specialItems = [...(clan.resources.specialItems ?? [])];
+          specialItems.splice(itemIndex, 1);
+          return { ...clan, resources: { ...clan.resources, specialItems } };
+        }
+        if (clan.id === toClanId) {
+          return {
+            ...clan,
+            resources: { ...clan.resources, specialItems: [...(clan.resources.specialItems ?? []), item] }
+          };
+        }
+        return clan;
+      })
+    });
+    showToast(`💎 «${item}» передан: ${source.name} → ${target.name}.`);
   };
 
   const isLiveWorkspace = mainSection === 'GAME'
@@ -715,7 +717,7 @@ export default function App() {
             onClick={() => setActiveTab('CLANS')}
             className={`px-4 py-2 rounded-md cursor-pointer transition-all ${activeTab === 'CLANS' ? 'bg-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.35)]' : 'bg-transparent text-neutral-400 hover:bg-[#111] hover:text-neutral-200'}`}
           >
-            🏛️ Посольства ({state.clans.slice(0, state.nClans).filter(c => c.id !== 'clan_guild').length})
+            🏛️ Посольства ({getActivePlayerClans(state.clans, state.nClans).length})
           </button>
 
         </div>
@@ -866,6 +868,7 @@ export default function App() {
         selectedClanId={storeClanId}
         state={state}
         onBuyResource={handleBuyResource}
+        onTransferSpecialItem={handleTransferSpecialItem}
       />
 
     </div>

@@ -24,6 +24,8 @@ export interface RecalculateReportInput {
   adventurers: Adventurer[];
   clans: Clan[];
   day: number;
+  /** Historical ledger used only to preserve healing or injuries that happened after this report. */
+  participantStateReference?: SimulationReport | null;
 }
 
 export interface RecalculateReportResult {
@@ -44,10 +46,9 @@ function promote(adventurer: Adventurer): Adventurer {
   return { ...adventurer, level, maxHp, hp: maxHp };
 }
 
-function restoreOriginalEffects(
+export function reverseSimulationReportEffects(
   adventurers: Adventurer[],
   clans: Clan[],
-  contract: Contract,
   originalReport?: SimulationReport | null
 ): { adventurers: Adventurer[]; clans: Clan[] } {
   const effects = originalReport?.effects;
@@ -66,35 +67,55 @@ function restoreOriginalEffects(
     if (!outcome) return adventurer;
     const relations = { ...adventurer.relations };
     (relationChangesByAdventurer.get(adventurer.id) ?? []).forEach(change => {
-      relations[change.clanId] = change.before;
+      const delta = change.after - change.before;
+      relations[change.clanId] = Math.max(0, Math.min(10, (relations[change.clanId] ?? 0) - delta));
     });
+    const hp = adventurer.hp - (outcome.hpAfter - outcome.hpBefore);
+    const maxHp = Math.max(1, adventurer.maxHp - (outcome.maxHpAfter - outcome.maxHpBefore));
+    const effectCausedDeath = outcome.statusAfter === 'DEAD' && outcome.statusBefore !== 'DEAD';
+    const keepLaterDeath = adventurer.status === 'DEAD' && !effectCausedDeath;
+    const status = keepLaterDeath
+      ? 'DEAD' as const
+      : adventurer.status === outcome.statusAfter
+        ? outcome.statusBefore
+        : adventurer.status;
     return {
       ...adventurer,
-      level: outcome.levelBefore,
-      hp: outcome.hpBefore,
-      maxHp: outcome.maxHpBefore,
-      status: outcome.statusBefore,
-      woundedOnDay: outcome.woundedOnDayBefore,
-      successfulMissions: outcome.successfulMissionsBefore,
-      totalMissions: outcome.totalMissionsBefore,
+      level: Math.max(1, adventurer.level - (outcome.levelAfter - outcome.levelBefore)),
+      hp: keepLaterDeath ? 0 : Math.max(0, Math.min(maxHp, hp)),
+      maxHp,
+      status,
+      woundedOnDay: adventurer.woundedOnDay === outcome.woundedOnDayAfter
+        ? outcome.woundedOnDayBefore
+        : adventurer.woundedOnDay,
+      successfulMissions: Math.max(0, adventurer.successfulMissions - outcome.successfulMissionsDelta),
+      totalMissions: Math.max(0, adventurer.totalMissions - outcome.totalMissionsDelta),
       relations
     };
   });
 
+  const pendingAwardedItems = [...effects.awardedSpecialItems];
+  const ownerClanId = originalReport?.rewardRecipientClanId ?? originalReport?.context?.clanId ?? null;
   const restoredClans = clans.map(clan => {
     const goldDelta = effects.clanGoldDeltas[clan.id] ?? 0;
-    if (clan.id !== contract.clanId && goldDelta === 0) return clan;
     const resources = { ...clan.resources };
-    if (clan.id === contract.clanId) {
+    if (clan.id === ownerClanId) {
       effects.resourceLedger.returned.forEach(resource => {
         resources[resource] = Math.max(0, Number(resources[resource] || 0) - 1);
       });
-      if (effects.awardedSpecialItems.length > 0) {
-        const awarded = new Set(effects.awardedSpecialItems);
-        resources.specialItems = (resources.specialItems ?? []).filter(item => !awarded.has(item));
-      }
     }
-    return { ...clan, gold: Math.max(0, clan.gold - goldDelta), resources };
+    if (pendingAwardedItems.length > 0) {
+      const items = [...(resources.specialItems ?? [])];
+      pendingAwardedItems.slice().forEach(awarded => {
+        const index = items.indexOf(awarded);
+        if (index >= 0) {
+          items.splice(index, 1);
+          pendingAwardedItems.splice(pendingAwardedItems.indexOf(awarded), 1);
+        }
+      });
+      resources.specialItems = items;
+    }
+    return { ...clan, gold: clan.gold - goldDelta, resources };
   });
 
   return { adventurers: restoredAdventurers, clans: restoredClans };
@@ -113,10 +134,14 @@ function resolveUsedResources(contract: Contract, requested: readonly string[]):
 }
 
 export function recalculateReportEffects(input: RecalculateReportInput): RecalculateReportResult {
-  const restored = restoreOriginalEffects(
+  const currentBeforeEditById = new Map(input.adventurers.map(adventurer => [adventurer.id, structuredClone(adventurer)]));
+  const stateReference = input.participantStateReference ?? input.originalReport;
+  const referenceOutcomes = new Map(
+    (stateReference?.effects?.participantOutcomes ?? []).map(outcome => [outcome.adventurerId, outcome])
+  );
+  const restored = reverseSimulationReportEffects(
     structuredClone(input.adventurers),
     structuredClone(input.clans),
-    input.contract,
     input.originalReport
   );
   let adventurers = restored.adventurers;
@@ -140,8 +165,9 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     if (!squadIdSet.has(source.id)) return source;
     let adventurer = { ...source, relations: { ...source.relations } };
     adventurer.hp -= damage;
-    adventurer.totalMissions += 1;
-    if (isSuccess) adventurer.successfulMissions += 1;
+    const grantsExperience = input.mission.type !== 'DUMMY';
+    if (grantsExperience) adventurer.totalMissions += 1;
+    if (grantsExperience && isSuccess) adventurer.successfulMissions += 1;
 
     if (input.contract.clanId && relationDelta !== 0) {
       const before = adventurer.relations[input.contract.clanId] ?? 0;
@@ -157,7 +183,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     adventurer = promote(adventurer);
 
     const returned = returnedIdSet.has(adventurer.id);
-    if (!returned && adventurer.hp <= 0) {
+    if (!returned) {
       adventurer.hp = 0;
       adventurer.status = 'DEAD';
       adventurer.woundedOnDay = undefined;
@@ -168,6 +194,26 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     } else {
       adventurer.status = 'READY';
       adventurer.woundedOnDay = undefined;
+    }
+
+    const currentBeforeEdit = currentBeforeEditById.get(adventurer.id);
+    const referenceOutcome = referenceOutcomes.get(adventurer.id);
+    const hasLaterParticipantState = Boolean(currentBeforeEdit && referenceOutcome && (
+      currentBeforeEdit.totalMissions !== referenceOutcome.totalMissionsAfter
+      || currentBeforeEdit.status !== referenceOutcome.statusAfter
+      || currentBeforeEdit.woundedOnDay !== referenceOutcome.woundedOnDayAfter
+    ));
+    if (returned && hasLaterParticipantState && currentBeforeEdit && referenceOutcome) {
+      if (currentBeforeEdit.status === 'DEAD' && referenceOutcome.statusAfter !== 'DEAD') {
+        adventurer.hp = 0;
+        adventurer.status = 'DEAD';
+        adventurer.woundedOnDay = undefined;
+      } else if (currentBeforeEdit.status !== 'DEAD') {
+        const laterHealthLoss = Math.max(0, currentBeforeEdit.maxHp - currentBeforeEdit.hp);
+        adventurer.hp = Math.max(0, adventurer.maxHp - laterHealthLoss);
+        adventurer.status = currentBeforeEdit.status;
+        adventurer.woundedOnDay = currentBeforeEdit.woundedOnDay;
+      }
     }
     return adventurer;
   });
@@ -191,7 +237,11 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     });
   }
 
-  const goldReward = isSuccess ? Math.max(0, input.editedReport.goldReward || 0) : 0;
+  const goldReward = Math.max(0, input.editedReport.goldReward || 0);
+  const rewardGranted = isSuccess && Boolean(input.editedReport.rewardGranted ?? true);
+  const rewardAwardedAmount = rewardGranted
+    ? Math.max(0, input.editedReport.rewardAwardedAmount ?? goldReward)
+    : 0;
   const awardedSpecialItems: string[] = [];
   const clanGoldDeltas: Record<string, number> = {};
   clans = clans.map(clan => {
@@ -200,7 +250,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     resourceLedger.returned.forEach(resource => {
       resources[resource] = Number(resources[resource] || 0) + 1;
     });
-    if (isSuccess && (input.mission.rewardSpecialItems?.length ?? 0) > 0) {
+    if (rewardGranted && (input.mission.rewardSpecialItems?.length ?? 0) > 0) {
       const specialItems = [...(resources.specialItems ?? [])];
       input.mission.rewardSpecialItems?.forEach(item => {
         if (!specialItems.includes(item)) {
@@ -210,8 +260,8 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
       });
       resources.specialItems = specialItems;
     }
-    clanGoldDeltas[clan.id] = goldReward;
-    return { ...clan, gold: clan.gold + goldReward, resources };
+    clanGoldDeltas[clan.id] = rewardAwardedAmount;
+    return { ...clan, gold: clan.gold + rewardAwardedAmount, resources };
   });
 
   const adventurersById = new Map(adventurers.map(adventurer => [adventurer.id, adventurer]));
@@ -241,8 +291,8 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
         survived: after.status !== 'DEAD',
         returned: returnedIdSet.has(id),
         relationDelta: relationChange ? relationChange.after - relationChange.before : 0,
-        successfulMissionsDelta: isSuccess ? 1 : 0,
-        totalMissionsDelta: 1
+        successfulMissionsDelta: input.mission.type !== 'DUMMY' && isSuccess ? 1 : 0,
+        totalMissionsDelta: input.mission.type !== 'DUMMY' ? 1 : 0
       };
     })
     .filter(Boolean) as ParticipantOutcome[];
@@ -251,7 +301,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     participantOutcomes,
     relationChanges,
     resourceLedger,
-    guildGoldDelta: input.contract.clanId === 'clan_guild' ? goldReward : 0,
+    guildGoldDelta: input.contract.clanId === 'clan_guild' ? rewardAwardedAmount : 0,
     clanGoldDeltas,
     awardedSpecialItems,
     unlockedMissionIds: (input.editedReport.baseObjectiveCompleted ?? isSuccess)
@@ -264,6 +314,9 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     isSuccess,
     totalRoll: (input.editedReport.roll || 0) + (input.editedReport.partyBonus || 0),
     goldReward,
+    rewardGranted,
+    rewardAwardedAmount,
+    rewardRecipientClanId: input.contract.clanId,
     damageDealt: damage,
     squadAdvIds: squadIds,
     squadNames: squadIds.map(id => adventurersById.get(id)?.name).filter((name): name is string => Boolean(name)),

@@ -35,7 +35,8 @@ export function getMissionPresentation(
     && mission.storyStatus === 'AWAITING_REPORT'
     && mission.storyAcceptedDay !== undefined
     && day > mission.storyAcceptedDay;
-  const showStoryIdentity = isDmMode || isDelayedStory;
+  const showStoryIdentity = mission.type === 'STORY'
+    && (isDmMode || Boolean(mission.intelRevealed) || isDelayedStory);
 
   return {
     visibleType: mission.type === 'STORY' && !showStoryIdentity ? 'OPERATION' : mission.type,

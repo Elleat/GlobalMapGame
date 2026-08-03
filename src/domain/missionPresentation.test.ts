@@ -73,5 +73,7 @@ test('сюжетный тип скрыт от игроков до следующ
     showStoryIdentity: true,
     isDelayedStory: true
   });
+  assert.equal(getMissionPresentation({ ...story, intelRevealed: true }, 4, false).visibleType, 'STORY');
   assert.equal(getMissionPresentation({ ...story, storyStatus: 'AVAILABLE' }, 4, true).visibleType, 'STORY');
+  assert.equal(getMissionPresentation(mission(), 4, true).showStoryIdentity, false);
 });

@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Coins, Gift, ShoppingCart, Plus } from 'lucide-react';
 import { GameState, Clan } from '../types';
 import { getResourceNameRu } from '../utils';
+import { getActiveClansGuildFirst } from '../domain/clans';
 
 interface ResourceStoreModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface ResourceStoreModalProps {
   selectedClanId: string | null;
   state: GameState;
   onBuyResource: (clanId: string, resourceType: string) => void;
+  onTransferSpecialItem: (fromClanId: string, itemIndex: number, toClanId: string) => void;
 }
 
 export default function ResourceStoreModal({
@@ -21,8 +23,10 @@ export default function ResourceStoreModal({
   onClose,
   selectedClanId,
   state,
-  onBuyResource
+  onBuyResource,
+  onTransferSpecialItem
 }: ResourceStoreModalProps) {
+  const [destinations, setDestinations] = useState<Record<number, string>>({});
   if (!isOpen || !selectedClanId) return null;
 
   const clan = state.clans.find(c => c.id === selectedClanId);
@@ -31,6 +35,12 @@ export default function ResourceStoreModal({
   const h = state.hCost;
   const freeBudget = clan.freeResourceBudget !== undefined ? clan.freeResourceBudget : (clan.freeSuppliesBudget || 0);
   const hasFreeBudget = clan.id !== 'clan_guild' && freeBudget > 0;
+  const transferTargets = getActiveClansGuildFirst(state.clans, state.nClans).filter(item => item.id !== clan.id);
+  const reservedItems = new Set(
+    state.contracts
+      .filter(contract => contract.clanId === clan.id)
+      .flatMap(contract => contract.reservedSpecialItems ?? [])
+  );
 
   const multipliers: Record<string, number> = {
     'Supplies': 0.5,
@@ -137,12 +147,24 @@ export default function ResourceStoreModal({
                         Уникальный трофей / реликт
                       </div>
                     </div>
-                    <button
-                      onClick={() => onBuyResource(clan.id, `special-${idx}`)}
-                      className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-mono text-[10px] font-bold uppercase rounded flex items-center gap-1 cursor-pointer transition-all"
-                    >
-                      Забрать
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={destinations[idx] ?? transferTargets[0]?.id ?? ''}
+                        onChange={event => setDestinations(previous => ({ ...previous, [idx]: event.target.value }))}
+                        disabled={reservedItems.has(item) || transferTargets.length === 0}
+                        className="max-w-36 rounded border border-neutral-700 bg-black px-2 py-1 text-[9px] text-neutral-300 disabled:opacity-40"
+                      >
+                        {transferTargets.map(target => <option key={target.id} value={target.id}>{target.name}</option>)}
+                      </select>
+                      <button
+                        onClick={() => onTransferSpecialItem(clan.id, idx, destinations[idx] ?? transferTargets[0]?.id ?? '')}
+                        disabled={reservedItems.has(item) || transferTargets.length === 0}
+                        className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:bg-neutral-800 disabled:text-neutral-500 text-black font-mono text-[10px] font-bold uppercase rounded flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed transition-all"
+                        title={reservedItems.has(item) ? 'Предмет зарезервирован активным контрактом' : 'Передать другому клану'}
+                      >
+                        {reservedItems.has(item) ? 'В контракте' : 'Передать'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

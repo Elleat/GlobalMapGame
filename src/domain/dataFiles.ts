@@ -11,6 +11,7 @@ import type {
 import { DEFAULT_MAP_URL } from './constants';
 import { createInitialGameState, normalizeMission } from './state';
 import { normalizeMapRegion } from './mapRegions';
+import { clampActiveClanCount, orderClansGuildFirst } from './clans';
 
 export const DATA_FILE_VERSION = 1;
 export const ADVENTURER_FILE_TYPE = 'global-map-adventurers';
@@ -84,6 +85,11 @@ function addFiniteIssue(value: unknown, path: string, issues: string[], minimum?
   if (maximum !== undefined && value > maximum) issues.push(`${path}: значение не может быть больше ${maximum}.`);
 }
 
+function addIntegerIssue(value: unknown, path: string, issues: string[], minimum?: number, maximum?: number) {
+  addFiniteIssue(value, path, issues, minimum, maximum);
+  if (typeof value === 'number' && Number.isFinite(value) && !Number.isInteger(value)) issues.push(`${path}: требуется целое число.`);
+}
+
 function validateHeader(value: unknown, expectedType: string, issues: string[]): value is Record<string, unknown> {
   if (!isRecord(value)) {
     issues.push('Корень файла должен быть JSON-объектом.');
@@ -117,7 +123,7 @@ function validateAdventurerList(value: unknown, path: string, issues: string[]):
     }
     addStringIssue(item.name, `${itemPath}.name`, issues);
     addStringIssue(item.class, `${itemPath}.class`, issues);
-    addFiniteIssue(item.level, `${itemPath}.level`, issues, 1, 5);
+    addIntegerIssue(item.level, `${itemPath}.level`, issues, 1, 5);
     addFiniteIssue(item.hp, `${itemPath}.hp`, issues);
     addFiniteIssue(item.maxHp, `${itemPath}.maxHp`, issues, 1);
     addFiniteIssue(item.successfulMissions, `${itemPath}.successfulMissions`, issues, 0);
@@ -263,10 +269,14 @@ function validateClanList(value: unknown, path: string, issues: string[]): value
     if (!isRecord(item.resources)) {
       issues.push(`${itemPath}.resources: требуется объект ресурсов.`);
     } else {
-      ['Supplies', 'Equipment', 'Intelligence', 'Alchemy'].forEach(key => addFiniteIssue(item.resources?.[key], `${itemPath}.resources.${key}`, issues, 0));
+      ['Supplies', 'Equipment', 'Intelligence', 'Alchemy'].forEach(key => addIntegerIssue(item.resources?.[key], `${itemPath}.resources.${key}`, issues, 0));
+      if (item.resources.specialItems !== undefined && (!Array.isArray(item.resources.specialItems) || item.resources.specialItems.some(value => typeof value !== 'string' || !value.trim()))) {
+        issues.push(`${itemPath}.resources.specialItems: требуется массив непустых строк.`);
+      }
     }
   });
   if (!ids.has('clan_guild')) issues.push(`${path}: отсутствует обязательный клан с ID «clan_guild».`);
+  if (!isRecord(value[0]) || value[0].id !== 'clan_guild') issues.push(`${path}: Гильдия с ID «clan_guild» должна стоять первой.`);
   return true;
 }
 
@@ -361,7 +371,7 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
       addStringIssue(scenario.guildName, 'scenario.guildName', issues);
       addStringIssue(scenario.guildShortName, 'scenario.guildShortName', issues);
       addFiniteIssue(scenario.hCost, 'scenario.hCost', issues, 1);
-      addFiniteIssue(scenario.nClans, 'scenario.nClans', issues, 1);
+      addIntegerIssue(scenario.nClans, 'scenario.nClans', issues, 1);
       addStringIssue(scenario.themeId, 'scenario.themeId', issues);
       addFiniteIssue(scenario.mapWidth, 'scenario.mapWidth', issues, 1);
       addFiniteIssue(scenario.mapHeight, 'scenario.mapHeight', issues, 1);
@@ -378,6 +388,13 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
       }
       validateMapRegions(scenario.mapRegions, 'scenario.mapRegions', issues);
       if (scenario.mapEffectsEnabled !== undefined && typeof scenario.mapEffectsEnabled !== 'boolean') issues.push('scenario.mapEffectsEnabled: требуется true или false.');
+      if (scenario.hqPos !== undefined) {
+        if (!isRecord(scenario.hqPos)) issues.push('scenario.hqPos: требуется точка.');
+        else {
+          addFiniteIssue(scenario.hqPos.x, 'scenario.hqPos.x', issues, 0, 100);
+          addFiniteIssue(scenario.hqPos.y, 'scenario.hqPos.y', issues, 0, 100);
+        }
+      }
       validateClanList(scenario.clans, 'scenario.clans', issues);
       if (Array.isArray(scenario.clans) && typeof scenario.nClans === 'number') {
         const playerClanCount = scenario.clans.filter(clan => isRecord(clan) && clan.id !== 'clan_guild').length;
@@ -433,8 +450,11 @@ export function buildNewCampaign(options: {
 }): GameState {
   const scenario = options.scenarioFile?.scenario;
   const initial = createInitialGameState({ isDmMode: options.isDmMode, clansCount: scenario?.nClans });
-  const guildName = options.guildName?.trim() || scenario?.guildName || initial.guildName;
-  const clans = structuredClone(scenario?.clans ?? initial.clans).map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan);
+  const requestedGuildName = options.guildName?.trim();
+  const guildName = requestedGuildName || scenario?.guildName || initial.guildName;
+  const clans = orderClansGuildFirst(structuredClone(scenario?.clans ?? initial.clans))
+    .map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan);
+  const nClans = clampActiveClanCount(clans, scenario?.nClans ?? initial.nClans);
   const adventurers = structuredClone(options.adventurerFile?.adventurers ?? scenario?.adventurers ?? initial.adventurers);
   const events = structuredClone(options.eventFile?.events ?? scenario?.events ?? initial.allMissions ?? initial.missions).map(normalizeMission);
 
@@ -442,9 +462,9 @@ export function buildNewCampaign(options: {
     ...initial,
     activeScenarioId: scenario?.id ?? null,
     guildName,
-    guildShortName: scenario?.guildShortName || guildName,
+    guildShortName: requestedGuildName || scenario?.guildShortName || guildName,
     hCost: scenario?.hCost ?? initial.hCost,
-    nClans: scenario?.nClans ?? initial.nClans,
+    nClans,
     themeId: scenario?.themeId ?? initial.themeId,
     mapBgUrl: DEFAULT_MAP_URL,
     mapAssetId: null,
@@ -461,6 +481,8 @@ export function buildNewCampaign(options: {
     contracts: [],
     history: [],
     completedMissionIds: [],
+    closedMissionIds: [],
+    expiredMissionIds: [],
     selectedMissionId: null,
     lastDistributionLogs: [],
     distributionReport: null

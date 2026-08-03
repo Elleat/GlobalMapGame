@@ -3,6 +3,7 @@ import { Plus, Search, Trash2, UserRound, Users } from 'lucide-react';
 import type { Adventurer, AdventurerStatus, GameState } from '../types';
 import { calculateMaxHp } from '../utils';
 import { clampRelation } from '../domain/economy';
+import { getActiveClansGuildFirst } from '../domain/clans';
 
 interface AdventurerEditorProps {
   state: GameState;
@@ -223,7 +224,7 @@ export default function AdventurerEditor({ state, updateState, showToast, mode =
                   <Users className="h-4 w-4" /> Отношения с заказчиками
                 </h4>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {state.clans.map(clan => {
+                  {getActiveClansGuildFirst(state.clans, state.nClans).map(clan => {
                     const value = clampRelation(selected.relations?.[clan.id] ?? 0);
                     return (
                       <label key={clan.id} className="rounded-lg border border-neutral-800 bg-black/40 p-3">

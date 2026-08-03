@@ -14,7 +14,14 @@ import {
   getTypeRu,
   generateMissionsForDay
 } from '../utils';
-import { isBasicResource, willMissionExpireAfterDay } from '../domain/missions';
+import {
+  clanHasSpecialItem,
+  getComplicationPositionLabel,
+  getReservedSpecialItems,
+  getRequiredSpecialItems,
+  isBasicResource,
+  willMissionExpireAfterDay
+} from '../domain/missions';
 import {
   getAttachedResourcesValue,
   getDefaultContractPayment,
@@ -30,6 +37,7 @@ import { simulateDayContracts } from '../domain/simulation';
 import { advanceMissionLifecycle } from '../domain/day';
 import { recalculateReportEffects } from '../domain/reportEffects';
 import { getMissionPresentation, getScoutingClanNames } from '../domain/missionPresentation';
+import { getActivePlayerClans } from '../domain/clans';
 
 interface PhasesTabProps {
   state: GameState;
@@ -69,7 +77,7 @@ export default function PhasesTab({
   const currentPhase = state.currentPhase;
 
   // Active clans (excluding Guild itself)
-  const playableClans = state.clans.slice(0, state.nClans).filter(c => c.id !== 'clan_guild');
+  const playableClans = getActivePlayerClans(state.clans, state.nClans);
   
   // Available missions that do NOT already have a contract
   const activeContractsMissionIds = new Set(state.contracts.map(c => c.missionId));
@@ -142,14 +150,13 @@ export default function PhasesTab({
       return;
     }
 
-    // Check required special item if specified
-    if (mission.requiredSpecialItem) {
-      const clanSpecialItems = clan.resources.specialItems || [];
-      const hasSpecial = clanSpecialItems.includes(mission.requiredSpecialItem) || clan.resources.AncientText === mission.requiredSpecialItem;
-      if (!hasSpecial) {
-        showToast(`У клана ${clan.name} нет требуемого особого предмета "${mission.requiredSpecialItem}"!`, true);
-        return;
-      }
+    const requiredSpecialItems = getRequiredSpecialItems(mission);
+    const reservedSpecialItems = getReservedSpecialItems(state.contracts, clan.id, mission.id);
+    const missingSpecialItems = requiredSpecialItems
+      .filter(item => !clanHasSpecialItem(clan.resources, item) || reservedSpecialItems.has(item));
+    if (missingSpecialItems.length > 0) {
+      showToast(`У клана ${clan.name} нет особых предметов для этапов: ${missingSpecialItems.join(', ')}.`, true);
+      return;
     }
 
     const guildCommission = getGuildCommission(paymentAmount);
@@ -201,6 +208,7 @@ export default function PhasesTab({
       distributionCompleted: false,
       maxPartySize,
       attachedResources: [...attachedResources],
+      reservedSpecialItems: requiredSpecialItems,
       partyAdvIds: []
     };
 
@@ -267,6 +275,10 @@ export default function PhasesTab({
 
   // Phase 2: Toggle adventurer on contract (strictly GM Override check!)
   const handleToggleAdventurer = (contract: Contract, advId: string) => {
+    if (state.isGuildActionsCompleted) {
+      showToast('После действий Гильдии отряды зафиксированы до симуляции.', true);
+      return;
+    }
     // Bug 4 Fix: restrict manual party editing strictly to GM mode!
     if (!state.isDmMode) {
       showToast(`⚠️ Только ГМ может напрямую собирать отряды вручную. Используйте автоматическое распределение «${state.guildName}».`, true);
@@ -312,6 +324,10 @@ export default function PhasesTab({
 
   // Phase 2: Drag and drop specific assign/remove logic
   const handleAssignAdventurerToContract = (contract: Contract, advId: string) => {
+    if (state.isGuildActionsCompleted) {
+      showToast('После действий Гильдии отряды зафиксированы до симуляции.', true);
+      return;
+    }
     if (!state.isDmMode) {
       showToast('⚠️ Ошибка: Только Гейм-Мастер (GM) может вручную менять составы отрядов.', true);
       return;
@@ -348,6 +364,10 @@ export default function PhasesTab({
   };
 
   const handleRemoveAdventurerFromAllContracts = (advId: string) => {
+    if (state.isGuildActionsCompleted) {
+      showToast('После действий Гильдии отряды зафиксированы до симуляции.', true);
+      return;
+    }
     if (!state.isDmMode) {
       showToast('⚠️ Ошибка: Только Гейм-Мастер (GM) может вручную менять составы отрядов.', true);
       return;
@@ -374,6 +394,7 @@ export default function PhasesTab({
     const mission = state.missions.find(item => item.id === contract.missionId);
     if (!mission || mission.type !== 'STORY') return;
     const clanName = state.clans.find(clan => clan.id === contract.clanId)?.name ?? 'Неизвестный заказчик';
+    const pendingComplications = contract.pendingStoryComplications ?? [];
     const draft: SimulationReport = {
       isSuccess: false,
       isResourceAutoSuccess: false,
@@ -384,7 +405,10 @@ export default function PhasesTab({
       dc: mission.dc,
       narrativeText: 'Сюжетная миссия завершена по решению ГМа.',
       damageDealt: 0,
-      goldReward: mission.goldReward ?? 0,
+      goldReward: mission.goldReward ?? (2 * state.hCost),
+      rewardGranted: false,
+      rewardAwardedAmount: 0,
+      rewardRecipientClanId: contract.clanId,
       attachedResourcesUsed: [],
       squadNames: [],
       squadAdvIds: [],
@@ -396,6 +420,12 @@ export default function PhasesTab({
       baseObjectiveCompleted: false,
       returnedAdventurerIds: [],
       failedChecksCount: 0,
+      checkResults: pendingComplications.map(complication => {
+        const resource = complication.reqResource === 'None'
+          ? 'без ключевого ресурса'
+          : `ресурс: ${getResourceNameRu(complication.reqResource)}`;
+        return `Сюжетное осложнение — ${getComplicationPositionLabel(mission, complication.position)}: DC ${complication.dc}, ${resource}. Исход определяет ГМ.`;
+      }),
       context: {
         clanId: contract.clanId,
         attachedResources: [...contract.attachedResources],
@@ -481,9 +511,12 @@ export default function PhasesTab({
         ...editingReportData,
         isSuccess: editedSuccess,
         totalRoll: (editingReportData.roll ?? sourceReport.roll) + (editingReportData.partyBonus ?? sourceReport.partyBonus),
-        baseObjectiveCompleted: editedSuccess !== sourceReport.isSuccess
-          ? editedSuccess
-          : (editingReportData.baseObjectiveCompleted ?? sourceReport.baseObjectiveCompleted ?? editedSuccess)
+        baseObjectiveCompleted: editingReportData.baseObjectiveCompleted ?? sourceReport.baseObjectiveCompleted ?? editedSuccess,
+        rewardGranted: Boolean(editingReportData.rewardGranted) && editedSuccess,
+        rewardAwardedAmount: Boolean(editingReportData.rewardGranted) && editedSuccess
+          ? (editingReportData.goldReward ?? sourceReport.goldReward)
+          : 0,
+        rewardRecipientClanId: originalContract.clanId
       } as SimulationReport;
       const recalculated = recalculateReportEffects({
         originalReport: originalRep,
@@ -536,6 +569,10 @@ export default function PhasesTab({
   };
 
   const handleAutoAssign = () => {
+    if (state.isGuildActionsCompleted) {
+      showToast('Распределение уже зафиксировано действиями Гильдии.', true);
+      return;
+    }
     const randomSeed = createDaySeed(state.day);
     const result = distributePlayerContracts({
       adventurers: state.adventurers,
@@ -554,8 +591,7 @@ export default function PhasesTab({
     updateState({
       contracts: updatedContracts,
       distributionReport: result.report,
-      lastDistributionLogs: result.report.logs,
-      isGuildActionsCompleted: false
+      lastDistributionLogs: result.report.logs
     });
 
     showToast(`Рынок контрактов завершён: нанято ${result.report.assignedAdventurers}, в резерве ${result.report.unassignedAdventurers}.`);
@@ -581,7 +617,8 @@ export default function PhasesTab({
       missions: result.missions,
       contracts: result.contracts,
       lastDistributionLogs: result.logs,
-      isGuildActionsCompleted: true
+      isGuildActionsCompleted: true,
+      currentPhase: 3
     });
     showToast(`Действия ${state.guildShortName} завершены: создано ${result.createdContracts}, назначено ${result.assignedAdventurers}.`);
     return;
@@ -606,6 +643,7 @@ export default function PhasesTab({
       adventurers: state.adventurers,
       clans: state.clans,
       day: state.day,
+      hCost: state.hCost,
       random: createSeededRandom(simulationSeed)
     });
     const simulationLogs = [
@@ -614,8 +652,8 @@ export default function PhasesTab({
     ];
     const expirationReports: SimulationReport[] = simulation.missions
       .filter(mission => {
-        const isAssigned = simulation.contracts.some(contract => contract.confirmed && contract.missionId === mission.id);
-        return !isAssigned && willMissionExpireAfterDay(mission);
+        const waitingForStoryReport = mission.type === 'STORY' && mission.storyStatus === 'AWAITING_REPORT';
+        return !waitingForStoryReport && willMissionExpireAfterDay(mission);
       })
       .map(mission => ({
         isSuccess: false,
@@ -682,6 +720,8 @@ export default function PhasesTab({
         contracts: state.contracts,
         allMissions: state.allMissions,
         completedMissionIds: state.completedMissionIds,
+        closedMissionIds: state.closedMissionIds,
+        expiredMissionIds: state.expiredMissionIds,
         nextDay
       });
       const nextDayMissions = [...lifecycle.missions];
@@ -705,17 +745,31 @@ export default function PhasesTab({
         return adventurer;
       });
 
-      const playableClansCount = state.clans.filter(clan => clan.id !== 'clan_guild').length;
+      const activePlayerClanIds = new Set(getActivePlayerClans(state.clans, state.nClans).map(clan => clan.id));
+      const playableClansCount = activePlayerClanIds.size;
+      const expiredContracts = state.contracts.filter(contract => lifecycle.expiredContractIds.includes(contract.missionId));
       const nextDayClans = state.clans.map(clan => {
+        const clanExpiredContracts = expiredContracts.filter(contract => contract.clanId === clan.id);
+        const refundedGold = clanExpiredContracts.reduce((sum, contract) => sum + (contract.paidAmount ?? contract.paymentAmount ?? 0), 0);
+        const refundedResources = { ...clan.resources };
+        clanExpiredContracts.forEach(contract => contract.attachedResources.forEach(resource => {
+          refundedResources[resource] = Number(refundedResources[resource] || 0) + 1;
+        }));
         if (clan.id === 'clan_guild') {
-          return { ...clan, gold: clan.gold + getGuildDailyFunding(playableClansCount, state.hCost) };
+          return {
+            ...clan,
+            gold: clan.gold + refundedGold + getGuildDailyFunding(playableClansCount, state.hCost),
+            resources: refundedResources
+          };
         }
+        if (!activePlayerClanIds.has(clan.id)) return { ...clan, gold: clan.gold + refundedGold, resources: refundedResources };
         const trust = Math.max(1, Math.min(3, clan.trustLevel || 1));
         const dailyGoldH = trust === 1 ? 12 : trust === 2 ? 20 : 35;
         const freeResources = trust;
         return {
           ...clan,
-          gold: clan.gold + dailyGoldH * state.hCost,
+          gold: clan.gold + refundedGold + dailyGoldH * state.hCost,
+          resources: refundedResources,
           freeResourceBudget: freeResources,
           freeSuppliesBudget: freeResources
         };
@@ -731,6 +785,8 @@ export default function PhasesTab({
         missions: nextDayMissions,
         contracts: lifecycle.contracts,
         completedMissionIds: lifecycle.completedMissionIds,
+        closedMissionIds: lifecycle.closedMissionIds,
+        expiredMissionIds: lifecycle.expiredMissionIds,
         distributionReport: null,
         lastDistributionLogs: []
       });
@@ -743,12 +799,14 @@ export default function PhasesTab({
   };
 
   const handleNextPhase = () => {
+    if (state.isGuildActionsCompleted) return;
     if (currentPhase < 3) {
       updateState({ currentPhase: currentPhase + 1 });
     }
   };
 
   const handlePrevPhase = () => {
+    if (state.isGuildActionsCompleted) return;
     if (currentPhase > 1) {
       updateState({ currentPhase: currentPhase - 1 });
     }
@@ -756,21 +814,90 @@ export default function PhasesTab({
 
   return (
     <div className="space-y-6">
+      {state.isDmMode && !state.isDaySimulated && state.contracts.some(contract => {
+        const mission = state.missions.find(item => item.id === contract.missionId);
+        return mission?.type === 'STORY' && mission.storyStatus === 'AWAITING_REPORT' && !contract.simulationReport;
+      }) && (
+        <div className="rounded-lg border border-amber-500/35 bg-amber-950/10 p-4 space-y-3">
+          <div>
+            <h3 className="font-mono text-sm font-bold uppercase text-amber-400">Отложенные сюжетные миссии</h3>
+            <p className="mt-1 text-xs text-neutral-500">Рапорт можно заполнить до любых действий нового дня.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {state.contracts.filter(contract => {
+              const mission = state.missions.find(item => item.id === contract.missionId);
+              return mission?.type === 'STORY' && mission.storyStatus === 'AWAITING_REPORT' && !contract.simulationReport;
+            }).map(contract => (
+              <div key={contract.missionId} className="flex items-center justify-between gap-3 rounded border border-amber-500/15 bg-black/40 p-3">
+                <div>
+                  <strong className="block text-sm text-neutral-200">{contract.title}</strong>
+                  <small className="text-neutral-500">Осложнений: {contract.pendingStoryComplications?.length ?? 0}</small>
+                </div>
+                <button type="button" onClick={() => handleStartStoryReport(contract)} className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 font-mono text-xs font-bold uppercase text-amber-400 hover:bg-amber-500 hover:text-black">
+                  Заполнить рапорт
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {state.isDmMode && !state.isDaySimulated && editingMissionId && editingReportData && (() => {
+        const contract = state.contracts.find(item => item.missionId === editingMissionId);
+        if (!contract) return null;
+        return (
+          <div className="space-y-4 rounded-lg border border-amber-500/40 bg-[#0d0d0d] p-5 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <h3 className="font-bold uppercase text-amber-400">Рапорт: {editingReportData.missionTitle}</h3>
+              <button type="button" onClick={() => { setEditingMissionId(null); setEditingReportData(null); }} className="text-neutral-500 hover:text-white">✕</button>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <button type="button" onClick={() => setEditingReportData(previous => previous ? { ...previous, isSuccess: !previous.isSuccess, rewardGranted: false, rewardAwardedAmount: 0 } : previous)} className={`rounded border p-2 font-bold uppercase ${editingReportData.isSuccess ? 'border-emerald-500 text-emerald-400' : 'border-rose-500 text-rose-400'}`}>{editingReportData.isSuccess ? 'Успех' : 'Провал'}</button>
+              <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" checked={editingReportData.baseObjectiveCompleted ?? false} onChange={event => updateEditingField('baseObjectiveCompleted', event.target.checked)} /> Основная задача выполнена</label>
+              <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" disabled={!editingReportData.isSuccess} checked={editingReportData.rewardGranted ?? false} onChange={event => updateEditingField('rewardGranted', event.target.checked)} /> Награда выдана</label>
+            </div>
+            <textarea value={editingReportData.narrativeText ?? ''} onChange={event => updateEditingField('narrativeText', event.target.value)} className="editor-input min-h-24" placeholder="Описание результата" />
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+              {([
+                ['dc', 'DC'], ['roll', 'd20'], ['partyBonus', 'Бонус'], ['goldReward', 'Награда'], ['damageDealt', 'Урон']
+              ] as const).map(([field, label]) => <label key={field} className="space-y-1 text-neutral-500"><span>{label}</span><input type="number" value={Number(editingReportData[field] ?? 0)} onChange={event => updateEditingField(field, Number(event.target.value) || 0)} className="editor-input" /></label>)}
+            </div>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={editingReportData.isResourceAutoSuccess ?? false} onChange={event => updateEditingField('isResourceAutoSuccess', event.target.checked)} /> Автоуспех</label>
+            {editingReportData.isResourceAutoSuccess && <input value={editingReportData.autoSuccessReason ?? ''} onChange={event => updateEditingField('autoSuccessReason', event.target.value)} className="editor-input" placeholder="Причина автоуспеха" />}
+            <div className="grid max-h-48 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
+              {state.adventurers.map(adventurer => {
+                const selected = editingReportData.squadAdvIds?.includes(adventurer.id) ?? false;
+                const returned = editingReportData.returnedAdventurerIds?.includes(adventurer.id) ?? false;
+                return <div key={adventurer.id} className={`flex items-center gap-2 rounded border p-2 ${selected ? 'border-emerald-500/40' : 'border-neutral-800'}`}><button type="button" onClick={() => toggleEditingParticipant(adventurer.id)} className="flex-1 text-left">{adventurer.name} · ур. {adventurer.level}</button>{selected && <button type="button" onClick={() => toggleEditingReturn(adventurer.id)} className={returned ? 'text-emerald-400' : 'text-rose-400'}>{returned ? 'Вернулся' : 'Не вернулся'}</button>}</div>;
+              })}
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as BasicResourceKey[]).map(resource => {
+                const used = (editingReportData.attachedResourcesUsed ?? []).filter(item => item === resource).length;
+                const attached = contract.attachedResources.filter(item => item === resource).length;
+                return <div key={resource} className="rounded border border-neutral-800 p-2 text-center"><span className="block text-neutral-500">{getResourceNameRu(resource)} {used}/{attached}</span><div className="mt-1 flex justify-center gap-2"><button type="button" onClick={() => adjustEditingResource(resource, -1)} disabled={used === 0}>−</button><strong>{used}</strong><button type="button" onClick={() => adjustEditingResource(resource, 1)} disabled={used >= attached}>+</button></div></div>;
+              })}
+            </div>
+            <div className="flex justify-end"><button type="button" onClick={() => handleSaveReportEdit(editingMissionId)} className="rounded bg-emerald-500 px-4 py-2 font-bold uppercase text-black">Сохранить рапорт</button></div>
+          </div>
+        );
+      })()}
       
       {/* Phases Chevron Navigator */}
       <div className="flex bg-[#0d0d0d] border border-emerald-500/15 rounded-lg overflow-hidden divide-x divide-emerald-500/10 font-mono text-xs shadow-md">
         
         <button
-          onClick={() => updateState({ currentPhase: 1 })}
-          className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 cursor-pointer transition-all ${currentPhase === 1 ? 'bg-emerald-950/20 text-emerald-400 border-b-2 border-emerald-400 font-bold' : 'text-neutral-500 hover:text-neutral-300 bg-transparent'}`}
+          disabled={state.isGuildActionsCompleted}
+          onClick={() => !state.isGuildActionsCompleted && updateState({ currentPhase: 1 })}
+          className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-all ${state.isGuildActionsCompleted ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${currentPhase === 1 ? 'bg-emerald-950/20 text-emerald-400 border-b-2 border-emerald-400 font-bold' : 'text-neutral-500 hover:text-neutral-300 bg-transparent'}`}
         >
           <FileText className="w-4 h-4" />
           <span>Фаза 1: Оформление контрактов</span>
         </button>
 
         <button
-          onClick={() => updateState({ currentPhase: 2 })}
-          className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 cursor-pointer transition-all ${currentPhase === 2 ? 'bg-emerald-950/20 text-emerald-400 border-b-2 border-emerald-400 font-bold' : 'text-neutral-500 hover:text-neutral-300 bg-transparent'}`}
+          disabled={state.isGuildActionsCompleted}
+          onClick={() => !state.isGuildActionsCompleted && updateState({ currentPhase: 2 })}
+          className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-all ${state.isGuildActionsCompleted ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${currentPhase === 2 ? 'bg-emerald-950/20 text-emerald-400 border-b-2 border-emerald-400 font-bold' : 'text-neutral-500 hover:text-neutral-300 bg-transparent'}`}
         >
           <Users className="w-4 h-4" />
           <span>Фаза 2: Сбор отрядов</span>
@@ -951,19 +1078,17 @@ export default function PhasesTab({
                                   {checksList.map((ch, idx) => (
                                     <div key={idx} className="flex justify-between items-center bg-black/60 px-2 py-1 rounded border border-neutral-800 text-[11px]">
                                       <span className="text-neutral-300">Этап #{idx + 1}: <strong className="text-amber-400">DC {ch.dc}</strong></span>
-                                      {ch.reqResource && ch.reqResource !== 'None' ? (
-                                        <span className="text-emerald-400 font-bold">Особый ресурс: {getResourceNameRu(ch.reqResource)}</span>
-                                      ) : (
-                                        <span className="text-neutral-500">Без спец. ресурса</span>
-                                      )}
+                                      <span className="text-right">
+                                        {ch.reqResource && ch.reqResource !== 'None' ? (
+                                          <span className="block text-emerald-400 font-bold">Ресурс: {getResourceNameRu(ch.reqResource)}</span>
+                                        ) : (
+                                          <span className="block text-neutral-500">Без ключевого ресурса</span>
+                                        )}
+                                        {ch.requiredSpecialItem && <span className="block text-amber-400">💎 {ch.requiredSpecialItem}</span>}
+                                      </span>
                                     </div>
                                   ))}
                                 </div>
-                                {selM.requiredSpecialItem && (
-                                  <div className="text-amber-400 text-[11px] pt-1">
-                                    💎 <strong>Требуемый особый предмет:</strong> {selM.requiredSpecialItem}
-                                  </div>
-                                )}
                               </div>
                             )}
                           </div>
@@ -1528,11 +1653,25 @@ export default function PhasesTab({
                     {state.contracts.filter(contract => {
                       const mission = state.missions.find(item => item.id === contract.missionId);
                       return mission?.type === 'STORY' && !contract.simulationReport;
-                    }).map(contract => (
-                      <div key={contract.missionId} className="bg-black/40 border border-amber-500/15 rounded p-3 flex items-center justify-between gap-3">
-                        <div>
+                    }).map(contract => {
+                      const storyMission = state.missions.find(item => item.id === contract.missionId)!;
+                      return (
+                      <div key={contract.missionId} className="bg-black/40 border border-amber-500/15 rounded p-3 flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-2">
                           <strong className="text-neutral-200 text-sm block">{contract.title}</strong>
                           <small className="text-neutral-500">Предложено NPC: {contract.suggestedSquadAdvIds?.length ?? 0}</small>
+                          {state.isDmMode && ((contract.pendingStoryComplications?.length ?? 0) > 0 ? (
+                              <div className="space-y-1 rounded border border-amber-500/15 bg-amber-500/5 p-2">
+                                <span className="block text-[9px] font-bold uppercase text-amber-400">Осложнения для D&amp;D-сессии</span>
+                                {contract.pendingStoryComplications?.map(complication => (
+                                  <div key={complication.id} className="text-[10px] leading-relaxed text-neutral-400">
+                                    {getComplicationPositionLabel(storyMission, complication.position)} · DC {complication.dc} · {complication.reqResource === 'None' ? 'без ключевого ресурса' : getResourceNameRu(complication.reqResource)}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <small className="block text-neutral-600">Автоматических осложнений не возникло.</small>
+                            ))}
                         </div>
                         {state.isDmMode && (
                           <button
@@ -1544,7 +1683,8 @@ export default function PhasesTab({
                           </button>
                         )}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               )}
@@ -1580,6 +1720,8 @@ export default function PhasesTab({
                               onClick={() => setEditingReportData(previous => previous ? {
                                 ...previous,
                                 isSuccess: !previous.isSuccess,
+                                rewardGranted: false,
+                                rewardAwardedAmount: 0,
                                 isResourceAutoSuccess: previous.isSuccess ? false : previous.isResourceAutoSuccess,
                                 autoSuccessReason: previous.isSuccess ? null : previous.autoSuccessReason
                               } : previous)}
@@ -1587,6 +1729,26 @@ export default function PhasesTab({
                             >
                               {editingReportData.isSuccess ? 'Успех' : 'Провал'}
                             </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label className="flex items-center gap-2 rounded border border-neutral-800 bg-black/30 p-2.5 text-[10px] text-neutral-300">
+                              <input
+                                type="checkbox"
+                                checked={editingReportData.baseObjectiveCompleted ?? false}
+                                onChange={event => updateEditingField('baseObjectiveCompleted', event.target.checked)}
+                              />
+                              Основная задача выполнена
+                            </label>
+                            <label className="flex items-center gap-2 rounded border border-neutral-800 bg-black/30 p-2.5 text-[10px] text-neutral-300">
+                              <input
+                                type="checkbox"
+                                checked={editingReportData.rewardGranted ?? false}
+                                disabled={!editingReportData.isSuccess}
+                                onChange={event => updateEditingField('rewardGranted', event.target.checked)}
+                              />
+                              Награда фактически выдана
+                            </label>
                           </div>
 
                           {/* Narrative output */}
@@ -1807,7 +1969,7 @@ export default function PhasesTab({
                               )}
                               {r.goldReward > 0 && (
                                 <span className="text-amber-500 font-bold flex items-center gap-1 bg-amber-950/10 px-2 py-1 rounded border border-amber-500/10">
-                                  🪙 Получено золота: +{r.goldReward}г
+                                  🪙 Награда: {r.goldReward}г · {r.rewardGranted ? 'выдана' : 'не выдана'}
                                 </span>
                               )}
                             </div>

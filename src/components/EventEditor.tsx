@@ -359,12 +359,9 @@ export default function EventEditor({ state, updateState, showToast, mode = 'LIV
               </EditorSection>
 
               <EditorSection title="Награды и тексты рапорта" icon={<Sparkles className="h-4 w-4" />}>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-1">
                   <Field label="Золотая награда клану">
                     <input type="number" min={0} value={selected.goldReward ?? 0} onChange={event => patchMission({ goldReward: Math.max(0, Number(event.target.value) || 0) })} className="editor-input" />
-                  </Field>
-                  <Field label="Особый предмет, необходимый всей миссии">
-                    <input value={selected.requiredSpecialItem ?? ''} onChange={event => patchMission({ requiredSpecialItem: event.target.value || undefined })} placeholder="Не требуется" className="editor-input" />
                   </Field>
                 </div>
                 <div className="space-y-2">

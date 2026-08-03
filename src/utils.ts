@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Clan, Adventurer, Mission, MissionType, Contract, BasicResourceKey, MissionCheck } from './types';
+import { Clan, Adventurer, Mission, MissionType, Contract, BasicResourceKey, MissionCheck, MissionResourceKey } from './types';
 import defaultClansJson from './data/default-clans.json';
 import defaultAdventurersJson from './data/default-adventurers.json';
 
@@ -126,6 +126,13 @@ export const DEFAULT_SPAWN_POLYGON = [
   { x: 41, y: 26 }
 ];
 
+export function chooseRandomStageResource(
+  fallback: BasicResourceKey,
+  random: () => number = Math.random
+): MissionResourceKey {
+  return random() < 0.2 ? 'None' : fallback;
+}
+
 export function generateRandomMission(
   id: string,
   startDay: number,
@@ -174,7 +181,9 @@ export function generateRandomMission(
 
   const checks: MissionCheck[] = [];
   for (let s = 0; s < stagesCount; s++) {
-    const res = shuffledRes[s % shuffledRes.length];
+    // Every ordinary stage independently has a 20% chance to have no key
+    // resource. The other 80% are distributed between the four resources.
+    const res = chooseRandomStageResource(shuffledRes[s % shuffledRes.length]);
     const dc = 10 + Math.floor(Math.random() * 6); // DC 10..15
     checks.push({ reqResource: res, dc });
   }
