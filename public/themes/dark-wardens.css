@@ -7,5 +7,6 @@
 :root[data-theme="dark-wardens"] {
   --contract-line: #10b981;
   --story-delayed: #f59e0b;
+  --region-fog-rgb: 183, 211, 202;
   color-scheme: dark;
 }

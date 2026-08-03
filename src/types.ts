@@ -292,6 +292,31 @@ export interface ThemeDefinition {
   cssFile?: string;
 }
 
+export type RegionFogDensity = 'LOW' | 'MEDIUM' | 'DENSE';
+export type RegionFogSpeed = 'SLOW' | 'NORMAL' | 'FAST';
+
+export interface MapRegionFog {
+  enabled: boolean;
+  density: RegionFogDensity;
+  speed: RegionFogSpeed;
+}
+
+export interface MapRegion {
+  id: string;
+  name: string;
+  points: { x: number; y: number }[];
+  labelPosition: { x: number; y: number };
+  color: string;
+  fillOpacity: number;
+  borderOpacity: number;
+  /** Master switch. A new region is hidden from players by default. */
+  visibleToPlayers: boolean;
+  showBoundary: boolean;
+  showLabel: boolean;
+  showFill: boolean;
+  fog: MapRegionFog;
+}
+
 export interface ScenarioDefinition {
   id: string;
   name: string;
@@ -302,6 +327,8 @@ export interface ScenarioDefinition {
   mapBgUrl: string;
   mapWidth: number;
   mapHeight: number;
+  mapRegions: MapRegion[];
+  mapEffectsEnabled: boolean;
   clans: Clan[];
   adventurers: Adventurer[];
   missions: Mission[];
@@ -326,6 +353,8 @@ export interface GameState {
   isGuildActionsCompleted: boolean;
   assignedClanFilter: string;
   spawnPolygon: { x: number; y: number }[];
+  mapRegions: MapRegion[];
+  mapEffectsEnabled: boolean;
   clans: Clan[];
   adventurers: Adventurer[];
   missions: Mission[];

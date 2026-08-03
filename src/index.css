@@ -5,3 +5,63 @@
     @apply w-full rounded-lg border border-neutral-800 bg-black px-3 py-2.5 text-sm text-neutral-200 outline-none transition placeholder:text-neutral-700 focus:border-emerald-500/60;
   }
 }
+
+.region-fog-mask {
+  isolation: isolate;
+  contain: strict;
+}
+
+.region-fog-cloud {
+  position: absolute;
+  inset: -28%;
+  background:
+    radial-gradient(ellipse at 18% 32%, rgba(var(--region-fog-rgb, 202, 216, 211), 0.78) 0 7%, transparent 28%),
+    radial-gradient(ellipse at 66% 24%, rgba(var(--region-fog-rgb, 202, 216, 211), 0.62) 0 10%, transparent 34%),
+    radial-gradient(ellipse at 42% 72%, rgba(var(--region-fog-rgb, 202, 216, 211), 0.72) 0 9%, transparent 31%),
+    radial-gradient(ellipse at 84% 68%, rgba(var(--region-fog-rgb, 202, 216, 211), 0.54) 0 8%, transparent 30%);
+  filter: blur(22px) saturate(0.72);
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  will-change: transform, opacity;
+}
+
+.region-fog-cloud-a {
+  animation: region-fog-breathe-a var(--region-fog-duration, 32s) ease-in-out infinite alternate;
+}
+
+.region-fog-cloud-b {
+  animation: region-fog-breathe-b var(--region-fog-duration, 32s) ease-in-out infinite alternate-reverse;
+  opacity: 0.55;
+  transform: rotate(118deg) scale(1.08);
+}
+
+.region-fog-cloud-c {
+  animation: region-fog-breathe-c var(--region-fog-duration, 32s) ease-in-out infinite alternate;
+  opacity: 0.42;
+  transform: rotate(238deg) scale(0.92);
+}
+
+@keyframes region-fog-breathe-a {
+  0% { transform: translate(-4%, 2%) rotate(-3deg) scale(0.96); opacity: 0.52; }
+  42% { transform: translate(3%, -4%) rotate(2deg) scale(1.06); opacity: 0.78; }
+  72% { transform: translate(-1%, 5%) rotate(-1deg) scale(1.01); opacity: 0.64; }
+  100% { transform: translate(5%, 1%) rotate(4deg) scale(1.09); opacity: 0.72; }
+}
+
+@keyframes region-fog-breathe-b {
+  0% { transform: translate(5%, -2%) rotate(112deg) scale(1.02); }
+  48% { transform: translate(-4%, 4%) rotate(121deg) scale(1.12); }
+  100% { transform: translate(1%, -5%) rotate(116deg) scale(0.98); }
+}
+
+@keyframes region-fog-breathe-c {
+  0% { transform: translate(-2%, -5%) rotate(232deg) scale(0.9); }
+  55% { transform: translate(5%, 2%) rotate(242deg) scale(1.04); }
+  100% { transform: translate(-4%, 5%) rotate(236deg) scale(0.96); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .region-fog-cloud {
+    animation: none !important;
+  }
+}

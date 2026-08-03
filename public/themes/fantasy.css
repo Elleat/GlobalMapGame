@@ -7,6 +7,7 @@
 :root[data-theme="fantasy"] {
   --contract-line: #d7a843;
   --story-delayed: #b75f3d;
+  --region-fog-rgb: 218, 207, 174;
   color-scheme: dark;
 }
 

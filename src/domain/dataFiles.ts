@@ -3,12 +3,14 @@ import type {
   AdventurerStatus,
   Clan,
   GameState,
+  MapRegion,
   Mission,
   MissionResourceKey,
   MissionType
 } from '../types';
 import { DEFAULT_MAP_URL } from './constants';
 import { createInitialGameState, normalizeMission } from './state';
+import { normalizeMapRegion } from './mapRegions';
 
 export const DATA_FILE_VERSION = 1;
 export const ADVENTURER_FILE_TYPE = 'global-map-adventurers';
@@ -41,6 +43,8 @@ export interface ScenarioFileData {
   mapWidth: number;
   mapHeight: number;
   spawnPolygon: GameState['spawnPolygon'];
+  mapRegions: MapRegion[];
+  mapEffectsEnabled: boolean;
   hqPos?: GameState['hqPos'];
   clans: Clan[];
   adventurers: Adventurer[];
@@ -266,6 +270,59 @@ function validateClanList(value: unknown, path: string, issues: string[]): value
   return true;
 }
 
+function validateMapRegions(value: unknown, path: string, issues: string[]): value is MapRegion[] {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) {
+    issues.push(`${path}: требуется массив регионов.`);
+    return false;
+  }
+  const ids = new Set<string>();
+  value.forEach((item, index) => {
+    const itemPath = `${path}[${index}]`;
+    if (!isRecord(item)) {
+      issues.push(`${itemPath}: требуется объект.`);
+      return;
+    }
+    addStringIssue(item.id, `${itemPath}.id`, issues);
+    if (typeof item.id === 'string') {
+      if (ids.has(item.id)) issues.push(`${itemPath}.id: повторяющийся ID «${item.id}».`);
+      ids.add(item.id);
+    }
+    addStringIssue(item.name, `${itemPath}.name`, issues);
+    if (!Array.isArray(item.points) || item.points.length < 3) {
+      issues.push(`${itemPath}.points: требуется не менее трёх точек.`);
+    } else {
+      item.points.forEach((point, pointIndex) => {
+        if (!isRecord(point)) issues.push(`${itemPath}.points[${pointIndex}]: требуется объект точки.`);
+        else {
+          addFiniteIssue(point.x, `${itemPath}.points[${pointIndex}].x`, issues, 0, 100);
+          addFiniteIssue(point.y, `${itemPath}.points[${pointIndex}].y`, issues, 0, 100);
+        }
+      });
+    }
+    if (!isRecord(item.labelPosition)) {
+      issues.push(`${itemPath}.labelPosition: требуется точка подписи.`);
+    } else {
+      addFiniteIssue(item.labelPosition.x, `${itemPath}.labelPosition.x`, issues, 0, 100);
+      addFiniteIssue(item.labelPosition.y, `${itemPath}.labelPosition.y`, issues, 0, 100);
+    }
+    if (typeof item.color !== 'string' || !/^#[0-9a-f]{6}$/iu.test(item.color)) issues.push(`${itemPath}.color: требуется цвет вида #RRGGBB.`);
+    addFiniteIssue(item.fillOpacity, `${itemPath}.fillOpacity`, issues, 0, 0.8);
+    addFiniteIssue(item.borderOpacity, `${itemPath}.borderOpacity`, issues, 0, 1);
+    ['visibleToPlayers', 'showBoundary', 'showLabel', 'showFill'].forEach(key => {
+      if (typeof item[key] !== 'boolean') issues.push(`${itemPath}.${key}: требуется true или false.`);
+    });
+    if (!isRecord(item.fog)) {
+      issues.push(`${itemPath}.fog: требуется объект настроек тумана.`);
+    } else {
+      if (typeof item.fog.enabled !== 'boolean') issues.push(`${itemPath}.fog.enabled: требуется true или false.`);
+      if (!['LOW', 'MEDIUM', 'DENSE'].includes(String(item.fog.density))) issues.push(`${itemPath}.fog.density: требуется LOW, MEDIUM или DENSE.`);
+      if (!['SLOW', 'NORMAL', 'FAST'].includes(String(item.fog.speed))) issues.push(`${itemPath}.fog.speed: требуется SLOW, NORMAL или FAST.`);
+    }
+  });
+  return true;
+}
+
 function throwIfIssues(issues: string[]) {
   if (issues.length > 0) throw new DataFileValidationError(issues);
 }
@@ -319,6 +376,8 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
           }
         });
       }
+      validateMapRegions(scenario.mapRegions, 'scenario.mapRegions', issues);
+      if (scenario.mapEffectsEnabled !== undefined && typeof scenario.mapEffectsEnabled !== 'boolean') issues.push('scenario.mapEffectsEnabled: требуется true или false.');
       validateClanList(scenario.clans, 'scenario.clans', issues);
       if (Array.isArray(scenario.clans) && typeof scenario.nClans === 'number') {
         const playerClanCount = scenario.clans.filter(clan => isRecord(clan) && clan.id !== 'clan_guild').length;
@@ -332,7 +391,12 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
   const parsed = structuredClone(value as unknown as ScenarioDataFile);
   return {
     ...parsed,
-    scenario: { ...parsed.scenario, events: parsed.scenario.events.map(normalizeMission) }
+    scenario: {
+      ...parsed.scenario,
+      mapRegions: (parsed.scenario.mapRegions ?? []).map(normalizeMapRegion),
+      mapEffectsEnabled: parsed.scenario.mapEffectsEnabled ?? true,
+      events: parsed.scenario.events.map(normalizeMission)
+    }
   };
 }
 
@@ -387,6 +451,8 @@ export function buildNewCampaign(options: {
     mapWidth: scenario?.mapWidth ?? initial.mapWidth,
     mapHeight: scenario?.mapHeight ?? initial.mapHeight,
     spawnPolygon: structuredClone(scenario?.spawnPolygon ?? initial.spawnPolygon),
+    mapRegions: structuredClone(scenario?.mapRegions ?? initial.mapRegions).map(normalizeMapRegion),
+    mapEffectsEnabled: scenario?.mapEffectsEnabled ?? initial.mapEffectsEnabled,
     hqPos: scenario?.hqPos ? { ...scenario.hqPos } : initial.hqPos,
     clans,
     adventurers,

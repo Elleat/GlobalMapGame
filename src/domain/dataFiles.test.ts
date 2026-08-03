@@ -11,6 +11,7 @@ import {
   parseEventDataFile,
   parseScenarioDataFile
 } from './dataFiles';
+import { createMapRegion } from './mapRegions';
 
 test('файл авантюристов требует тип, версию и уникальные ID', () => {
   const state = createInitialGameState();
@@ -40,6 +41,30 @@ test('валидные отдельные файлы проходят прове
   assert.equal(parseEventDataFile(events).events.length, 2);
 });
 
+test('сценарий отклоняет регион с повреждённой границей', () => {
+  const state = createInitialGameState();
+  const invalidRegion = { ...createMapRegion(0), points: [{ x: 10, y: 10 }, { x: 20, y: 20 }] };
+  const file = createScenarioDataFile({
+    id: 'invalid_region_scenario',
+    name: 'Повреждённый регион',
+    description: '',
+    guildName: state.guildName,
+    guildShortName: state.guildShortName,
+    hCost: state.hCost,
+    nClans: state.nClans,
+    themeId: state.themeId,
+    mapWidth: state.mapWidth,
+    mapHeight: state.mapHeight,
+    spawnPolygon: state.spawnPolygon,
+    mapRegions: [invalidRegion],
+    mapEffectsEnabled: true,
+    clans: state.clans,
+    adventurers: state.adventurers,
+    events: state.missions
+  });
+  assert.throws(() => parseScenarioDataFile(file), DataFileValidationError);
+});
+
 test('сценарий и отдельные наборы собирают новую кампанию с приоритетом отдельных файлов', () => {
   const state = createInitialGameState();
   const scenario = createScenarioDataFile({
@@ -54,6 +79,8 @@ test('сценарий и отдельные наборы собирают но�
     mapWidth: state.mapWidth,
     mapHeight: state.mapHeight,
     spawnPolygon: state.spawnPolygon,
+    mapRegions: [{ ...createMapRegion(0), name: 'Туманные топи' }],
+    mapEffectsEnabled: state.mapEffectsEnabled,
     hqPos: state.hqPos,
     clans: state.clans,
     adventurers: state.adventurers.slice(0, 3),
@@ -72,4 +99,5 @@ test('сценарий и отдельные наборы собирают но�
   assert.equal(campaign.adventurers.length, 1);
   assert.equal(campaign.contracts.length, 0);
   assert.equal(campaign.day, 1);
+  assert.equal(campaign.mapRegions[0].name, 'Туманные топи');
 });

@@ -14,6 +14,7 @@ import {
 } from './constants';
 import { clampRelation } from './economy';
 import { cleanMissionTitle } from './missionPresentation';
+import { normalizeMapRegion } from './mapRegions';
 
 export const GAME_STORAGE_KEY = 'adventurer_guild_state';
 
@@ -90,6 +91,8 @@ export function createInitialGameState(options?: {
     isGuildActionsCompleted: false,
     assignedClanFilter: 'ALL',
     spawnPolygon: structuredClone(DEFAULT_SPAWN_POLYGON),
+    mapRegions: [],
+    mapEffectsEnabled: true,
     clans,
     adventurers: generateAdventurersForClans(clansCount).map(normalizeAdventurer),
     missions: generateMissionsForDay(clansCount, 1, DEFAULT_SPAWN_POLYGON).map(normalizeMission),
@@ -129,6 +132,8 @@ export function parseStoredGameState(serialized: string): GameState | null {
       completedMissionIds: state.completedMissionIds ?? [],
       distributionReport: state.distributionReport ?? null,
       hqPos: state.hqPos ?? { x: 50, y: 50 },
+      mapRegions: (state.mapRegions ?? []).map(normalizeMapRegion),
+      mapEffectsEnabled: state.mapEffectsEnabled ?? true,
       clans: state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan),
       adventurers: state.adventurers.map(normalizeAdventurer),
       missions: state.missions.map(normalizeMission),

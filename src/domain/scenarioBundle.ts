@@ -1,8 +1,9 @@
-import type { Adventurer, Clan, GameState, Mission } from '../types';
+import type { Adventurer, Clan, GameState, MapRegion, Mission } from '../types';
 import { DEFAULT_MAP_URL } from './constants';
 import { loadMapAssetBlob, saveMapBlob } from './mapAssets';
 import { getScenarioMissions } from './scenarioEditor';
 import { createInitialGameState } from './state';
+import { normalizeMapRegion } from './mapRegions';
 
 const BUNDLE_FORMAT = 'global-map-scenario';
 const BUNDLE_VERSION = 1;
@@ -19,6 +20,8 @@ interface ScenarioBundleData {
   mapWidth: number;
   mapHeight: number;
   spawnPolygon: GameState['spawnPolygon'];
+  mapRegions?: MapRegion[];
+  mapEffectsEnabled?: boolean;
   hqPos?: GameState['hqPos'];
   clans: Clan[];
   adventurers: Adventurer[];
@@ -103,6 +106,8 @@ export async function createScenarioBundle(state: GameState): Promise<{ blob: Bl
       mapWidth: state.mapWidth,
       mapHeight: state.mapHeight,
       spawnPolygon: structuredClone(state.spawnPolygon),
+      mapRegions: structuredClone(state.mapRegions),
+      mapEffectsEnabled: state.mapEffectsEnabled,
       hqPos: state.hqPos ? { ...state.hqPos } : undefined,
       clans: structuredClone(state.clans),
       adventurers: structuredClone(state.adventurers),
@@ -165,6 +170,8 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     mapWidth: scenario.mapWidth || mapAsset.width,
     mapHeight: scenario.mapHeight || mapAsset.height,
     spawnPolygon: structuredClone(scenario.spawnPolygon),
+    mapRegions: structuredClone(scenario.mapRegions ?? []).map(normalizeMapRegion),
+    mapEffectsEnabled: scenario.mapEffectsEnabled ?? true,
     hqPos: scenario.hqPos ? { ...scenario.hqPos } : initial.hqPos,
     clans: structuredClone(scenario.clans).map(clan => clan.id === 'clan_guild' ? { ...clan, name: scenario.guildName } : clan),
     adventurers: structuredClone(scenario.adventurers),

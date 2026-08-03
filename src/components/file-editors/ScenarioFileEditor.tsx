@@ -2,6 +2,7 @@ import { Boxes, Map, Plus, Trash2, Upload, Users } from 'lucide-react';
 import { useRef } from 'react';
 import type { Clan } from '../../types';
 import type { ScenarioFileData } from '../../domain/dataFiles';
+import ScenarioRegionsEditor from './ScenarioRegionsEditor';
 
 interface ScenarioFileEditorProps {
   value: ScenarioFileData;
@@ -75,6 +76,12 @@ export default function ScenarioFileEditor({ value, onChange, onImportAdventurer
         <button type="button" onClick={() => patch({ spawnPolygon: [...value.spawnPolygon, { x: 50, y: 50 }] })} className="mt-3 flex items-center gap-2 rounded border border-emerald-500/30 px-3 py-2 font-mono text-xs text-emerald-400 hover:bg-emerald-500/10"><Plus className="h-4 w-4" /> Добавить точку</button>
       </EditorSection>
 
+      <EditorSection title="Регионы и эффекты карты" icon={<Map className="h-4 w-4" />}>
+        <ToggleField label="Атмосферные эффекты включены" checked={value.mapEffectsEnabled} onChange={mapEffectsEnabled => patch({ mapEffectsEnabled })} />
+        <p className="text-xs leading-relaxed text-neutral-600">Каждый новый регион скрыт от игроков. Общая видимость и слои границы, названия, заливки и тумана настраиваются отдельно.</p>
+        <ScenarioRegionsEditor regions={value.mapRegions} onChange={mapRegions => patch({ mapRegions })} />
+      </EditorSection>
+
       <EditorSection title="Кланы" icon={<Users className="h-4 w-4" />}>
         <div className="space-y-3">
           {value.clans.map(clan => (
@@ -118,7 +125,10 @@ function NumberField({ label, value, min, max, onChange }: { label: string; valu
   return <Field label={label}><input type="number" min={min} max={max} value={value} onChange={event => { let next = Number(event.target.value) || 0; if (min !== undefined) next = Math.max(min, next); if (max !== undefined) next = Math.min(max, next); onChange(next); }} className="editor-input" /></Field>;
 }
 
+function ToggleField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-neutral-800 bg-black/30 px-4 py-3 font-mono text-xs text-neutral-300"><span>{label}</span><input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} className="accent-emerald-500" /></label>;
+}
+
 function ImportCard({ title, count, description, onClick }: { title: string; count: number; description: string; onClick: () => void }) {
   return <div className="rounded-xl border border-neutral-800 bg-black/30 p-5"><div className="flex items-center justify-between"><strong className="text-neutral-100">{title}</strong><span className="rounded bg-emerald-500/10 px-2 py-1 font-mono text-xs text-emerald-400">{count}</span></div><p className="mt-2 text-xs leading-relaxed text-neutral-600">{description}</p><button type="button" onClick={onClick} className="mt-4 flex items-center gap-2 rounded border border-neutral-700 px-3 py-2 font-mono text-[10px] uppercase text-neutral-300 transition hover:border-emerald-500/50 hover:text-emerald-300"><Upload className="h-3.5 w-3.5" /> Выбрать JSON</button></div>;
 }
-

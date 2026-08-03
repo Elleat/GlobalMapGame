@@ -52,6 +52,8 @@ function blankScenario(): ScenarioFileData {
     mapWidth: state.mapWidth,
     mapHeight: state.mapHeight,
     spawnPolygon: structuredClone(DEFAULT_SPAWN_POLYGON),
+    mapRegions: [],
+    mapEffectsEnabled: true,
     hqPos: state.hqPos,
     clans: structuredClone(state.clans),
     adventurers: [],
