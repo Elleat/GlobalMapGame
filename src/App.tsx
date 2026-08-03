@@ -16,7 +16,10 @@ import {
   HelpCircle,
   Terminal,
   RotateCw,
-  Plus
+  Plus,
+  Gamepad2,
+  UserRoundCog,
+  CalendarCog
 } from 'lucide-react';
 
 import { GameState, Clan, Adventurer, Mission, Contract } from './types';
@@ -39,6 +42,8 @@ import PhasesTab from './components/PhasesTab';
 import ResultsTab from './components/ResultsTab';
 import AdventurersTab from './components/AdventurersTab';
 import ClansTab from './components/ClansTab';
+import AdventurerEditor from './components/AdventurerEditor';
+import EventEditor from './components/EventEditor';
 
 import GmOverlordModal from './components/GmOverlordModal';
 import MissionModal from './components/MissionModal';
@@ -56,8 +61,8 @@ export default function App() {
     return createInitialGameState();
   });
 
-  // Active Tab state: 'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS' | 'HISTORY'
-  const [activeTab, setActiveTab] = useState<'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS' | 'HISTORY'>('MAP');
+  const [mainSection, setMainSection] = useState<'GAME' | 'ADVENTURER_EDITOR' | 'EVENT_EDITOR'>('GAME');
+  const [activeTab, setActiveTab] = useState<'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS'>('MAP');
 
   // Modals view toggles
   const [isGmOpen, setIsGmOpen] = useState(false);
@@ -440,8 +445,32 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Tab Links */}
-      <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">
+      {/* Main menu */}
+      <nav className="border-b border-emerald-500/15 bg-[#080808]/95 py-3 z-50">
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 font-mono text-xs">
+          <button
+            onClick={() => setMainSection('GAME')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-md border cursor-pointer transition-all ${mainSection === 'GAME' ? 'bg-emerald-500 border-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)]' : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}
+          >
+            <Gamepad2 className="w-4 h-4" /> Игра
+          </button>
+          <button
+            onClick={() => setMainSection('ADVENTURER_EDITOR')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-md border cursor-pointer transition-all ${mainSection === 'ADVENTURER_EDITOR' ? 'bg-emerald-500 border-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)]' : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}
+          >
+            <UserRoundCog className="w-4 h-4" /> Редактор авантюристов
+          </button>
+          <button
+            onClick={() => setMainSection('EVENT_EDITOR')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-md border cursor-pointer transition-all ${mainSection === 'EVENT_EDITOR' ? 'bg-emerald-500 border-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)]' : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}
+          >
+            <CalendarCog className="w-4 h-4" /> Редактор событий
+          </button>
+        </div>
+      </nav>
+
+      {/* Game workspace tabs */}
+      {mainSection === 'GAME' && <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap gap-2.5 font-mono text-xs">
           
           <button
@@ -480,13 +509,13 @@ export default function App() {
           </button>
 
         </div>
-      </nav>
+      </nav>}
 
       {/* Main Container Workspace */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 z-10">
+      <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 z-10">
         
         {/* Render Active View Tab */}
-        {activeTab === 'MAP' && (
+        {mainSection === 'GAME' && activeTab === 'MAP' && (
           <MapTab
             state={state}
             updateState={updateState}
@@ -498,7 +527,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'PHASES' && (
+        {mainSection === 'GAME' && activeTab === 'PHASES' && (
           <PhasesTab
             state={state}
             updateState={updateState}
@@ -508,11 +537,11 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'RESULTS' && (
+        {mainSection === 'GAME' && activeTab === 'RESULTS' && (
           <ResultsTab state={state} updateState={updateState} showToast={showToast} />
         )}
 
-        {activeTab === 'ADVENTURERS' && (
+        {mainSection === 'GAME' && activeTab === 'ADVENTURERS' && (
           <AdventurersTab
             state={state}
             onOpenRecruit={() => setIsRecruitOpen(true)}
@@ -521,12 +550,20 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'CLANS' && (
+        {mainSection === 'GAME' && activeTab === 'CLANS' && (
           <ClansTab
             state={state}
             onSelectClan={(id) => setSelectedClanId(id)}
             onOpenStore={(id) => setStoreClanId(id)}
           />
+        )}
+
+        {mainSection === 'ADVENTURER_EDITOR' && (
+          <AdventurerEditor state={state} updateState={updateState} showToast={showToast} />
+        )}
+
+        {mainSection === 'EVENT_EDITOR' && (
+          <EventEditor state={state} updateState={updateState} showToast={showToast} />
         )}
 
       </main>
