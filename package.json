@@ -18,7 +18,7 @@
     "desktop:win": "npm run build && electron-builder --win nsis portable",
     "clean": "node scripts/clean.mjs",
     "lint": "tsc --noEmit",
-    "test": "tsx --test src/domain/economy.test.ts src/domain/simulation.test.ts src/domain/scenarioEditor.test.ts",
+    "test": "tsx --test src/domain/economy.test.ts src/domain/simulation.test.ts src/domain/scenarioEditor.test.ts src/domain/dataFiles.test.ts",
     "sync-themes": "node scripts/sync-themes.mjs"
   },
   "dependencies": {},

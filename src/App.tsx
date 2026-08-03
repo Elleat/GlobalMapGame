@@ -49,7 +49,8 @@ import AdventurersTab from './components/AdventurersTab';
 import ClansTab from './components/ClansTab';
 import ThemeSelector from './components/ThemeSelector';
 import MainMenu, { FileEditorKind } from './components/MainMenu';
-import FileEditorPlaceholder from './components/FileEditorPlaceholder';
+import type { NewGameSetupValue } from './components/NewGameSetup';
+import { buildNewCampaign } from './domain/dataFiles';
 
 import GmOverlordModal from './components/GmOverlordModal';
 import MissionModal from './components/MissionModal';
@@ -60,6 +61,8 @@ import ResourceStoreModal from './components/ResourceStoreModal';
 
 const AdventurerEditor = lazy(() => import('./components/AdventurerEditor'));
 const EventEditor = lazy(() => import('./components/EventEditor'));
+const FileEditorWorkspace = lazy(() => import('./components/file-editors/FileEditorWorkspace'));
+const NewGameSetup = lazy(() => import('./components/NewGameSetup'));
 
 export default function App() {
   const [hasStoredGame, setHasStoredGame] = useState(() => {
@@ -74,7 +77,7 @@ export default function App() {
     return createInitialGameState();
   });
 
-  const [mainSection, setMainSection] = useState<'HOME' | 'GAME' | 'ADVENTURER_EDITOR' | 'EVENT_EDITOR' | 'FILE_EDITOR'>('HOME');
+  const [mainSection, setMainSection] = useState<'HOME' | 'NEW_GAME' | 'GAME' | 'ADVENTURER_EDITOR' | 'EVENT_EDITOR' | 'FILE_EDITOR'>('HOME');
   const [gameChoicesOpen, setGameChoicesOpen] = useState(false);
   const [fileEditorKind, setFileEditorKind] = useState<FileEditorKind>('ADVENTURERS');
   const [activeTab, setActiveTab] = useState<'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS'>('MAP');
@@ -117,7 +120,7 @@ export default function App() {
   }, [state.themeId, themes]);
 
   useEffect(() => {
-    document.title = mainSection === 'HOME' || mainSection === 'FILE_EDITOR'
+    document.title = mainSection === 'HOME' || mainSection === 'FILE_EDITOR' || mainSection === 'NEW_GAME'
       ? 'Глобальная Карта'
       : `${state.guildName} — Глобальная Карта`;
   }, [mainSection, state.guildName]);
@@ -221,13 +224,29 @@ export default function App() {
   };
 
   const handleStartNewGame = () => {
-    if (hasStoredGame && !window.confirm('Начать новую игру? Текущее локальное сохранение будет заменено.')) return;
-    const newState = createInitialGameState({ isDmMode: state.isDmMode });
+    setMainSection('NEW_GAME');
+    setGameChoicesOpen(false);
+  };
+
+  const handleCreateNewGame = async (setup: NewGameSetupValue) => {
+    if (hasStoredGame && !window.confirm('Начать новую игру? Текущее локальное сохранение будет заменено.')) return false;
+    const previousMapAssetId = state.mapAssetId;
+    const newState = buildNewCampaign(setup);
+    if (setup.mapFile) {
+      const mapAsset = await saveMapAsset(setup.mapFile);
+      newState.mapAssetId = mapAsset.id;
+      newState.mapWidth = mapAsset.width;
+      newState.mapHeight = mapAsset.height;
+    }
     setState(newState);
     setHasStoredGame(true);
     setMainSection('GAME');
     setActiveTab('MAP');
-    setGameChoicesOpen(false);
+    if (previousMapAssetId && previousMapAssetId !== newState.mapAssetId) {
+      await deleteMapAsset(previousMapAssetId).catch(() => undefined);
+    }
+    showToast(`Новая кампания «${newState.guildName}» начата.`);
+    return true;
   };
 
   const handleOpenFileEditor = (kind: FileEditorKind) => {
@@ -568,7 +587,22 @@ export default function App() {
         />
       )}
 
-      {mainSection === 'FILE_EDITOR' && <FileEditorPlaceholder kind={fileEditorKind} onBack={() => setMainSection('HOME')} />}
+      {mainSection === 'FILE_EDITOR' && (
+        <Suspense fallback={<div className="relative z-10 p-10 text-center font-mono text-xs text-emerald-400">Открываем файловый редактор…</div>}>
+          <FileEditorWorkspace kind={fileEditorKind} onBack={() => setMainSection('HOME')} />
+        </Suspense>
+      )}
+
+      {mainSection === 'NEW_GAME' && (
+        <Suspense fallback={<div className="relative z-10 p-10 text-center font-mono text-xs text-emerald-400">Открываем мастер новой игры…</div>}>
+          <NewGameSetup
+            hasStoredGame={hasStoredGame}
+            defaultGuildName={state.guildName}
+            onBack={() => setMainSection('HOME')}
+            onStart={handleCreateNewGame}
+          />
+        </Suspense>
+      )}
 
       {/* Primary game header */}
       {isLiveWorkspace && <header className="border-b border-emerald-500/15 bg-black/90 p-4 sticky top-0 z-[100] backdrop-blur shadow-[0_4px_30px_rgba(0,0,0,0.8)]">

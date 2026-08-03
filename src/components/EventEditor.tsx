@@ -28,6 +28,7 @@ interface EventEditorProps {
   state: GameState;
   updateState: (change: Partial<GameState>) => void;
   showToast: (message: string, isError?: boolean) => void;
+  mode?: 'LIVE' | 'FILE';
 }
 
 const RESOURCE_OPTIONS: { value: MissionResourceKey; label: string }[] = [
@@ -63,7 +64,7 @@ function cloneMission(source: Mission, existingIds: readonly string[]): Mission 
   return copy;
 }
 
-export default function EventEditor({ state, updateState, showToast }: EventEditorProps) {
+export default function EventEditor({ state, updateState, showToast, mode = 'LIVE' }: EventEditorProps) {
   const scenarioMissions = getScenarioMissions(state);
   const [selectedId, setSelectedId] = useState<string | null>(scenarioMissions[0]?.id ?? null);
   const [query, setQuery] = useState('');
@@ -143,10 +144,12 @@ export default function EventEditor({ state, updateState, showToast }: EventEdit
       <div className="rounded-xl border border-emerald-500/20 bg-black/60 p-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500">Редактор сценария</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500">{mode === 'FILE' ? 'Файловый редактор' : 'Текущая кампания'}</p>
             <h2 className="mt-1 text-xl font-bold text-white">События глобальной карты</h2>
             <p className="mt-1 max-w-3xl text-sm text-neutral-500">
-              Здесь задаются дни появления, цепочки условий, этапы, ресурсы и осложнения. Будущие события хранятся в сценарии и появятся на карте автоматически.
+              {mode === 'FILE'
+                ? 'Черновик содержит отдельный набор событий. Он не меняет активную кампанию, пока не будет выбран при создании новой игры.'
+                : 'Здесь задаются дни появления, цепочки условий, этапы, ресурсы и осложнения. Будущие события хранятся в сценарии и появятся на карте автоматически.'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

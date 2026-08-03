@@ -8,6 +8,7 @@ interface AdventurerEditorProps {
   state: GameState;
   updateState: (change: Partial<GameState>) => void;
   showToast: (message: string, isError?: boolean) => void;
+  mode?: 'LIVE' | 'FILE';
 }
 
 const STATUS_LABELS: Record<AdventurerStatus, string> = {
@@ -41,7 +42,7 @@ function createAdventurer(existingIds: readonly string[], clans: GameState['clan
   };
 }
 
-export default function AdventurerEditor({ state, updateState, showToast }: AdventurerEditorProps) {
+export default function AdventurerEditor({ state, updateState, showToast, mode = 'LIVE' }: AdventurerEditorProps) {
   const [selectedId, setSelectedId] = useState<string | null>(state.adventurers[0]?.id ?? null);
   const [query, setQuery] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -97,10 +98,12 @@ export default function AdventurerEditor({ state, updateState, showToast }: Adve
       <div className="rounded-xl border border-emerald-500/20 bg-black/60 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500">Редактор сценария</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-500">{mode === 'FILE' ? 'Файловый редактор' : 'Текущая кампания'}</p>
             <h2 className="mt-1 text-xl font-bold text-white">Список авантюристов</h2>
             <p className="mt-1 max-w-2xl text-sm text-neutral-500">
-              Изменения сохраняются автоматически и сразу используются игрой. Описание видно игрокам только по отдельной кнопке в досье.
+              {mode === 'FILE'
+                ? 'Изменения остаются в черновике этого редактора до скачивания JSON и не затрагивают текущую игру.'
+                : 'Изменения сохраняются автоматически и сразу используются игрой. Описание видно игрокам только по отдельной кнопке в досье.'}
             </p>
           </div>
           <button
