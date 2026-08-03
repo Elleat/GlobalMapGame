@@ -157,7 +157,7 @@ export default function MissionModal({
           {(() => {
             const activeContract = state.contracts.find(c => c.missionId === selectedMissionId);
             if (!activeContract) return null;
-            const customerClan = state.clans.find(c => c.id === activeContract.clanId)?.name || 'Гильдия';
+            const customerClan = state.clans.find(c => c.id === activeContract.clanId)?.name || state.guildName;
             return (
               <div className="bg-[#121212] border border-emerald-500/40 p-4 rounded-md space-y-2 font-mono">
                 <div className="text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center justify-between">

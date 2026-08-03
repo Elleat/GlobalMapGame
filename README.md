@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Глобальная Карта — Гильдия Авантюристов
 
-# Run and deploy your AI Studio app
+Локальное приложение для мета-игры D&D: кланы оформляют контракты, авантюристы выбирают выгодные предложения, Гильдия участвует в жизни мира, а операции автоматически симулируются по этапам.
 
-This contains everything you need to run your app locally.
+## Локальный запуск
 
-View your app in AI Studio: https://ai.studio/apps/4398a9b8-0678-4f46-a02f-34e4e96803a5
+Требуется Node.js 20.19+ или 22.12+.
 
-## Run Locally
+```powershell
+npm install
+npm run dev
+```
 
-**Prerequisites:**  Node.js
+После запуска откройте адрес, показанный Vite в терминале (обычно `http://localhost:3000`). API-ключи и внешние сервисы приложению не нужны.
 
+## Проверка и сборка
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```powershell
+npm run lint
+npm test
+npm run build
+```
+
+Готовая браузерная сборка появится в `dist`. Упаковка этой версии в отдельное Windows-приложение будет выполнена отдельным этапом.
+
+## Данные и настройка
+
+- `src/data/default-clans.json` — стартовые кланы и Гильдия.
+- `src/data/default-adventurers.json` — стартовые NPC-авантюристы.
+- `public/media/GlobalMap.webp` — карта по умолчанию.
+- `public/themes` — темы интерфейса. После добавления CSS-файла выполните `npm run sync-themes` или перезапустите приложение.
+- Главное меню приложения содержит редакторы авантюристов и событий сценария.
+
+Полные правила, формулы и инструкция ГМа: [Правила и руководство Глобальной Карты.md](./Правила%20и%20руководство%20Глобальной%20Карты.md).

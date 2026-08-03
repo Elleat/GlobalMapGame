@@ -1,0 +1,11 @@
+/*
+@theme-name: Dark Wardens
+@theme-description: Исходная чёрно-зелёная тема глобальной карты.
+@theme-version: 1
+*/
+
+:root[data-theme="dark-wardens"] {
+  --contract-line: #10b981;
+  --story-delayed: #f59e0b;
+  color-scheme: dark;
+}

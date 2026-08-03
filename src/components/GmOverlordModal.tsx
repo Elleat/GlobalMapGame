@@ -4,8 +4,9 @@
  */
 
 import React, { useRef, useState } from 'react';
-import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2 } from 'lucide-react';
+import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2, ImagePlus } from 'lucide-react';
 import { GameState, Mission, MissionCheck, MissionResourceKey, MissionType } from '../types';
+import { DEFAULT_GUILD_NAME, DEFAULT_MAP_URL } from '../domain/constants';
 
 interface GmOverlordModalProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface GmOverlordModalProps {
   onCreateCustomMission: (missionData: Partial<Mission>) => void;
   onImportState: (importedState: GameState) => void;
   onResetToDay1: () => void;
+  onSelectMapFile: (file: File) => Promise<void>;
+  onRestoreDefaultMap: () => Promise<void>;
 }
 
 export default function GmOverlordModal({
@@ -28,7 +31,9 @@ export default function GmOverlordModal({
   onHealAll,
   onCreateCustomMission,
   onImportState,
-  onResetToDay1
+  onResetToDay1,
+  onSelectMapFile,
+  onRestoreDefaultMap
 }: GmOverlordModalProps) {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showCreateMissionModal, setShowCreateMissionModal] = useState(false);
@@ -54,6 +59,7 @@ export default function GmOverlordModal({
   const fileEventsRef = useRef<HTMLInputElement>(null);
   const fileAdvsRef = useRef<HTMLInputElement>(null);
   const fileStateRef = useRef<HTMLInputElement>(null);
+  const fileMapRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -149,14 +155,32 @@ export default function GmOverlordModal({
     const day = parseInt((document.getElementById('dm-input-day') as HTMLInputElement)?.value) || state.day;
     const nClans = parseInt((document.getElementById('dm-input-nclans') as HTMLInputElement)?.value) || state.nClans;
     const hCost = parseInt((document.getElementById('dm-input-hcost') as HTMLInputElement)?.value) || state.hCost;
+    const guildName = (document.getElementById('dm-input-guild-name') as HTMLInputElement)?.value.trim() || DEFAULT_GUILD_NAME;
+    const mapUrlChanged = mapUrl !== state.mapBgUrl;
+    const renameGuildReport = (report: NonNullable<GameState['contracts'][number]['simulationReport']>) =>
+      report.context?.clanId === 'clan_guild' || report.clanName === state.guildName
+        ? { ...report, clanName: guildName }
+        : report;
 
     updateState({
       mapBgUrl: mapUrl,
+      mapAssetId: mapUrlChanged ? null : state.mapAssetId,
       mapWidth: width,
       mapHeight: height,
       day,
       nClans,
-      hCost
+      hCost,
+      guildName,
+      guildShortName: guildName,
+      clans: state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan),
+      contracts: state.contracts.map(contract => ({
+        ...contract,
+        simulationReport: contract.simulationReport ? renameGuildReport(contract.simulationReport) : undefined
+      })),
+      history: state.history.map(entry => ({
+        ...entry,
+        reports: entry.reports.map(renameGuildReport)
+      }))
     });
 
     showToast('Параметры ГМа успешно применены!');
@@ -366,6 +390,40 @@ export default function GmOverlordModal({
           <div>
             <h3 className="text-amber-500 font-mono text-xs font-bold uppercase tracking-wider mb-3">🖼️ Фоновая карта и размеры</h3>
             <div className="space-y-4">
+              <div className="rounded-lg border border-emerald-500/15 bg-black/40 p-3">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileMapRef.current?.click()}
+                    className="flex items-center gap-2 rounded border border-emerald-500/30 px-3 py-2 font-mono text-xs text-emerald-400 transition hover:bg-emerald-500/10"
+                  >
+                    <ImagePlus className="h-4 w-4" /> Выбрать изображение на компьютере
+                  </button>
+                  <input
+                    ref={fileMapRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async event => {
+                      const file = event.target.files?.[0];
+                      if (file) await onSelectMapFile(file);
+                      event.target.value = '';
+                    }}
+                  />
+                  {state.mapAssetId && (
+                    <button
+                      type="button"
+                      onClick={onRestoreDefaultMap}
+                      className="rounded border border-neutral-700 px-3 py-2 font-mono text-xs text-neutral-400 transition hover:text-neutral-200"
+                    >
+                      Вернуть GlobalMap.webp
+                    </button>
+                  )}
+                </div>
+                <p className="mt-2 text-[10px] text-neutral-600">
+                  {state.mapAssetId ? 'Используется локальное изображение. Оно хранится в браузере на этом компьютере.' : `Карта по умолчанию: ${DEFAULT_MAP_URL}`}
+                </p>
+              </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-mono uppercase text-neutral-400">URL фонового изображения:</label>
                 <input
@@ -402,6 +460,16 @@ export default function GmOverlordModal({
           {/* Section 2: Global Constants */}
           <div>
             <h3 className="text-amber-500 font-mono text-xs font-bold uppercase tracking-wider mb-3">⚙️ Игровые Константы</h3>
+            <div className="mb-4 flex flex-col gap-1">
+              <label className="text-xs font-mono uppercase text-neutral-400">Название Гильдии:</label>
+              <input
+                type="text"
+                id="dm-input-guild-name"
+                className="w-full bg-black border border-emerald-500/20 text-neutral-200 px-3 py-2 rounded font-mono text-sm focus:border-emerald-500 outline-none"
+                defaultValue={state.guildName}
+              />
+              <span className="text-[10px] text-neutral-600">Название изменится в заголовках, контрактах, рапортах и названии клана Гильдии.</span>
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-mono uppercase text-neutral-400">Текущий День:</label>

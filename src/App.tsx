@@ -22,7 +22,7 @@ import {
   CalendarCog
 } from 'lucide-react';
 
-import { GameState, Clan, Adventurer, Mission, Contract } from './types';
+import { GameState, Clan, Adventurer, Mission, Contract, ThemeDefinition } from './types';
 import {
   DEFAULT_EVENT_TEMPLATES,
   getRandomPointInSpawnPolygon,
@@ -36,6 +36,9 @@ import {
   serializeGameState
 } from './domain/state';
 import { clampRelation } from './domain/economy';
+import { BUILT_IN_THEMES, applyTheme, loadThemeCatalog } from './domain/themes';
+import { deleteMapAsset, loadMapAssetUrl, saveMapAsset } from './domain/mapAssets';
+import { DEFAULT_MAP_URL } from './domain/constants';
 
 import MapTab from './components/MapTab';
 import PhasesTab from './components/PhasesTab';
@@ -44,6 +47,7 @@ import AdventurersTab from './components/AdventurersTab';
 import ClansTab from './components/ClansTab';
 import AdventurerEditor from './components/AdventurerEditor';
 import EventEditor from './components/EventEditor';
+import ThemeSelector from './components/ThemeSelector';
 
 import GmOverlordModal from './components/GmOverlordModal';
 import MissionModal from './components/MissionModal';
@@ -71,6 +75,8 @@ export default function App() {
   const [selectedAdvId, setSelectedAdvId] = useState<string | null>(null);
   const [selectedClanId, setSelectedClanId] = useState<string | null>(null);
   const [storeClanId, setStoreClanId] = useState<string | null>(null);
+  const [themes, setThemes] = useState<ThemeDefinition[]>(BUILT_IN_THEMES);
+  const [runtimeMapUrl, setRuntimeMapUrl] = useState<string | null>(null);
 
   // Custom visual toast alerts
   const [toast, setToast] = useState<{ message: string; isError?: boolean } | null>(null);
@@ -79,6 +85,46 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(state));
   }, [state]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadThemeCatalog().then(catalog => {
+      if (!cancelled) setThemes(catalog);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const selectedTheme = themes.find(theme => theme.id === state.themeId) ?? BUILT_IN_THEMES[0];
+    applyTheme(selectedTheme);
+  }, [state.themeId, themes]);
+
+  useEffect(() => {
+    document.title = `${state.guildName} — Глобальная Карта`;
+  }, [state.guildName]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    if (!state.mapAssetId) {
+      setRuntimeMapUrl(null);
+      return;
+    }
+    loadMapAssetUrl(state.mapAssetId)
+      .then(url => {
+        if (cancelled) {
+          if (url) URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setRuntimeMapUrl(url);
+      })
+      .catch(() => setRuntimeMapUrl(null));
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [state.mapAssetId]);
 
   const showToast = (message: string, isError = false) => {
     setToast({ message, isError });
@@ -89,6 +135,28 @@ export default function App() {
 
   const updateState = (newState: Partial<GameState>) => {
     setState(prev => ({ ...prev, ...newState }));
+  };
+
+  const handleSelectMapFile = async (file: File) => {
+    try {
+      const previousId = state.mapAssetId;
+      const asset = await saveMapAsset(file);
+      updateState({ mapAssetId: asset.id, mapWidth: asset.width, mapHeight: asset.height });
+      if (previousId && previousId !== asset.id) await deleteMapAsset(previousId);
+      showToast(`Карта «${file.name}» сохранена локально (${asset.width}×${asset.height}).`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Не удалось загрузить карту.', true);
+    }
+  };
+
+  const handleRestoreDefaultMap = async () => {
+    try {
+      await deleteMapAsset(state.mapAssetId);
+      updateState({ mapAssetId: null, mapBgUrl: DEFAULT_MAP_URL, mapWidth: 910, mapHeight: 1303 });
+      showToast('Восстановлена карта GlobalMap.webp.');
+    } catch {
+      showToast('Не удалось восстановить карту по умолчанию.', true);
+    }
   };
 
   // Payout of resources and budget override
@@ -138,6 +206,14 @@ export default function App() {
 
   const handleResetToDay1 = () => {
     const newState = createInitialGameState({ isDmMode: state.isDmMode });
+    newState.guildName = state.guildName;
+    newState.guildShortName = state.guildShortName;
+    newState.themeId = state.themeId;
+    newState.mapBgUrl = state.mapBgUrl;
+    newState.mapAssetId = state.mapAssetId;
+    newState.mapWidth = state.mapWidth;
+    newState.mapHeight = state.mapHeight;
+    newState.clans = newState.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: state.guildName } : clan);
 
     setState(newState);
     localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(newState));
@@ -336,7 +412,7 @@ export default function App() {
       });
 
       updateState({ clans: updatedClans });
-      showToast(`🛒 Особый товар "${item}" перевезен в посольство Гильдии.`);
+      showToast(`🛒 Особый товар "${item}" перевезён в посольство «${state.guildName}».`);
       return;
     }
 
@@ -414,6 +490,11 @@ export default function App() {
 
           {/* Quick Stats Ribbon */}
           <div className="flex items-center gap-4 sm:gap-6 font-mono text-xs">
+            <ThemeSelector
+              themes={themes}
+              value={state.themeId}
+              onChange={themeId => updateState({ themeId })}
+            />
             
             <div className="flex items-center gap-2 bg-[#0d0d0d] border border-emerald-500/10 px-3 py-1.5 rounded">
               <Clock className="w-4 h-4 text-emerald-500" />
@@ -524,6 +605,7 @@ export default function App() {
               updateState({ selectedMissionId: id });
               setIsMissionOpen(true);
             }}
+            mapDisplayUrl={runtimeMapUrl}
           />
         )}
 
@@ -594,6 +676,8 @@ export default function App() {
         onCreateCustomMission={handleCreateCustomMission}
         onImportState={(importedState) => updateState(importedState)}
         onResetToDay1={handleResetToDay1}
+        onSelectMapFile={handleSelectMapFile}
+        onRestoreDefaultMap={handleRestoreDefaultMap}
       />
 
       {/* Mission Scouting / Contract Binder Modal */}

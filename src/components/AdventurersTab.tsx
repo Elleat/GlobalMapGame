@@ -198,7 +198,7 @@ export default function AdventurersTab({
               Персонажи Игроков (Игровые Герои) — Ручное Управление ({players.length})
             </h3>
             <span className="text-[10px] text-neutral-400 font-mono italic">
-              *ИИ Гильдии никогда не распределяет данных героев автоматически!
+              *{state.guildName} никогда не распределяет этих героев автоматически!
             </span>
           </div>
 
@@ -233,7 +233,7 @@ export default function AdventurersTab({
         <div className="bg-[#0d0d0d] border border-emerald-500/15 rounded-lg overflow-hidden shadow-md">
           <div className="px-5 py-3 border-b border-emerald-500/10 bg-black/40">
             <h3 className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
-              Приключенцы Ветераны и Рекруты Гильдии — Авто-Распределение ({npcs.length})
+              NPC-авантюристы «{state.guildName}» — авто-распределение ({npcs.length})
             </h3>
           </div>
 

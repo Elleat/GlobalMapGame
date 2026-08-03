@@ -15,13 +15,15 @@ interface MapTabProps {
   updateState: (newState: Partial<GameState>) => void;
   showToast: (msg: string, isError?: boolean) => void;
   onSelectMission: (id: string) => void;
+  mapDisplayUrl?: string | null;
 }
 
 export default function MapTab({
   state,
   updateState,
   showToast,
-  onSelectMission
+  onSelectMission,
+  mapDisplayUrl
 }: MapTabProps) {
   const [zoom, setZoom] = useState(60);
   const [rotate, setRotate] = useState(90);
@@ -433,14 +435,14 @@ export default function MapTab({
               {/* Map Image Backdrop */}
               <img
                 ref={mapImageRef}
-                src={state.mapBgUrl || DEFAULT_MAP_URL}
+                src={mapDisplayUrl || state.mapBgUrl || DEFAULT_MAP_URL}
                 alt="Поле Боя"
                 onClick={handleMapClick}
                 onError={(e) => {
                   const target = e.currentTarget;
                   if (!target.src.endsWith(DEFAULT_MAP_URL)) {
                     target.src = DEFAULT_MAP_URL;
-                    updateState({ mapBgUrl: DEFAULT_MAP_URL });
+                    if (!mapDisplayUrl) updateState({ mapBgUrl: DEFAULT_MAP_URL, mapAssetId: null });
                   }
                 }}
                 className="w-full h-full object-cover rounded pointer-events-auto"
@@ -525,7 +527,7 @@ export default function MapTab({
                     onClick={(e) => {
                       e.stopPropagation();
                       if (draggedDistance > 5) return;
-                      showToast('🏰 Штаб-квартира Гильдии Приключенцев' + (state.isDmMode ? ' (ГМ: можно перетащить)' : ''));
+                      showToast(`🏰 Штаб-квартира «${state.guildName}»` + (state.isDmMode ? ' (ГМ: можно перетащить)' : ''));
                     }}
                     className="no-pan absolute w-12 h-12 cursor-pointer flex items-center justify-center group"
                     style={{
@@ -539,7 +541,7 @@ export default function MapTab({
                     <div className={`relative w-10 h-10 rounded-full border-2 border-amber-400 bg-[#121212] flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.5)] transition-all group-hover:scale-110 ${state.isDmMode ? 'cursor-move' : 'cursor-pointer'}`}>
                       <Shield className="w-5 h-5 text-amber-400 fill-amber-500/20" />
                       <span className="absolute bottom-11 bg-black border border-amber-500 text-amber-400 text-[10px] font-mono px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                        🏰 Штаб Гильдии {state.isDmMode && '(GM: Перетащите)'}
+                        🏰 Штаб «{state.guildName}» {state.isDmMode && '(ГМ: перетащите)'}
                       </span>
                     </div>
                   </div>

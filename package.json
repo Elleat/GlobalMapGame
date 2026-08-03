@@ -1,30 +1,28 @@
 {
-  "name": "react-example",
+  "name": "global-map-adventurers-guild",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.5.0",
   "type": "module",
   "scripts": {
+    "predev": "npm run sync-themes",
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "prebuild": "npm run sync-themes",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "node scripts/clean.mjs",
     "lint": "tsc --noEmit",
-    "test": "tsx --test src/domain/economy.test.ts src/domain/simulation.test.ts src/domain/scenarioEditor.test.ts"
+    "test": "tsx --test src/domain/economy.test.ts src/domain/simulation.test.ts src/domain/scenarioEditor.test.ts",
+    "sync-themes": "node scripts/sync-themes.mjs"
   },
   "dependencies": {
-    "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "vite": "^6.2.3",
-    "express": "^4.21.2",
-    "dotenv": "^17.2.3",
-    "motion": "^12.23.24"
+    "vite": "^6.2.3"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

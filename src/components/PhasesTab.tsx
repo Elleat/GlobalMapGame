@@ -117,7 +117,7 @@ export default function PhasesTab({
   const handleConfirmContract = (e: React.FormEvent) => {
     e.preventDefault();
     if (state.isGuildActionsCompleted) {
-      showToast('Действия Гильдии уже завершены. Новые контракты можно оформить на следующий день.', true);
+      showToast(`Действия «${state.guildName}» уже завершены. Новые контракты можно оформить на следующий день.`, true);
       return;
     }
     if (!selectedMissionId || !selectedClanId) {
@@ -227,7 +227,7 @@ export default function PhasesTab({
 
   const handleUnassignContract = (missionId: string) => {
     if (state.isGuildActionsCompleted) {
-      showToast('После действий Гильдии состав контрактов зафиксирован до конца дня.', true);
+      showToast(`После действий «${state.guildName}» состав контрактов зафиксирован до конца дня.`, true);
       return;
     }
     const contract = state.contracts.find(c => c.missionId === missionId);
@@ -268,7 +268,7 @@ export default function PhasesTab({
   const handleToggleAdventurer = (contract: Contract, advId: string) => {
     // Bug 4 Fix: restrict manual party editing strictly to GM mode!
     if (!state.isDmMode) {
-      showToast('⚠️ Ошибка: Только Гейм-Мастер (GM) может напрямую собирать отряды вручную. Используйте автоматическое распределение Гильдии!', true);
+      showToast(`⚠️ Только ГМ может напрямую собирать отряды вручную. Используйте автоматическое распределение «${state.guildName}».`, true);
       return;
     }
 
@@ -563,7 +563,7 @@ export default function PhasesTab({
   // Phase 3: Autonomous Guild Actions (Honest resource spending/buying)
   const handleGuildActionsPhase3 = () => {
     if (state.isGuildActionsCompleted) {
-      showToast('Действия Гильдии в этом дне уже завершены.', true);
+      showToast(`Действия «${state.guildName}» в этом дне уже завершены.`, true);
       return;
     }
 
@@ -1422,13 +1422,13 @@ export default function PhasesTab({
                     Подготовленные к симуляции контракты ({state.contracts.filter(c => c.confirmed).length})
                   </h4>
                   <span className="text-neutral-500 font-mono text-[10px] uppercase">
-                    Игроки: {state.contracts.filter(c => c.confirmed && c.clanId !== 'clan_guild').length} | Гильдия: {state.contracts.filter(c => c.confirmed && c.clanId === 'clan_guild').length}
+                    Игроки: {state.contracts.filter(c => c.confirmed && c.clanId !== 'clan_guild').length} | {state.guildName}: {state.contracts.filter(c => c.confirmed && c.clanId === 'clan_guild').length}
                   </span>
                 </div>
 
                 {state.contracts.filter(c => c.confirmed).length === 0 ? (
                   <div className="text-center py-6 text-neutral-500 text-xs font-mono">
-                    Нет активных контрактов. Запустите Действия Гильдии (ИИ) или вернитесь на предыдущие фазы.
+                    Нет активных контрактов. Запустите действия «{state.guildName}» или вернитесь на предыдущие фазы.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1442,7 +1442,7 @@ export default function PhasesTab({
                             <div>
                               <strong className="text-neutral-200 text-sm leading-snug block">{c.title}</strong>
                               <span className={`text-[10px] font-bold uppercase ${isGuild ? 'text-amber-500' : 'text-emerald-400'}`}>
-                                {isGuild ? '🏰 Гильдия (ИИ)' : `🛡️ Клан: ${clan?.name}`}
+                                {isGuild ? `🏰 ${state.guildName}` : `🛡️ Клан: ${clan?.name}`}
                               </span>
                             </div>
                             <span className="text-[10px] bg-black/40 px-2 py-0.5 rounded border border-neutral-800 text-neutral-400 font-bold">
@@ -1827,7 +1827,7 @@ export default function PhasesTab({
                       <span className="text-[10px] font-mono text-neutral-500 uppercase mt-0.5 block">{exp.missionRegion}</span>
                     </div>
                     <p className="text-xs font-mono text-neutral-400 leading-relaxed italic mt-4 pl-3 border-l-2 border-rose-500/20">
-                      Донесение осталось без внимания и затерялось в тумане войны со временем. Кланы разочарованы бездействием Гильдии.
+                      Донесение осталось без внимания и затерялось в тумане войны. Кланы недовольны бездействием «{state.guildName}».
                     </p>
                   </div>
                 ))}

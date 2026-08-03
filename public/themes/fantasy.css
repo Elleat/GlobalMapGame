@@ -1,0 +1,65 @@
+/*
+@theme-name: Fantasy
+@theme-description: Тёплая фэнтезийная тема с золотом, бронзой и пергаментом.
+@theme-version: 1
+*/
+
+:root[data-theme="fantasy"] {
+  --contract-line: #d7a843;
+  --story-delayed: #b75f3d;
+  color-scheme: dark;
+}
+
+:root[data-theme="fantasy"] body {
+  background: #120e0a;
+  color: #e8dcc0;
+  font-family: Georgia, "Times New Roman", serif;
+  background-image:
+    radial-gradient(circle at 18% 8%, rgba(155, 105, 45, 0.12), transparent 28rem),
+    linear-gradient(rgba(40, 29, 18, 0.58), rgba(18, 14, 10, 0.94));
+}
+
+:root[data-theme="fantasy"] [class*="font-mono"] {
+  font-family: Georgia, "Times New Roman", serif !important;
+  letter-spacing: 0.045em;
+}
+
+:root[data-theme="fantasy"] [class~="bg-black"],
+:root[data-theme="fantasy"] [class*="bg-[#0"],
+:root[data-theme="fantasy"] [class*="bg-[#1"] {
+  background-color: #1b140d !important;
+}
+
+:root[data-theme="fantasy"] [class*="text-emerald-"] {
+  color: #e2b85d !important;
+}
+
+:root[data-theme="fantasy"] [class~="bg-emerald-500"],
+:root[data-theme="fantasy"] [class~="bg-emerald-400"] {
+  background-color: #c79338 !important;
+}
+
+:root[data-theme="fantasy"] [class*="bg-emerald-"][class*="/"] {
+  background-color: rgba(156, 103, 37, 0.18) !important;
+}
+
+:root[data-theme="fantasy"] [class*="border-emerald-"] {
+  border-color: rgba(210, 163, 76, 0.44) !important;
+}
+
+:root[data-theme="fantasy"] [class*="text-neutral-2"],
+:root[data-theme="fantasy"] [class*="text-neutral-3"] {
+  color: #e8dcc0 !important;
+}
+
+:root[data-theme="fantasy"] [class*="text-neutral-4"],
+:root[data-theme="fantasy"] [class*="text-neutral-5"] {
+  color: #ae9b78 !important;
+}
+
+:root[data-theme="fantasy"] input,
+:root[data-theme="fantasy"] select,
+:root[data-theme="fantasy"] textarea {
+  border-color: rgba(210, 163, 76, 0.32) !important;
+  background-color: #171009 !important;
+}
