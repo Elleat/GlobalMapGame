@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useState } from 'react';
-import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2, ImagePlus } from 'lucide-react';
+import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2, ImagePlus, FileArchive } from 'lucide-react';
 import { GameState, Mission, MissionCheck, MissionResourceKey, MissionType } from '../types';
 import { DEFAULT_GUILD_NAME, DEFAULT_MAP_URL } from '../domain/constants';
 
@@ -20,6 +20,8 @@ interface GmOverlordModalProps {
   onResetToDay1: () => void;
   onSelectMapFile: (file: File) => Promise<void>;
   onRestoreDefaultMap: () => Promise<void>;
+  onExportScenario: () => Promise<void>;
+  onImportScenario: (file: File) => Promise<void>;
 }
 
 export default function GmOverlordModal({
@@ -33,7 +35,9 @@ export default function GmOverlordModal({
   onImportState,
   onResetToDay1,
   onSelectMapFile,
-  onRestoreDefaultMap
+  onRestoreDefaultMap,
+  onExportScenario,
+  onImportScenario
 }: GmOverlordModalProps) {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showCreateMissionModal, setShowCreateMissionModal] = useState(false);
@@ -60,6 +64,7 @@ export default function GmOverlordModal({
   const fileAdvsRef = useRef<HTMLInputElement>(null);
   const fileStateRef = useRef<HTMLInputElement>(null);
   const fileMapRef = useRef<HTMLInputElement>(null);
+  const fileScenarioRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -358,7 +363,7 @@ export default function GmOverlordModal({
           {/* Saves Management Integration */}
           <div className="bg-[#121212] border border-emerald-500/20 p-4 rounded-lg space-y-3">
             <h3 className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">💾 Сохранение и Загрузка Сессии</h3>
-            <div className="flex gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => fileStateRef.current?.click()}
@@ -384,6 +389,34 @@ export default function GmOverlordModal({
                 <span>Скачать Сохранение (.json)</span>
               </button>
             </div>
+            <div className="grid gap-3 border-t border-neutral-800 pt-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={onExportScenario}
+                className="flex items-center justify-center gap-2 rounded border border-amber-500/30 bg-amber-500/5 px-4 py-2.5 font-mono text-xs text-amber-400 transition hover:bg-amber-500/10"
+              >
+                <FileArchive className="h-4 w-4" /> Скачать сценарий с картой (.globalmap)
+              </button>
+              <button
+                type="button"
+                onClick={() => fileScenarioRef.current?.click()}
+                className="flex items-center justify-center gap-2 rounded border border-amber-500/30 px-4 py-2.5 font-mono text-xs text-amber-400 transition hover:bg-amber-500/10"
+              >
+                <Upload className="h-4 w-4" /> Открыть сценарий — новая кампания
+              </button>
+              <input
+                ref={fileScenarioRef}
+                type="file"
+                accept=".globalmap,application/json"
+                className="hidden"
+                onChange={async event => {
+                  const file = event.target.files?.[0];
+                  if (file) await onImportScenario(file);
+                  event.target.value = '';
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-neutral-600">Файл .globalmap содержит исходный сценарий, кланы, авантюристов и изображение карты. Открытие начинает новую кампанию без старых рапортов.</p>
           </div>
 
           {/* Section 1: Visual Theme & Resolution */}

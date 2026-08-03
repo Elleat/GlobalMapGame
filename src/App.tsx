@@ -39,6 +39,7 @@ import { clampRelation } from './domain/economy';
 import { BUILT_IN_THEMES, applyTheme, loadThemeCatalog } from './domain/themes';
 import { deleteMapAsset, loadMapAssetUrl, saveMapAsset } from './domain/mapAssets';
 import { DEFAULT_MAP_URL } from './domain/constants';
+import { createScenarioBundle, importScenarioBundle } from './domain/scenarioBundle';
 
 import MapTab from './components/MapTab';
 import PhasesTab from './components/PhasesTab';
@@ -156,6 +157,40 @@ export default function App() {
       showToast('Восстановлена карта GlobalMap.webp.');
     } catch {
       showToast('Не удалось восстановить карту по умолчанию.', true);
+    }
+  };
+
+  const handleExportScenario = async () => {
+    try {
+      const bundle = await createScenarioBundle(state);
+      const url = URL.createObjectURL(bundle.blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = bundle.fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      showToast(`Сценарий сохранён в файл «${bundle.fileName}».`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Не удалось сохранить сценарий.', true);
+    }
+  };
+
+  const handleImportScenario = async (file: File) => {
+    try {
+      const previousMapAssetId = state.mapAssetId;
+      const imported = await importScenarioBundle(file, state.isDmMode);
+      setState(imported);
+      if (previousMapAssetId && previousMapAssetId !== imported.mapAssetId) {
+        await deleteMapAsset(previousMapAssetId);
+      }
+      setMainSection('GAME');
+      setActiveTab('MAP');
+      setIsGmOpen(false);
+      showToast(`Сценарий «${file.name}» открыт. Начат день 1.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Не удалось открыть сценарий.', true);
     }
   };
 
@@ -494,6 +529,10 @@ export default function App() {
               themes={themes}
               value={state.themeId}
               onChange={themeId => updateState({ themeId })}
+              onRefresh={() => loadThemeCatalog().then(catalog => {
+                setThemes(catalog);
+                showToast(`Список тем обновлён: ${catalog.length}.`);
+              })}
             />
             
             <div className="flex items-center gap-2 bg-[#0d0d0d] border border-emerald-500/10 px-3 py-1.5 rounded">
@@ -678,6 +717,8 @@ export default function App() {
         onResetToDay1={handleResetToDay1}
         onSelectMapFile={handleSelectMapFile}
         onRestoreDefaultMap={handleRestoreDefaultMap}
+        onExportScenario={handleExportScenario}
+        onImportScenario={handleImportScenario}
       />
 
       {/* Mission Scouting / Contract Binder Modal */}

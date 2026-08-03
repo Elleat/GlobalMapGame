@@ -31,7 +31,12 @@ function getImageDimensions(blob: Blob): Promise<{ width: number; height: number
 
 export async function saveMapAsset(file: File): Promise<{ id: string; width: number; height: number }> {
   if (!file.type.startsWith('image/')) throw new Error('Для карты необходимо выбрать изображение.');
-  const dimensions = await getImageDimensions(file);
+  return saveMapBlob(file);
+}
+
+export async function saveMapBlob(blob: Blob): Promise<{ id: string; width: number; height: number }> {
+  if (!blob.type.startsWith('image/')) throw new Error('Данные карты не являются изображением.');
+  const dimensions = await getImageDimensions(blob);
   const database = await openDatabase();
   const id = typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
@@ -39,7 +44,7 @@ export async function saveMapAsset(file: File): Promise<{ id: string; width: num
 
   await new Promise<void>((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, 'readwrite');
-    transaction.objectStore(STORE_NAME).put(file, id);
+    transaction.objectStore(STORE_NAME).put(blob, id);
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error ?? new Error('Не удалось сохранить карту.'));
   });
@@ -48,6 +53,11 @@ export async function saveMapAsset(file: File): Promise<{ id: string; width: num
 }
 
 export async function loadMapAssetUrl(id: string): Promise<string | null> {
+  const blob = await loadMapAssetBlob(id);
+  return blob ? URL.createObjectURL(blob) : null;
+}
+
+export async function loadMapAssetBlob(id: string): Promise<Blob | null> {
   const database = await openDatabase();
   const blob = await new Promise<Blob | undefined>((resolve, reject) => {
     const request = database.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME).get(id);
@@ -55,7 +65,7 @@ export async function loadMapAssetUrl(id: string): Promise<string | null> {
     request.onerror = () => reject(request.error ?? new Error('Не удалось загрузить карту.'));
   });
   database.close();
-  return blob ? URL.createObjectURL(blob) : null;
+  return blob ?? null;
 }
 
 export async function deleteMapAsset(id: string | null | undefined): Promise<void> {
