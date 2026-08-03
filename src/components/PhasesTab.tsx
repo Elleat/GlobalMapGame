@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FileText, Users, Play, CheckCircle, XCircle, ArrowRight, Shield, AlertTriangle, Coins, RefreshCw, Trash2, UserPlus } from 'lucide-react';
-import { GameState, Contract, Mission, Clan, Adventurer, SimulationReport } from '../types';
+import { GameState, Contract, Mission, Clan, Adventurer, SimulationReport, BasicResourceKey } from '../types';
 import {
   getContractTargetPartySize,
   getMaxContractLevelForClan,
@@ -16,6 +16,14 @@ import {
   getTypeRu,
   generateMissionsForDay
 } from '../utils';
+import {
+  decrementMissionLifespan,
+  getMissionUrgency,
+  isBasicResource,
+  isMissionExpired,
+  willMissionExpireAfterDay
+} from '../domain/missions';
+import { getDefaultContractPayment } from '../domain/economy';
 
 interface PhasesTabProps {
   state: GameState;
@@ -36,8 +44,8 @@ export default function PhasesTab({
   const [selectedClanId, setSelectedClanId] = useState('');
   const [contractLevel, setContractLevel] = useState(1);
   const [maxPartySize, setMaxPartySize] = useState(5);
-  const [attachedResources, setAttachedResources] = useState<string[]>([]);
-  const [paymentAmount, setPaymentAmount] = useState(state.hCost * 2);
+  const [attachedResources, setAttachedResources] = useState<BasicResourceKey[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState(getDefaultContractPayment(1, state.hCost));
   const [editingMissionId, setEditingMissionId] = useState<string | null>(null);
   const [editingReportData, setEditingReportData] = useState<Partial<SimulationReport> | null>(null);
 
@@ -68,18 +76,18 @@ export default function PhasesTab({
       // Suggest level based on DC
       const suggestedLvl = Math.max(1, Math.min(5, Math.ceil(m.dc / 4)));
       setContractLevel(suggestedLvl);
-      setPaymentAmount(suggestedLvl * state.hCost * 2);
+      setPaymentAmount(getDefaultContractPayment(suggestedLvl, state.hCost));
     }
   };
 
   // Handle level change in Phase 1
   const handleLevelChange = (lvl: number) => {
     setContractLevel(lvl);
-    setPaymentAmount(lvl * state.hCost * 2);
+    setPaymentAmount(getDefaultContractPayment(lvl, state.hCost));
   };
 
   // Toggle resource attachment check in Phase 1
-  const handleToggleResource = (resType: string) => {
+  const handleToggleResource = (resType: BasicResourceKey) => {
     if (attachedResources.includes(resType)) {
       setAttachedResources(attachedResources.filter(r => r !== resType));
     } else {
@@ -522,7 +530,7 @@ export default function PhasesTab({
       const uncontractedMissions = updatedMissions.filter(m => !contractedMissionIds.has(m.id));
 
       // Sort uncontracted missions by urgency (lifespan ascending)
-      const urgentMissions = [...uncontractedMissions].sort((a, b) => a.lifespan - b.lifespan);
+      const urgentMissions = [...uncontractedMissions].sort((a, b) => getMissionUrgency(a) - getMissionUrgency(b));
 
       // Select top n missions
       const selectedMissionsForGuild = urgentMissions.slice(0, n);
@@ -562,7 +570,7 @@ export default function PhasesTab({
           return mi;
         });
 
-        const attachedResources: string[] = [];
+        const attachedResources: BasicResourceKey[] = [];
 
         if (m.type === 'DUMMY') {
           // Dummy mission requires no resources
@@ -574,7 +582,7 @@ export default function PhasesTab({
 
           let reqResourcesList = checksList
             .map(ch => ch.reqResource)
-            .filter(r => r && r !== 'None');
+            .filter(isBasicResource);
 
           if (reqResourcesList.length === 0) {
             reqResourcesList.push('Supplies');
@@ -707,7 +715,7 @@ export default function PhasesTab({
       const uncontractedMissions = updatedMissions.filter(m => !contractedMissionIds.has(m.id));
       
       // Sort uncontracted missions by urgency (lifespan ascending)
-      const urgentMissions = [...uncontractedMissions].sort((a, b) => a.lifespan - b.lifespan);
+      const urgentMissions = [...uncontractedMissions].sort((a, b) => getMissionUrgency(a) - getMissionUrgency(b));
       
       // Select top n missions
       const selectedMissionsForGuild = urgentMissions.slice(0, n);
@@ -741,7 +749,7 @@ export default function PhasesTab({
 
         const chosenAdv = availableNPCs.shift();
         const contractLvl = chosenAdv ? chosenAdv.level : 1;
-        const attachedResources: string[] = [];
+        const attachedResources: BasicResourceKey[] = [];
 
         if (m.type === 'DUMMY') {
           // Dummy mission requires no resources
@@ -753,7 +761,7 @@ export default function PhasesTab({
 
           let reqResourcesList = checksList
             .map(ch => ch.reqResource)
-            .filter(r => r && r !== 'None');
+            .filter(isBasicResource);
 
           if (reqResourcesList.length === 0) {
             reqResourcesList.push('Supplies');
@@ -960,17 +968,17 @@ export default function PhasesTab({
       let goldReward = mission.goldReward !== undefined ? mission.goldReward : (c.paymentAmount || 100);
 
       if (isSuccess) {
-        // Success: reward adventurers with reputation and XP
+        // Success: reward adventurers with relations and XP
         squad.forEach(adv => {
           adv.successfulMissions += 1;
           adv.totalMissions += 1;
           
-          // Increment reputation with customer clan
+          // Increment relations with customer clan
           if (c.clanId) {
-            adv.reputation[c.clanId] = (adv.reputation[c.clanId] || 0) + 1;
+            adv.relations[c.clanId] = (adv.relations[c.clanId] || 0) + 1;
           }
 
-          // Level up logic (reputation check or XP milestone)
+          // Level up logic (XP milestone)
           const lvlUpNeeded = adv.level === 1 ? 1 : adv.level === 2 ? 3 : adv.level === 3 ? 6 : adv.level === 4 ? 10 : 999;
           if (adv.successfulMissions >= lvlUpNeeded && adv.level < 5) {
             adv.level += 1;
@@ -1103,7 +1111,7 @@ export default function PhasesTab({
     // Check for expired unconfirmed missions (lifespan <= 1)
     updatedMissions.forEach(m => {
       const isAssigned = simulatedContracts.some(c => c.missionId === m.id && c.confirmed);
-      if (!isAssigned && m.lifespan <= 1) {
+      if (!isAssigned && willMissionExpireAfterDay(m)) {
         dayLogs.push(`⏳ [ПРОСРОЧЕНО] Донесение "${m.title}" в регионе ${m.region} осталось без внимания и бесследно исчезло.`);
         reports.push({
           isSuccess: false,
@@ -1158,7 +1166,7 @@ export default function PhasesTab({
           return false; // Successful contract completes
         }
         const m = state.missions.find(mi => mi.id === c.missionId);
-        if (!m || m.lifespan <= 1) {
+        if (!m || willMissionExpireAfterDay(m)) {
           return false; // Mission deleted or expired
         }
         return true;
@@ -1231,8 +1239,8 @@ export default function PhasesTab({
 
     const nextDayMissions = state.missions
       .filter(m => !simulatedMissionIds.has(m.id))
-      .map(m => ({ ...m, lifespan: m.lifespan - 1 }))
-      .filter(m => m.lifespan > 0);
+      .map(decrementMissionLifespan)
+      .filter(m => !isMissionExpired(m));
 
     // 1. Process Quest Chain Unlocks:
     const unlockedMissionsToSpawn: Mission[] = [];
@@ -1384,7 +1392,7 @@ export default function PhasesTab({
                             </div>
                             <div className="flex justify-between items-center text-[9px] text-neutral-500 uppercase mt-1">
                               <span>📍 {m.region}</span>
-                              <span className="text-rose-500 font-bold">⏳ {m.lifespan}дн</span>
+                              <span className="text-rose-500 font-bold">⏳ {m.lifespan === null ? 'Без срока' : `${m.lifespan}дн`}</span>
                             </div>
                           </div>
                         );
@@ -1406,7 +1414,7 @@ export default function PhasesTab({
                             const maxLvl = getMaxContractLevelForClan(selectedClan);
                             if (contractLevel > maxLvl) {
                               setContractLevel(maxLvl);
-                              setPaymentAmount(maxLvl * state.hCost * 2);
+                              setPaymentAmount(getDefaultContractPayment(maxLvl, state.hCost));
                             }
                           }
                         }}
@@ -1565,7 +1573,7 @@ export default function PhasesTab({
                   </label>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {['Supplies', 'Equipment', 'Intelligence', 'Alchemy'].map(r => {
+                    {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as BasicResourceKey[]).map(r => {
                       const isAttached = attachedResources.includes(r);
                       const selectedClan = playableClans.find(c => c.id === selectedClanId);
                       const resourceCount = selectedClan ? (selectedClan.resources[r] || 0) : 0;

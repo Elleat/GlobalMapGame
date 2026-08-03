@@ -6,6 +6,7 @@
 import React from 'react';
 import { X, Calendar, Compass, Search, HelpCircle, Shield, AlertTriangle } from 'lucide-react';
 import { Mission, Clan, GameState } from '../types';
+import { willMissionExpireAfterDay } from '../domain/missions';
 import { getResourceNameRu, getTypeRu } from '../utils';
 
 interface MissionModalProps {
@@ -32,7 +33,7 @@ export default function MissionModal({
   const m = state.missions.find(x => x.id === selectedMissionId);
   if (!m) return null;
 
-  const isUrgent = m.lifespan <= 1;
+  const isUrgent = willMissionExpireAfterDay(m);
   const isRevealed = state.isDmMode || m.intelRevealed;
 
   // Find clans with at least 1 intelligence
@@ -67,7 +68,7 @@ export default function MissionModal({
           <div className="flex gap-2">
             <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${isUrgent ? 'bg-rose-950/35 border border-rose-500 text-rose-400 animate-pulse' : 'bg-emerald-950/35 border border-emerald-500/40 text-emerald-400'}`}>
               <Calendar className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
-              Осталось дней: {m.lifespan}
+              {m.lifespan === null ? 'Без срока' : `Осталось дней: ${m.lifespan}`}
             </span>
             <span className="px-2 py-0.5 bg-[#161616] border border-neutral-700 rounded text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
               Регион: {m.region}

@@ -1,7 +1,22 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * Domain model for the Global Map game.
+ *
+ * UI components import the model from this module, while rules and state
+ * transitions live in src/domain. Keeping the model independent from React
+ * is important for tests and the future Electron application.
  */
+
+export const GAME_STATE_VERSION = 2;
+
+export const BASIC_RESOURCE_KEYS = [
+  'Supplies',
+  'Equipment',
+  'Intelligence',
+  'Alchemy'
+] as const;
+
+export type BasicResourceKey = typeof BASIC_RESOURCE_KEYS[number];
+export type MissionResourceKey = BasicResourceKey | 'None';
 
 export interface Resources {
   Supplies: number;
@@ -16,11 +31,12 @@ export interface Resources {
 export interface Clan {
   id: string;
   name: string;
-  trustLevel: number; // 1, 2, or 3
+  trustLevel: number;
   gold: number;
   resources: Resources;
   freeResourceBudget?: number;
-  freeSuppliesBudget?: number; // legacy fallback
+  freeSuppliesBudget?: number;
+  description?: string;
 }
 
 export type AdventurerStatus = 'READY' | 'WOUNDED' | 'ON_MISSION' | 'DEAD';
@@ -29,34 +45,50 @@ export interface Adventurer {
   id: string;
   name: string;
   class: string;
+  description?: string;
   level: number;
   hp: number;
   maxHp: number;
   status: AdventurerStatus;
   successfulMissions: number;
   totalMissions: number;
-  reputation: Record<string, number>; // clanId -> reputation level
+  /** clanId -> relation score from 0 to 10 */
+  relations: Record<string, number>;
   isPlayer?: boolean;
   woundedOnDay?: number;
 }
 
 export type MissionType = 'STORY' | 'OPERATION' | 'DUMMY';
+export type PrerequisiteMode = 'ALL' | 'ANY';
+export type StoryMissionStatus = 'AVAILABLE' | 'AWAITING_REPORT' | 'RESOLVED';
 
 export interface MissionCheck {
-  reqResource?: string;
+  id?: string;
+  reqResource?: MissionResourceKey;
   dc: number;
   requiredSpecialItem?: string;
+  label?: string;
+}
+
+export interface ComplicationSettings {
+  enabled: boolean;
+  /** Independent probability for every possible insertion point, 0..1. */
+  chancePerSlot: number;
+  /** A value of 12 means DC = 12 + the number of regular checks. */
+  baseDc: number;
+  allowMultiple: boolean;
 }
 
 export interface Mission {
   id: string;
   title: string;
   desc: string;
-  reqResource: string;
+  reqResource: MissionResourceKey;
   dc: number;
   type: MissionType;
-  lifespan: number;
-  maxLifespan: number;
+  /** null means the mission never expires. */
+  lifespan: number | null;
+  maxLifespan: number | null;
   x: number;
   y: number;
   region: string;
@@ -69,7 +101,79 @@ export interface Mission {
   checks?: MissionCheck[];
   requiredSpecialItem?: string;
   rewardSpecialItems?: string[];
+  /** Legacy outgoing links retained while scenarios are moved to prerequisites. */
   unlocksMissionIds?: string[];
+  prerequisiteMissionIds?: string[];
+  prerequisiteMode?: PrerequisiteMode;
+  complications?: Partial<ComplicationSettings>;
+  storyStatus?: StoryMissionStatus;
+  storyAcceptedDay?: number;
+  storyClanId?: string | null;
+  suggestedSquadAdvIds?: string[];
+}
+
+export interface CheckResolution {
+  id: string;
+  kind: 'STAGE' | 'COMPLICATION' | 'RETREAT';
+  position: number;
+  reqResource: MissionResourceKey;
+  dc: number;
+  roll: number | null;
+  partyBonus: number;
+  total: number | null;
+  usedResource?: BasicResourceKey;
+  isSuccess: boolean;
+  damage: number;
+}
+
+export interface ParticipantOutcome {
+  adventurerId: string;
+  name: string;
+  hpBefore: number;
+  hpAfter: number;
+  statusBefore: AdventurerStatus;
+  statusAfter: AdventurerStatus;
+  survived: boolean;
+  relationDelta: number;
+  successfulMissionsDelta: number;
+  totalMissionsDelta: number;
+}
+
+export interface RetreatResolution {
+  wasTriggered: boolean;
+  reason?: 'HERO_DOWN' | 'HALF_PARTY_WOUNDED';
+  usedSupplies: boolean;
+  roll: number | null;
+  bonus: number;
+  total: number | null;
+  isSuccess: boolean;
+  extraDamage: number;
+  deadAdventurerIds: string[];
+}
+
+export interface ResourceLedger {
+  attached: BasicResourceKey[];
+  used: BasicResourceKey[];
+  returned: BasicResourceKey[];
+  lost: BasicResourceKey[];
+}
+
+export interface RelationChange {
+  adventurerId: string;
+  clanId: string;
+  before: number;
+  after: number;
+  reason: 'FULL_PREPARATION_SUCCESS' | 'NO_PREPARATION';
+}
+
+export interface SimulationEffectLedger {
+  participantOutcomes: ParticipantOutcome[];
+  relationChanges: RelationChange[];
+  resourceLedger: ResourceLedger;
+  guildGoldDelta: number;
+  clanGoldDeltas: Record<string, number>;
+  awardedSpecialItems: string[];
+  unlockedMissionIds: string[];
 }
 
 export interface SimulationReport {
@@ -92,6 +196,36 @@ export interface SimulationReport {
   missionId: string;
   isExpired?: boolean;
   checkResults?: string[];
+  resolutions?: CheckResolution[];
+  retreat?: RetreatResolution;
+  effects?: SimulationEffectLedger;
+  wasManuallyResolved?: boolean;
+  baseObjectiveCompleted?: boolean;
+}
+
+export interface ContractCandidateDecision {
+  contractMissionId: string;
+  eligible: boolean;
+  perceivedValue: number;
+  relationBonus: number;
+  offeredShare: number;
+  reason?: string;
+}
+
+export interface AdventurerDistributionDecision {
+  adventurerId: string;
+  adventurerName: string;
+  selectedMissionId: string | null;
+  candidates: ContractCandidateDecision[];
+}
+
+export interface DistributionReport {
+  generatedAt: string;
+  availableAdventurers: number;
+  assignedAdventurers: number;
+  unassignedAdventurers: number;
+  decisions: AdventurerDistributionDecision[];
+  logs: string[];
 }
 
 export interface Contract {
@@ -101,33 +235,69 @@ export interface Contract {
   pendingClanId?: string | null;
   confirmed: boolean;
   contractLevel: number;
+  /** Gold divided between adventurers. Guild commission is stored separately. */
   paymentAmount: number;
+  guildCommission?: number;
   maxPartySize: number;
-  attachedResources: string[];
+  attachedResources: BasicResourceKey[];
   partyAdvIds: string[];
+  suggestedSquadAdvIds?: string[];
+  actualSquadAdvIds?: string[];
   paidAmount?: number;
+  paidCommission?: number;
   isScoutedByGuild?: boolean;
   simulationReport?: SimulationReport;
 }
 
 export interface GameHistoryEntry {
   day: number;
+  randomSeed?: string;
   contractsCount: number;
   reports: SimulationReport[];
   logs: string[];
 }
 
-export interface GameState {
-  day: number;
-  nClans: number;
+export interface ThemeDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+  cssFile?: string;
+}
+
+export interface ScenarioDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  guildName: string;
+  guildShortName: string;
   hCost: number;
-  isDmMode: boolean;
   mapBgUrl: string;
   mapWidth: number;
   mapHeight: number;
-  currentPhase: number; // 1, 2, or 3
+  clans: Clan[];
+  adventurers: Adventurer[];
+  missions: Mission[];
+}
+
+export interface GameState {
+  schemaVersion: number;
+  day: number;
+  nClans: number;
+  hCost: number;
+  guildName: string;
+  guildShortName: string;
+  themeId: string;
+  activeScenarioId: string | null;
+  isDmMode: boolean;
+  mapBgUrl: string;
+  mapAssetId?: string | null;
+  mapWidth: number;
+  mapHeight: number;
+  currentPhase: number;
   isDaySimulated: boolean;
-  assignedClanFilter: string; // 'ALL' or specific clanId
+  isGuildActionsCompleted: boolean;
+  assignedClanFilter: string;
   spawnPolygon: { x: number; y: number }[];
   clans: Clan[];
   adventurers: Adventurer[];
@@ -135,7 +305,9 @@ export interface GameState {
   allMissions?: Mission[];
   contracts: Contract[];
   history: GameHistoryEntry[];
+  completedMissionIds: string[];
   selectedMissionId: string | null;
   lastDistributionLogs: string[];
+  distributionReport?: DistributionReport | null;
   hqPos?: { x: number; y: number };
 }

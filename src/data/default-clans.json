@@ -1,0 +1,52 @@
+[
+  {
+    "id": "clan_1",
+    "name": "Клан Красный Волк",
+    "trustLevel": 1,
+    "gold": 120,
+    "resources": { "Supplies": 3, "Equipment": 2, "Intelligence": 1, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_2",
+    "name": "Клан Серебряный Ворон",
+    "trustLevel": 2,
+    "gold": 200,
+    "resources": { "Supplies": 4, "Equipment": 3, "Intelligence": 3, "Alchemy": 1, "AncientText": "Древний Манускрипт", "specialItems": [] }
+  },
+  {
+    "id": "clan_3",
+    "name": "Клан Железный Молот",
+    "trustLevel": 1,
+    "gold": 120,
+    "resources": { "Supplies": 2, "Equipment": 4, "Intelligence": 1, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_4",
+    "name": "Клан Изумрудная Тень",
+    "trustLevel": 3,
+    "gold": 350,
+    "resources": { "Supplies": 6, "Equipment": 5, "Intelligence": 5, "Alchemy": 3, "AncientText": "Карта Руин", "specialItems": [] }
+  },
+  {
+    "id": "clan_5",
+    "name": "Клан Золотой Дракон",
+    "trustLevel": 2,
+    "gold": 180,
+    "resources": { "Supplies": 3, "Equipment": 3, "Intelligence": 2, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_6",
+    "name": "Клан Ночной Клинок",
+    "trustLevel": 1,
+    "gold": 100,
+    "resources": { "Supplies": 2, "Equipment": 2, "Intelligence": 4, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_guild",
+    "name": "Гильдия Авантюристов",
+    "trustLevel": 5,
+    "gold": 1000,
+    "resources": { "Supplies": 10, "Equipment": 10, "Intelligence": 10, "Alchemy": 10, "AncientText": "", "specialItems": [] }
+  }
+]
+

@@ -3,25 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Clan, Adventurer, Mission, MissionType, Contract } from './types';
+import { Clan, Adventurer, Mission, MissionType, Contract, BasicResourceKey, MissionCheck } from './types';
+import defaultClansJson from './data/default-clans.json';
+import defaultAdventurersJson from './data/default-adventurers.json';
 
-export const GUILD_CLAN: Clan = {
-  id: 'clan_guild',
-  name: 'Гильдия',
-  trustLevel: 5,
-  gold: 1000,
-  resources: { Supplies: 10, Equipment: 10, Intelligence: 10, Alchemy: 10, AncientText: "" }
-};
+const DEFAULT_CLAN_DATA = defaultClansJson as Clan[];
+const DEFAULT_ADVENTURER_DATA = defaultAdventurersJson as Adventurer[];
 
-export const DEFAULT_CLANS: Clan[] = [
-  { id: 'clan_1', name: 'Клан Красный Волк', trustLevel: 1, gold: 120, resources: { Supplies: 3, Equipment: 2, Intelligence: 1, Alchemy: 0, AncientText: "" } },
-  { id: 'clan_2', name: 'Клан Серебряный Ворон', trustLevel: 2, gold: 200, resources: { Supplies: 4, Equipment: 3, Intelligence: 3, Alchemy: 1, AncientText: "Древний Манускрипт" } },
-  { id: 'clan_3', name: 'Клан Железный Молот', trustLevel: 1, gold: 120, resources: { Supplies: 2, Equipment: 4, Intelligence: 1, Alchemy: 0, AncientText: "" } },
-  { id: 'clan_4', name: 'Клан Изумрудная Тень', trustLevel: 3, gold: 350, resources: { Supplies: 6, Equipment: 5, Intelligence: 5, Alchemy: 3, AncientText: "Карта Руин" } },
-  { id: 'clan_5', name: 'Клан Золотой Дракон', trustLevel: 2, gold: 180, resources: { Supplies: 3, Equipment: 3, Intelligence: 2, Alchemy: 1, AncientText: "" } },
-  { id: 'clan_6', name: 'Клан Ночной Клинок', trustLevel: 1, gold: 100, resources: { Supplies: 2, Equipment: 2, Intelligence: 4, Alchemy: 0, AncientText: "" } },
-  GUILD_CLAN
-];
+export const DEFAULT_CLANS: Clan[] = structuredClone(DEFAULT_CLAN_DATA);
+export const GUILD_CLAN: Clan = structuredClone(
+  DEFAULT_CLANS.find(clan => clan.id === 'clan_guild')!
+);
 
 export const DEFAULT_EVENT_TEMPLATES = [
   // Операции (OPERATION)
@@ -177,10 +169,10 @@ export function generateRandomMission(
     stagesCount = 4;
   }
 
-  const possibleResources = ['Supplies', 'Equipment', 'Intelligence', 'Alchemy'];
+  const possibleResources: BasicResourceKey[] = ['Supplies', 'Equipment', 'Intelligence', 'Alchemy'];
   const shuffledRes = [...possibleResources].sort(() => Math.random() - 0.5);
 
-  const checks: { reqResource: string; dc: number }[] = [];
+  const checks: MissionCheck[] = [];
   for (let s = 0; s < stagesCount; s++) {
     const res = shuffledRes[s % shuffledRes.length];
     const dc = 10 + Math.floor(Math.random() * 6); // DC 10..15
@@ -317,46 +309,18 @@ export function getRandomPointInSpawnPolygon(polygon: { x: number; y: number }[]
 
 export function generateAdventurersForClans(clansCount: number): Adventurer[] {
   const count = clansCount * 5;
-  const defaultClasses = ['Варвар', 'Бард', 'Жрец', 'Друид', 'Воин', 'Монах', 'Паладин', 'Следопыт', 'Плут', 'Чародей', 'Колдун', 'Волшебник'];
-  const nameFirst = ['Роланд', 'Лира', 'Элдор', 'Брон', 'Селена', 'Тариэль', 'Маркус', 'Валдор', 'Ариан', 'Галеон', 'Торвальд', 'Изольда', 'Корвин', 'Морган', 'Вилл', 'Аэлита', 'Дрейк', 'Оливер', 'Кассиан', 'Фрейя', 'Беладонна', 'Грим', 'Леорик', 'Сапфира', 'Гэвин', 'Келеборн', 'Тариэль', 'Изольда', 'Бальтазар', 'Зефир', 'Каэлин', 'Орфей', 'Элора', 'Феликс', 'Торн', 'Рагнар', 'Ингрид', 'Астрид', 'Ван', 'Виктор'];
-  const nameLast = ['Неустрашимый', 'Теневой', 'Пламенный', 'Железногруд', 'Лесная', 'Алхимик', 'Святой', 'Клинок', 'Светоносный', 'Теней', 'Молот', 'Мудрая', 'Быстрый', 'Заря', 'Сокол', 'Ночная', 'Буря', 'Клык', 'Страж', 'Птица', 'Роза', 'Гроза', 'Цитадель', 'Звезда', 'Серебряный', 'Шторм', 'Светлый', 'Огненный', 'Темный', 'Ветер', 'Лесной', 'Лира', 'Сумеречная', 'Утренний', 'Железный', 'Яростный', 'Стальная', 'Северная', 'Охотник', 'Хранитель'];
+  if (count <= 0 || DEFAULT_ADVENTURER_DATA.length === 0) return [];
 
-  const countLvl5 = Math.ceil(count * 0.03);
-  const countLvl4 = Math.ceil(count * 0.07);
-  const countLvl3 = Math.ceil(count * 0.10);
-  const countLvl2 = Math.ceil(count * 0.20);
-  const countLvl1 = Math.max(0, count - (countLvl5 + countLvl4 + countLvl3 + countLvl2));
-
-  const levels: number[] = [];
-  for (let j = 0; j < countLvl1; j++) levels.push(1);
-  for (let j = 0; j < countLvl2; j++) levels.push(2);
-  for (let j = 0; j < countLvl3; j++) levels.push(3);
-  for (let j = 0; j < countLvl4; j++) levels.push(4);
-  for (let j = 0; j < countLvl5; j++) levels.push(5);
-
-  const advs: Adventurer[] = [];
-  for (let i = 0; i < count; i++) {
-    const fn = nameFirst[i % nameFirst.length];
-    const ln = nameLast[Math.floor(i / nameFirst.length) % nameLast.length];
-    const advClass = defaultClasses[i % defaultClasses.length];
-    const level = levels[i] || 1;
-    const mhp = calculateMaxHp(level);
-    const clanIdx = (i % Math.max(1, clansCount)) + 1;
-
-    advs.push({
-      id: `adv_${i + 1}`,
-      name: `${fn} ${ln}`,
-      class: advClass,
-      level: level,
-      hp: mhp,
-      maxHp: mhp,
-      status: 'READY',
-      successfulMissions: level - 1,
-      totalMissions: level,
-      reputation: { [`clan_${clanIdx}`]: 1 }
-    });
-  }
-  return advs;
+  return Array.from({ length: count }, (_, index) => {
+    const template = structuredClone(DEFAULT_ADVENTURER_DATA[index % DEFAULT_ADVENTURER_DATA.length]);
+    const isAdditionalCopy = index >= DEFAULT_ADVENTURER_DATA.length;
+    return {
+      ...template,
+      id: isAdditionalCopy ? `adv_${index + 1}` : template.id,
+      name: isAdditionalCopy ? `${template.name} ${Math.floor(index / DEFAULT_ADVENTURER_DATA.length) + 1}` : template.name,
+      relations: { ...template.relations }
+    };
+  });
 }
 
 /**

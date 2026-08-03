@@ -5,7 +5,7 @@
 
 import React, { useRef, useState } from 'react';
 import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2 } from 'lucide-react';
-import { GameState, Mission, MissionType } from '../types';
+import { GameState, Mission, MissionCheck, MissionResourceKey, MissionType } from '../types';
 
 interface GmOverlordModalProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ export default function GmOverlordModal({
   const [mTitle, setMTitle] = useState('Новое Донесение');
   const [mDesc, setMDesc] = useState('Поступили свежие сведения о происшествии в регионе.');
   const [mRegion, setMRegion] = useState('ДИКИЕ ЗЕМЛИ');
-  const [mReqResource, setMReqResource] = useState('Supplies');
+  const [mReqResource, setMReqResource] = useState<MissionResourceKey>('Supplies');
   const [mRequiredSpecialItem, setMRequiredSpecialItem] = useState('');
   const [mDc, setMDc] = useState(12);
   const [mType, setMType] = useState<MissionType>('OPERATION');
@@ -47,7 +47,7 @@ export default function GmOverlordModal({
   const [mIntelRevealed, setMIntelRevealed] = useState(false);
   const [mGoldReward, setMGoldReward] = useState(0);
   const [mPinned, setMPinned] = useState(false);
-  const [mChecks, setMChecks] = useState<{ reqResource: string; dc: number }[]>([
+  const [mChecks, setMChecks] = useState<MissionCheck[]>([
     { reqResource: 'Supplies', dc: 12 }
   ]);
 
@@ -294,7 +294,7 @@ export default function GmOverlordModal({
               status: 'READY' as const,
               successfulMissions: adv.successfulMissions || 0,
               totalMissions: adv.totalMissions || 0,
-              reputation: adv.reputation || {}
+              relations: adv.relations || {}
             };
           });
 

@@ -184,15 +184,15 @@ export default function AdventurerDetailModal({
           <div>
             <h3 className="text-amber-500 font-mono text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Users className="w-4 h-4 text-amber-500" />
-              🏛️ Репутация в Кланах и Домах
+              🏛️ Отношения с Кланами и Домами
             </h3>
             <p className="text-[10px] font-mono text-neutral-500 leading-relaxed mb-3">
-              *Повышается автоматически при успешном завершении миссий с ресурсами клана без потерь в отряде.
+              *Меняются в зависимости от подготовки и результатов контрактов этого заказчика.
             </p>
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {state.clans.map(clan => {
-                const currentRep = adv.reputation?.[clan.id] || 0;
+                const currentRep = adv.relations?.[clan.id] || 0;
                 return (
                   <div
                     key={clan.id}
@@ -201,7 +201,7 @@ export default function AdventurerDetailModal({
                     <div>
                       <strong className="text-xs font-mono text-emerald-400">{clan.name}</strong>
                       <div className="text-[10px] font-mono text-neutral-500">
-                        Фракционная репутация: <span className="text-amber-500 font-bold">+{currentRep}</span>
+                        Отношения: <span className="text-amber-500 font-bold">{currentRep} / 10</span>
                       </div>
                     </div>
 

@@ -21,15 +21,18 @@ import {
 
 import { GameState, Clan, Adventurer, Mission, Contract } from './types';
 import {
-  DEFAULT_CLANS,
-  generateAdventurersForClans,
-  DEFAULT_SPAWN_POLYGON,
   DEFAULT_EVENT_TEMPLATES,
   getRandomPointInSpawnPolygon,
   calculateMaxHp,
-  getMaxContractLevelForClan,
-  generateMissionsForDay
+  getMaxContractLevelForClan
 } from './utils';
+import {
+  createInitialGameState,
+  GAME_STORAGE_KEY,
+  loadStoredGameState,
+  serializeGameState
+} from './domain/state';
+import { clampRelation } from './domain/economy';
 
 import MapTab from './components/MapTab';
 import PhasesTab from './components/PhasesTab';
@@ -46,52 +49,11 @@ import ResourceStoreModal from './components/ResourceStoreModal';
 
 export default function App() {
   const [state, setState] = useState<GameState>(() => {
-    // Attempt local storage load
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('adventurer_guild_state');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed.day === 'number') {
-            if (!parsed.mapBgUrl || parsed.mapBgUrl.includes('Карта') || parsed.mapBgUrl === '/media/GlobalMap' || (!parsed.mapBgUrl.startsWith('http') && parsed.mapBgUrl !== '/media/GlobalMap.png')) {
-              parsed.mapBgUrl = '/media/GlobalMap.png';
-            }
-            return {
-              ...parsed,
-              mapBgUrl: parsed.mapBgUrl || '/media/GlobalMap.png',
-              hqPos: parsed.hqPos || { x: 50, y: 50 }
-            };
-          }
-        } catch (e) {
-          console.error("Failed to parse saved game state", e);
-        }
-      }
+      const stored = loadStoredGameState(localStorage);
+      if (stored) return stored;
     }
-
-    // Default Initial State: generate missions count equal to clans count (6)
-    const defaultMissions = generateMissionsForDay(6, 1, DEFAULT_SPAWN_POLYGON);
-
-    return {
-      day: 1,
-      nClans: 6,
-      hCost: 10,
-      isDmMode: false,
-      mapBgUrl: '/media/GlobalMap.png',
-      mapWidth: 910,
-      mapHeight: 1303,
-      currentPhase: 1,
-      isDaySimulated: false,
-      assignedClanFilter: 'ALL',
-      spawnPolygon: DEFAULT_SPAWN_POLYGON,
-      clans: DEFAULT_CLANS,
-      adventurers: generateAdventurersForClans(6),
-      missions: defaultMissions,
-      contracts: [],
-      history: [],
-      selectedMissionId: null,
-      lastDistributionLogs: [],
-      hqPos: { x: 50, y: 50 }
-    };
+    return createInitialGameState();
   });
 
   // Active Tab state: 'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS' | 'HISTORY'
@@ -110,7 +72,7 @@ export default function App() {
 
   // Auto-save state updates
   useEffect(() => {
-    localStorage.setItem('adventurer_guild_state', JSON.stringify(state));
+    localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(state));
   }, [state]);
 
   const showToast = (message: string, isError = false) => {
@@ -170,36 +132,10 @@ export default function App() {
   };
 
   const handleResetToDay1 = () => {
-    // Generate default missions equal to number of clans (6)
-    const defaultMissions = generateMissionsForDay(6, 1, DEFAULT_SPAWN_POLYGON);
-
-    // Reset clans to default clans
-    const defaultClans = JSON.parse(JSON.stringify(DEFAULT_CLANS)) as Clan[];
-
-    const newState: GameState = {
-      day: 1,
-      nClans: 6,
-      hCost: 10,
-      isDmMode: state.isDmMode, // preserve current GM mode setting!
-      mapBgUrl: '/media/GlobalMap.png',
-      mapWidth: 910,
-      mapHeight: 1303,
-      currentPhase: 1,
-      isDaySimulated: false,
-      assignedClanFilter: 'ALL',
-      spawnPolygon: DEFAULT_SPAWN_POLYGON,
-      clans: defaultClans,
-      adventurers: generateAdventurersForClans(6),
-      missions: defaultMissions,
-      contracts: [],
-      history: [],
-      selectedMissionId: null,
-      lastDistributionLogs: [],
-      hqPos: { x: 50, y: 50 }
-    };
+    const newState = createInitialGameState({ isDmMode: state.isDmMode });
 
     setState(newState);
-    localStorage.setItem('adventurer_guild_state', JSON.stringify(newState));
+    localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(newState));
     showToast('🧙‍♂️ Игровой мир успешно сброшен к началу Дня 1!');
   };
 
@@ -236,7 +172,7 @@ export default function App() {
       status: 'READY',
       successfulMissions: 0,
       totalMissions: 0,
-      reputation: clanId !== 'FREE_GM' ? { [clanId]: 1 } : {},
+      relations: clanId !== 'FREE_GM' ? { [clanId]: 1 } : {},
       isPlayer
     };
 
@@ -264,16 +200,16 @@ export default function App() {
     showToast('Герой полностью исцелен.');
   };
 
-  // reputation overriding
+  // relation adjustment
   const handleAdjustReputation = (advId: string, clanId: string, delta: number) => {
     const updated = state.adventurers.map(a => {
       if (a.id === advId) {
-        const currentRep = a.reputation?.[clanId] || 0;
+        const currentRep = a.relations?.[clanId] || 0;
         return {
           ...a,
-          reputation: {
-            ...a.reputation,
-            [clanId]: Math.max(0, currentRep + delta)
+          relations: {
+            ...a.relations,
+            [clanId]: clampRelation(currentRep + delta)
           }
         };
       }
@@ -466,7 +402,7 @@ export default function App() {
             <Compass className="w-8 h-8 text-emerald-500 animate-spin-slow" />
             <div>
               <h1 className="text-lg font-mono font-bold uppercase tracking-widest text-emerald-400">
-                Гильдия Приключенцев
+                {state.guildName}
               </h1>
             </div>
           </div>

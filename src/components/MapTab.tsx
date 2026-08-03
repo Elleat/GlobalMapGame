@@ -5,7 +5,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Compass, HelpCircle, Shield, RotateCw, Maximize2, Search, Plus, MapPin, Award } from 'lucide-react';
-import { GameState, Mission, MissionType } from '../types';
+import { GameState, Mission, MissionResourceKey, MissionType } from '../types';
+import { DEFAULT_MAP_URL } from '../domain/constants';
+import { willMissionExpireAfterDay } from '../domain/missions';
 import { getResourceNameRu } from '../utils';
 
 interface MapTabProps {
@@ -30,7 +32,7 @@ export default function MapTab({
   // Story Mission Form inputs
   const [storyTitle, setStoryTitle] = useState('');
   const [storyDesc, setStoryDesc] = useState('');
-  const [storyReq, setStoryReq] = useState('Supplies');
+  const [storyReq, setStoryReq] = useState<MissionResourceKey>('Supplies');
   const [storySpecialItem, setStorySpecialItem] = useState('');
   const [storyDc, setStoryDc] = useState(12);
   const [storyLifespan, setStoryLifespan] = useState(3);
@@ -430,14 +432,14 @@ export default function MapTab({
               {/* Map Image Backdrop */}
               <img
                 ref={mapImageRef}
-                src={state.mapBgUrl || '/media/GlobalMap.png'}
+                src={state.mapBgUrl || DEFAULT_MAP_URL}
                 alt="Поле Боя"
                 onClick={handleMapClick}
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.endsWith('/media/GlobalMap.png')) {
-                    target.src = '/media/GlobalMap.png';
-                    updateState({ mapBgUrl: '/media/GlobalMap.png' });
+                  if (!target.src.endsWith(DEFAULT_MAP_URL)) {
+                    target.src = DEFAULT_MAP_URL;
+                    updateState({ mapBgUrl: DEFAULT_MAP_URL });
                   }
                 }}
                 className="w-full h-full object-cover rounded pointer-events-auto"
@@ -561,7 +563,7 @@ export default function MapTab({
 
               {/* Draggable/Selectable Active Mission Pins */}
               {state.missions.map((m) => {
-                const isUrgent = m.lifespan <= 1;
+                const isUrgent = willMissionExpireAfterDay(m);
                 return (
                   <div
                     key={m.id}
@@ -677,7 +679,7 @@ export default function MapTab({
                     <label className="text-neutral-400 uppercase text-[10px]">Ключевой Ресурс:</label>
                     <select
                       value={storyReq}
-                      onChange={(e) => setStoryReq(e.target.value)}
+                      onChange={(e) => setStoryReq(e.target.value as MissionResourceKey)}
                       className="w-full bg-black border border-amber-500/20 text-neutral-200 px-2 py-1.5 rounded outline-none"
                     >
                       <option value="Supplies">🎒 Припасы</option>
