@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import {
   Compass,
   FileText,
@@ -19,7 +19,8 @@ import {
   Plus,
   Gamepad2,
   UserRoundCog,
-  CalendarCog
+  CalendarCog,
+  Home
 } from 'lucide-react';
 
 import { GameState, Clan, Adventurer, Mission, Contract, ThemeDefinition } from './types';
@@ -46,9 +47,9 @@ import PhasesTab from './components/PhasesTab';
 import ResultsTab from './components/ResultsTab';
 import AdventurersTab from './components/AdventurersTab';
 import ClansTab from './components/ClansTab';
-import AdventurerEditor from './components/AdventurerEditor';
-import EventEditor from './components/EventEditor';
 import ThemeSelector from './components/ThemeSelector';
+import MainMenu, { FileEditorKind } from './components/MainMenu';
+import FileEditorPlaceholder from './components/FileEditorPlaceholder';
 
 import GmOverlordModal from './components/GmOverlordModal';
 import MissionModal from './components/MissionModal';
@@ -57,7 +58,14 @@ import AdventurerDetailModal from './components/AdventurerDetailModal';
 import ClanDossierModal from './components/ClanDossierModal';
 import ResourceStoreModal from './components/ResourceStoreModal';
 
+const AdventurerEditor = lazy(() => import('./components/AdventurerEditor'));
+const EventEditor = lazy(() => import('./components/EventEditor'));
+
 export default function App() {
+  const [hasStoredGame, setHasStoredGame] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return loadStoredGameState(localStorage) !== null;
+  });
   const [state, setState] = useState<GameState>(() => {
     if (typeof window !== 'undefined') {
       const stored = loadStoredGameState(localStorage);
@@ -66,7 +74,9 @@ export default function App() {
     return createInitialGameState();
   });
 
-  const [mainSection, setMainSection] = useState<'GAME' | 'ADVENTURER_EDITOR' | 'EVENT_EDITOR'>('GAME');
+  const [mainSection, setMainSection] = useState<'HOME' | 'GAME' | 'ADVENTURER_EDITOR' | 'EVENT_EDITOR' | 'FILE_EDITOR'>('HOME');
+  const [gameChoicesOpen, setGameChoicesOpen] = useState(false);
+  const [fileEditorKind, setFileEditorKind] = useState<FileEditorKind>('ADVENTURERS');
   const [activeTab, setActiveTab] = useState<'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS'>('MAP');
 
   // Modals view toggles
@@ -84,8 +94,14 @@ export default function App() {
 
   // Auto-save state updates
   useEffect(() => {
-    localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(state));
-  }, [state]);
+    if (hasStoredGame) localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(state));
+  }, [hasStoredGame, state]);
+
+  useEffect(() => {
+    if (!state.isDmMode && (mainSection === 'ADVENTURER_EDITOR' || mainSection === 'EVENT_EDITOR')) {
+      setMainSection('GAME');
+    }
+  }, [mainSection, state.isDmMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,8 +117,10 @@ export default function App() {
   }, [state.themeId, themes]);
 
   useEffect(() => {
-    document.title = `${state.guildName} — Глобальная Карта`;
-  }, [state.guildName]);
+    document.title = mainSection === 'HOME' || mainSection === 'FILE_EDITOR'
+      ? 'Глобальная Карта'
+      : `${state.guildName} — Глобальная Карта`;
+  }, [mainSection, state.guildName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -182,6 +200,7 @@ export default function App() {
       const previousMapAssetId = state.mapAssetId;
       const imported = await importScenarioBundle(file, state.isDmMode);
       setState(imported);
+      setHasStoredGame(true);
       if (previousMapAssetId && previousMapAssetId !== imported.mapAssetId) {
         await deleteMapAsset(previousMapAssetId);
       }
@@ -192,6 +211,29 @@ export default function App() {
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Не удалось открыть сценарий.', true);
     }
+  };
+
+  const handleContinueGame = () => {
+    if (!hasStoredGame) return;
+    setMainSection('GAME');
+    setActiveTab('MAP');
+    setGameChoicesOpen(false);
+  };
+
+  const handleStartNewGame = () => {
+    if (hasStoredGame && !window.confirm('Начать новую игру? Текущее локальное сохранение будет заменено.')) return;
+    const newState = createInitialGameState({ isDmMode: state.isDmMode });
+    setState(newState);
+    setHasStoredGame(true);
+    setMainSection('GAME');
+    setActiveTab('MAP');
+    setGameChoicesOpen(false);
+  };
+
+  const handleOpenFileEditor = (kind: FileEditorKind) => {
+    setFileEditorKind(kind);
+    setMainSection('FILE_EDITOR');
+    setGameChoicesOpen(false);
   };
 
   // Payout of resources and budget override
@@ -503,37 +545,74 @@ export default function App() {
     showToast(`🛒 Закуплено: +1 ед. ресурсов (${resourceType}) для ${clan.name}.`);
   };
 
+  const isLiveWorkspace = mainSection === 'GAME'
+    || (state.isDmMode && (mainSection === 'ADVENTURER_EDITOR' || mainSection === 'EVENT_EDITOR'));
+
   return (
     <div className="min-h-screen bg-[#060606] text-neutral-300 flex flex-col relative selection:bg-emerald-500 selection:text-black">
       
       {/* Visual background scanning noise */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(18,18,18,0.15)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none z-0" />
 
-      {/* Primary CRT Header */}
-      <header className="border-b border-emerald-500/15 bg-black/90 p-4 sticky top-0 z-[100] backdrop-blur shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
+      {mainSection === 'HOME' && (
+        <MainMenu
+          guildName={state.guildName}
+          hasSavedGame={hasStoredGame}
+          gameChoicesOpen={gameChoicesOpen}
+          onOpenGameChoices={() => setGameChoicesOpen(true)}
+          onCloseGameChoices={() => setGameChoicesOpen(false)}
+          onContinue={handleContinueGame}
+          onNewGame={handleStartNewGame}
+          onLoadScenario={handleImportScenario}
+          onOpenFileEditor={handleOpenFileEditor}
+        />
+      )}
+
+      {mainSection === 'FILE_EDITOR' && <FileEditorPlaceholder kind={fileEditorKind} onBack={() => setMainSection('HOME')} />}
+
+      {/* Primary game header */}
+      {isLiveWorkspace && <header className="border-b border-emerald-500/15 bg-black/90 p-4 sticky top-0 z-[100] backdrop-blur shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           
           {/* Logo Title */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={() => setMainSection('HOME')} className="rounded border border-neutral-800 bg-[#0d0d0d] p-2 text-neutral-500 transition hover:border-emerald-500/40 hover:text-emerald-300" title="Главное меню">
+              <Home className="h-4 w-4" />
+            </button>
             <Compass className="w-8 h-8 text-emerald-500 animate-spin-slow" />
-            <div>
+            <div className="mr-2">
               <h1 className="text-lg font-mono font-bold uppercase tracking-widest text-emerald-400">
                 {state.guildName}
               </h1>
             </div>
+            {state.isDmMode && (
+              <div className="flex flex-wrap items-center gap-1 rounded-lg border border-amber-500/20 bg-amber-500/5 p-1 font-mono text-[10px] uppercase">
+                <button type="button" onClick={() => setMainSection('GAME')} className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition ${mainSection === 'GAME' ? 'bg-amber-500 text-black' : 'text-amber-300/70 hover:bg-amber-500/10 hover:text-amber-200'}`}>
+                  <Gamepad2 className="h-3.5 w-3.5" /> Игра
+                </button>
+                <button type="button" onClick={() => setMainSection('ADVENTURER_EDITOR')} className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition ${mainSection === 'ADVENTURER_EDITOR' ? 'bg-amber-500 text-black' : 'text-amber-300/70 hover:bg-amber-500/10 hover:text-amber-200'}`}>
+                  <UserRoundCog className="h-3.5 w-3.5" /> Авантюристы
+                </button>
+                <button type="button" onClick={() => setMainSection('EVENT_EDITOR')} className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition ${mainSection === 'EVENT_EDITOR' ? 'bg-amber-500 text-black' : 'text-amber-300/70 hover:bg-amber-500/10 hover:text-amber-200'}`}>
+                  <CalendarCog className="h-3.5 w-3.5" /> События
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quick Stats Ribbon */}
           <div className="flex items-center gap-4 sm:gap-6 font-mono text-xs">
-            <ThemeSelector
-              themes={themes}
-              value={state.themeId}
-              onChange={themeId => updateState({ themeId })}
-              onRefresh={() => loadThemeCatalog().then(catalog => {
-                setThemes(catalog);
-                showToast(`Список тем обновлён: ${catalog.length}.`);
-              })}
-            />
+            {state.isDmMode && (
+              <ThemeSelector
+                themes={themes}
+                value={state.themeId}
+                onChange={themeId => updateState({ themeId })}
+                onRefresh={() => loadThemeCatalog().then(catalog => {
+                  setThemes(catalog);
+                  showToast(`Список тем обновлён: ${catalog.length}.`);
+                })}
+              />
+            )}
             
             <div className="flex items-center gap-2 bg-[#0d0d0d] border border-emerald-500/10 px-3 py-1.5 rounded">
               <Clock className="w-4 h-4 text-emerald-500" />
@@ -563,31 +642,7 @@ export default function App() {
           </div>
 
         </div>
-      </header>
-
-      {/* Main menu */}
-      <nav className="border-b border-emerald-500/15 bg-[#080808]/95 py-3 z-50">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap gap-2 font-mono text-xs">
-          <button
-            onClick={() => setMainSection('GAME')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-md border cursor-pointer transition-all ${mainSection === 'GAME' ? 'bg-emerald-500 border-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)]' : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}
-          >
-            <Gamepad2 className="w-4 h-4" /> Игра
-          </button>
-          <button
-            onClick={() => setMainSection('ADVENTURER_EDITOR')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-md border cursor-pointer transition-all ${mainSection === 'ADVENTURER_EDITOR' ? 'bg-emerald-500 border-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)]' : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}
-          >
-            <UserRoundCog className="w-4 h-4" /> Редактор авантюристов
-          </button>
-          <button
-            onClick={() => setMainSection('EVENT_EDITOR')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-md border cursor-pointer transition-all ${mainSection === 'EVENT_EDITOR' ? 'bg-emerald-500 border-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.25)]' : 'border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'}`}
-          >
-            <CalendarCog className="w-4 h-4" /> Редактор событий
-          </button>
-        </div>
-      </nav>
+      </header>}
 
       {/* Game workspace tabs */}
       {mainSection === 'GAME' && <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">
@@ -632,7 +687,7 @@ export default function App() {
       </nav>}
 
       {/* Main Container Workspace */}
-      <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 z-10">
+      {isLiveWorkspace && <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 z-10">
         
         {/* Render Active View Tab */}
         {mainSection === 'GAME' && activeTab === 'MAP' && (
@@ -679,18 +734,20 @@ export default function App() {
           />
         )}
 
-        {mainSection === 'ADVENTURER_EDITOR' && (
-          <AdventurerEditor state={state} updateState={updateState} showToast={showToast} />
-        )}
+        <Suspense fallback={<div className="rounded-xl border border-emerald-500/15 bg-[#0b0b0b] p-8 text-center font-mono text-xs text-emerald-400">Открываем инструменты ГМа…</div>}>
+          {state.isDmMode && mainSection === 'ADVENTURER_EDITOR' && (
+            <AdventurerEditor state={state} updateState={updateState} showToast={showToast} />
+          )}
 
-        {mainSection === 'EVENT_EDITOR' && (
-          <EventEditor state={state} updateState={updateState} showToast={showToast} />
-        )}
+          {state.isDmMode && mainSection === 'EVENT_EDITOR' && (
+            <EventEditor state={state} updateState={updateState} showToast={showToast} />
+          )}
+        </Suspense>
 
-      </main>
+      </main>}
 
       {/* Retro scan footer */}
-      <footer className="border-t border-emerald-500/5 bg-black/50 py-2 font-mono text-[10px] text-neutral-600 text-center z-40 mt-auto" />
+      {isLiveWorkspace && <footer className="border-t border-emerald-500/5 bg-black/50 py-2 font-mono text-[10px] text-neutral-600 text-center z-40 mt-auto" />}
 
       {/* ==============================================
           MODALS & FLOATING DIALOGS VAULT
