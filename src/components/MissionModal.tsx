@@ -7,6 +7,11 @@ import React from 'react';
 import { X, Calendar, Compass, Search, HelpCircle, Shield, AlertTriangle } from 'lucide-react';
 import { Mission, Clan, GameState } from '../types';
 import { willMissionExpireAfterDay } from '../domain/missions';
+import {
+  cleanMissionTitle,
+  getMissionPresentation,
+  getScoutingClanNames
+} from '../domain/missionPresentation';
 import { getResourceNameRu, getTypeRu } from '../utils';
 
 interface MissionModalProps {
@@ -35,6 +40,11 @@ export default function MissionModal({
 
   const isUrgent = willMissionExpireAfterDay(m);
   const isRevealed = state.isDmMode || m.intelRevealed;
+  const presentation = getMissionPresentation(m, state.day, state.isDmMode);
+  const scoutingClanNames = getScoutingClanNames(m, state.clans);
+  const scoutingCaption = scoutingClanNames.length > 0
+    ? scoutingClanNames.join(', ')
+    : 'источник не указан';
 
   // Find clans with at least 1 intelligence
   const eligibleClans = state.clans.filter(c => c.id !== 'clan_guild' && (c.resources.Intelligence || 0) >= 1);
@@ -54,7 +64,7 @@ export default function MissionModal({
         <div className="px-6 py-4 border-b border-emerald-500/20 flex justify-between items-center bg-[#080808]">
           <h2 className="text-emerald-400 font-mono text-sm font-bold tracking-wider uppercase flex items-center gap-2">
             <Compass className={`w-5 h-5 ${isUrgent ? 'text-rose-500 animate-spin' : 'text-emerald-500'}`} />
-            Донесение: {m.title}
+            Донесение: {cleanMissionTitle(m.title)}
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-[#161616] rounded text-rose-500 transition-colors">
             <X className="w-5 h-5" />
@@ -85,10 +95,12 @@ export default function MissionModal({
             <div className="bg-emerald-950/10 border border-emerald-500/40 p-4 rounded-md space-y-3">
               <div className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Search className="w-4 h-4 text-emerald-400" />
-                Рассекреченные Данные (Разведка Клана):
+                {m.intelRevealed
+                  ? `Рассекреченные данные (разведано: ${scoutingCaption})`
+                  : 'Скрытые данные ГМа'}
               </div>
               <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-mono">
-                <div className="text-neutral-400 col-span-2">Тип события: <span className="text-white font-bold">{getTypeRu(m.type)}</span></div>
+                <div className="text-neutral-400 col-span-2">Тип события: <span className="text-white font-bold">{getTypeRu(presentation.visibleType)}</span></div>
                 
                 {m.type === 'DUMMY' ? (
                   <div className="text-neutral-300 col-span-2 bg-neutral-900/60 p-2.5 rounded border border-neutral-700/50 text-xs font-mono">

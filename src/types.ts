@@ -94,6 +94,8 @@ export interface Mission {
   region: string;
   pinned?: boolean;
   intelRevealed?: boolean;
+  /** Clan IDs that spent Intelligence to reveal this report. */
+  scoutedByClanIds?: string[];
   successText?: string;
   failText?: string;
   startDay?: number;

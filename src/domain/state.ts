@@ -1,4 +1,4 @@
-import type { Adventurer, Clan, GameState, Mission } from '../types';
+import type { Adventurer, Clan, Contract, GameState, Mission, SimulationReport } from '../types';
 import { GAME_STATE_VERSION } from '../types';
 import {
   DEFAULT_CLANS,
@@ -13,6 +13,7 @@ import {
   DEFAULT_THEME_ID
 } from './constants';
 import { clampRelation } from './economy';
+import { cleanMissionTitle } from './missionPresentation';
 
 export const GAME_STORAGE_KEY = 'adventurer_guild_state';
 
@@ -31,13 +32,33 @@ function normalizeAdventurer(adventurer: Adventurer): Adventurer {
   };
 }
 
-function normalizeMission(mission: Mission): Mission {
+export function normalizeMission(mission: Mission): Mission {
   return {
     ...mission,
+    title: cleanMissionTitle(mission.title),
     lifespan: mission.lifespan ?? null,
     maxLifespan: mission.maxLifespan ?? null,
+    scoutedByClanIds: mission.scoutedByClanIds ?? [],
     prerequisiteMissionIds: mission.prerequisiteMissionIds ?? [],
     prerequisiteMode: mission.prerequisiteMode ?? 'ALL'
+  };
+}
+
+function normalizeReport(report: SimulationReport): SimulationReport {
+  return {
+    ...report,
+    missionTitle: cleanMissionTitle(report.missionTitle),
+    context: report.context
+      ? { ...report.context, mission: normalizeMission(report.context.mission) }
+      : report.context
+  };
+}
+
+function normalizeContract(contract: Contract): Contract {
+  return {
+    ...contract,
+    title: cleanMissionTitle(contract.title),
+    simulationReport: contract.simulationReport ? normalizeReport(contract.simulationReport) : undefined
   };
 }
 
@@ -111,7 +132,12 @@ export function parseStoredGameState(serialized: string): GameState | null {
       clans: state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan),
       adventurers: state.adventurers.map(normalizeAdventurer),
       missions: state.missions.map(normalizeMission),
-      allMissions: state.allMissions?.map(normalizeMission)
+      allMissions: state.allMissions?.map(normalizeMission),
+      contracts: state.contracts.map(normalizeContract),
+      history: state.history.map(entry => ({
+        ...entry,
+        reports: entry.reports.map(normalizeReport)
+      }))
     };
   } catch {
     return null;
@@ -126,4 +152,3 @@ export function loadStoredGameState(storage: Pick<Storage, 'getItem'>): GameStat
 export function serializeGameState(state: GameState): string {
   return JSON.stringify(state);
 }
-

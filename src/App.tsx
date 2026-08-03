@@ -41,6 +41,7 @@ import { BUILT_IN_THEMES, applyTheme, loadThemeCatalog } from './domain/themes';
 import { deleteMapAsset, loadMapAssetUrl, saveMapAsset } from './domain/mapAssets';
 import { DEFAULT_MAP_URL } from './domain/constants';
 import { createScenarioBundle, importScenarioBundle } from './domain/scenarioBundle';
+import { markMissionScouted } from './domain/missionPresentation';
 
 import MapTab from './components/MapTab';
 import PhasesTab from './components/PhasesTab';
@@ -446,7 +447,7 @@ export default function App() {
     // Mark mission revealed
     const updatedMissions = state.missions.map(m => {
       if (m.id === missionId) {
-        return { ...m, intelRevealed: true };
+        return markMissionScouted(m, clanId);
       }
       return m;
     });

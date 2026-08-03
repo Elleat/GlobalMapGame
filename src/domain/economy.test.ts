@@ -163,6 +163,7 @@ test('Гильдия тратит разведданные и оплачивае
   assert.equal(result.clans[0].gold, 90);
   assert.equal(result.clans[0].resources.Intelligence, 0);
   assert.equal(result.missions[0].intelRevealed, true);
+  assert.deepEqual(result.missions[0].scoutedByClanIds, ['clan_guild']);
 });
 
 test('Гильдия не раскрывает и не принимает событие без доступной разведки', () => {

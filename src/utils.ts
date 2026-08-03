@@ -137,7 +137,7 @@ export function generateRandomMission(
   if (template.type === 'DUMMY') {
     return {
       id,
-      title: `${template.title} #${Math.floor(Math.random() * 900) + 100}`,
+      title: template.title,
       desc: template.desc,
       reqResource: 'None',
       dc: 0,
@@ -181,7 +181,7 @@ export function generateRandomMission(
 
   return {
     id,
-    title: `${template.title} #${Math.floor(Math.random() * 900) + 100}`,
+    title: template.title,
     desc: template.desc,
     reqResource: checks[0].reqResource,
     dc: checks[0].dc,

@@ -8,6 +8,11 @@ import { Compass, HelpCircle, Shield, RotateCw, Maximize2, Search, Plus, MapPin,
 import { GameState, Mission, MissionResourceKey, MissionType } from '../types';
 import { DEFAULT_MAP_URL } from '../domain/constants';
 import { willMissionExpireAfterDay } from '../domain/missions';
+import {
+  cleanMissionTitle,
+  getMissionPresentation,
+  getScoutingClanNames
+} from '../domain/missionPresentation';
 import { getResourceNameRu } from '../utils';
 
 interface MapTabProps {
@@ -309,7 +314,8 @@ export default function MapTab({
       y: storyY,
       region: 'СЮЖЕТНАЯ ЗОНА',
       pinned: true,
-      intelRevealed: true,
+      intelRevealed: false,
+      scoutedByClanIds: [],
       storyStatus: 'AVAILABLE'
     };
 
@@ -472,10 +478,7 @@ export default function MapTab({
                   const mission = state.missions.find(m => m.id === c.missionId);
                   if (!mission) return null;
                   const hq = state.hqPos || { x: 50, y: 50 };
-                  const isDelayedStory = mission.type === 'STORY'
-                    && mission.storyStatus === 'AWAITING_REPORT'
-                    && mission.storyAcceptedDay !== undefined
-                    && state.day > mission.storyAcceptedDay;
+                  const { isDelayedStory } = getMissionPresentation(mission, state.day, state.isDmMode);
                   return (
                     <line
                       key={c.missionId}
@@ -571,11 +574,13 @@ export default function MapTab({
               {/* Draggable/Selectable Active Mission Pins */}
               {state.missions.map((m) => {
                 const isUrgent = willMissionExpireAfterDay(m);
-                const isStory = m.type === 'STORY';
-                const isDelayedStory = isStory
-                  && m.storyStatus === 'AWAITING_REPORT'
-                  && m.storyAcceptedDay !== undefined
-                  && state.day > m.storyAcceptedDay;
+                const presentation = getMissionPresentation(m, state.day, state.isDmMode);
+                const isStory = presentation.showStoryIdentity;
+                const isDelayedStory = presentation.isDelayedStory;
+                const scoutingClanNames = getScoutingClanNames(m, state.clans);
+                const scoutingSuffix = m.intelRevealed
+                  ? ` · разведано: ${scoutingClanNames.length > 0 ? scoutingClanNames.join(', ') : 'источник не указан'}`
+                  : '';
                 return (
                   <div
                     key={m.id}
@@ -613,7 +618,7 @@ export default function MapTab({
                         
                         {/* Floating tooltip badge */}
                         <span className="absolute bottom-9 bg-black border border-emerald-500/40 text-neutral-200 text-[10px] font-mono px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                          {isDelayedStory ? '⏳ Сюжетная миссия ожидает рапорта · ' : isStory ? '◆ Сюжетная миссия · ' : ''}{m.title} {m.intelRevealed && `(DC ${m.dc})`}
+                          {isDelayedStory ? '⏳ Сюжетная миссия ожидает рапорта · ' : isStory ? '◆ Сюжетная миссия · ' : ''}{cleanMissionTitle(m.title)} {m.intelRevealed && `(DC ${m.dc})`}{scoutingSuffix}
                         </span>
                       </div>
                     </div>
@@ -747,7 +752,10 @@ export default function MapTab({
                       onClick={() => onSelectMission(m.id)}
                       className="p-2 bg-[#121212] border border-emerald-500/5 hover:border-emerald-500/30 rounded cursor-pointer transition-all text-xs font-mono flex flex-col gap-1 hover:translate-x-1"
                     >
-                      <strong className="text-neutral-200">{m.title}</strong>
+                      <strong className="text-neutral-200">
+                        {cleanMissionTitle(m.title)}
+                        {m.intelRevealed && ` (разведано: ${getScoutingClanNames(m, state.clans).join(', ') || 'источник не указан'})`}
+                      </strong>
                       <span className="text-[10px] text-neutral-400 uppercase">Регион: {m.region}</span>
                     </div>
                   ))

@@ -29,6 +29,7 @@ import { performGuildActions } from '../domain/guild';
 import { simulateDayContracts } from '../domain/simulation';
 import { advanceMissionLifecycle } from '../domain/day';
 import { recalculateReportEffects } from '../domain/reportEffects';
+import { getMissionPresentation, getScoutingClanNames } from '../domain/missionPresentation';
 
 interface PhasesTabProps {
   state: GameState;
@@ -819,7 +820,10 @@ export default function PhasesTab({
                             className={`p-2 rounded border cursor-pointer select-none transition-all flex flex-col justify-between ${isSelected ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/20' : 'bg-black/80 border-neutral-800 hover:border-neutral-700 hover:bg-[#121212] text-neutral-400'}`}
                           >
                             <div className="flex justify-between items-start gap-1">
-                              <span className="font-bold text-[11px] leading-tight line-clamp-1">{m.title}</span>
+                              <span className="font-bold text-[11px] leading-tight line-clamp-2">
+                                {m.title}
+                                {m.intelRevealed && ` (разведано: ${getScoutingClanNames(m, state.clans).join(', ') || 'источник не указан'})`}
+                              </span>
                               {m.intelRevealed && (
                                 <span className="text-[9px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-1 rounded uppercase shrink-0 font-bold">
                                   DC {m.dc}
@@ -899,8 +903,10 @@ export default function PhasesTab({
                         const checksList = selM.checks && selM.checks.length > 0 
                           ? selM.checks 
                           : [{ reqResource: selM.reqResource, dc: selM.dc }];
+                        const presentation = getMissionPresentation(selM, state.day, state.isDmMode);
+                        const scoutingClanNames = getScoutingClanNames(selM, state.clans);
 
-                        if (!selM.intelRevealed) {
+                        if (!selM.intelRevealed && !state.isDmMode) {
                           return (
                             <div className="w-full bg-neutral-950 border border-neutral-800 p-3 rounded space-y-2 text-xs font-mono">
                               <div className="flex justify-between items-center">
@@ -921,9 +927,15 @@ export default function PhasesTab({
                             <div className="flex justify-between items-center">
                               <span className="text-emerald-400 font-bold">{selM.title}</span>
                               <span className="text-[10px] bg-neutral-800 px-2 py-0.5 rounded text-neutral-300">
-                                {getTypeRu(selM.type)}
+                                {getTypeRu(presentation.visibleType)}
                               </span>
                             </div>
+
+                            {selM.intelRevealed && (
+                              <div className="text-[10px] text-emerald-500/80">
+                                Разведано: {scoutingClanNames.join(', ') || 'источник не указан'}
+                              </div>
+                            )}
 
                             {selM.type === 'DUMMY' ? (
                               <div className="text-amber-400 text-[11px] bg-amber-500/10 border border-amber-500/20 p-2 rounded">

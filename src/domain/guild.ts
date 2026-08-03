@@ -1,6 +1,7 @@
 import type { Adventurer, BasicResourceKey, Clan, Contract, Mission } from '../types';
 import { getResourceGoldCost } from './economy';
 import { getMissionChecks, getMissionUrgency, getRequiredPreparationResources } from './missions';
+import { markMissionScouted } from './missionPresentation';
 
 export interface GuildActionInput {
   clans: Clan[];
@@ -131,7 +132,7 @@ export function performGuildActions(input: GuildActionInput): GuildActionResult 
     const partyIds = new Set(party.map(adventurer => adventurer.id));
     available = available.filter(adventurer => !partyIds.has(adventurer.id));
 
-    missions = missions.map(item => item.id === mission.id ? { ...item, intelRevealed: true } : item);
+    missions = missions.map(item => item.id === mission.id ? markMissionScouted(item, 'clan_guild') : item);
     contracts.push({
       missionId: mission.id,
       title: mission.title,
@@ -159,4 +160,3 @@ export function performGuildActions(input: GuildActionInput): GuildActionResult 
 
   return { clans, missions, contracts, createdContracts, assignedAdventurers, logs };
 }
-

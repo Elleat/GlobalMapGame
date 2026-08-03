@@ -8,7 +8,7 @@ import type {
   MissionType
 } from '../types';
 import { DEFAULT_MAP_URL } from './constants';
-import { createInitialGameState } from './state';
+import { createInitialGameState, normalizeMission } from './state';
 
 export const DATA_FILE_VERSION = 1;
 export const ADVENTURER_FILE_TYPE = 'global-map-adventurers';
@@ -165,6 +165,7 @@ function validateEventList(value: unknown, path: string, issues: string[]): valu
     if (item.failText !== undefined && typeof item.failText !== 'string') issues.push(`${itemPath}.failText: требуется строка.`);
     if (item.pinned !== undefined && typeof item.pinned !== 'boolean') issues.push(`${itemPath}.pinned: требуется true или false.`);
     if (item.intelRevealed !== undefined && typeof item.intelRevealed !== 'boolean') issues.push(`${itemPath}.intelRevealed: требуется true или false.`);
+    if (item.scoutedByClanIds !== undefined && (!Array.isArray(item.scoutedByClanIds) || item.scoutedByClanIds.some(clanId => typeof clanId !== 'string'))) issues.push(`${itemPath}.scoutedByClanIds: требуется массив ID кланов.`);
     if (item.rewardSpecialItems !== undefined && (!Array.isArray(item.rewardSpecialItems) || item.rewardSpecialItems.some(reward => typeof reward !== 'string'))) issues.push(`${itemPath}.rewardSpecialItems: требуется массив строк.`);
     if (!Array.isArray(item.checks)) {
       issues.push(`${itemPath}.checks: требуется массив этапов, в том числе пустой для пустышки.`);
@@ -286,7 +287,8 @@ export function parseEventDataFile(value: unknown): EventDataFile {
     validateEventList(value.events, 'events', issues);
   }
   throwIfIssues(issues);
-  return structuredClone(value as unknown as EventDataFile);
+  const parsed = structuredClone(value as unknown as EventDataFile);
+  return { ...parsed, events: parsed.events.map(normalizeMission) };
 }
 
 export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
@@ -327,7 +329,11 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
     }
   }
   throwIfIssues(issues);
-  return structuredClone(value as unknown as ScenarioDataFile);
+  const parsed = structuredClone(value as unknown as ScenarioDataFile);
+  return {
+    ...parsed,
+    scenario: { ...parsed.scenario, events: parsed.scenario.events.map(normalizeMission) }
+  };
 }
 
 export async function readJsonFile(file: File): Promise<unknown> {
@@ -366,7 +372,7 @@ export function buildNewCampaign(options: {
   const guildName = options.guildName?.trim() || scenario?.guildName || initial.guildName;
   const clans = structuredClone(scenario?.clans ?? initial.clans).map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan);
   const adventurers = structuredClone(options.adventurerFile?.adventurers ?? scenario?.adventurers ?? initial.adventurers);
-  const events = structuredClone(options.eventFile?.events ?? scenario?.events ?? initial.allMissions ?? initial.missions);
+  const events = structuredClone(options.eventFile?.events ?? scenario?.events ?? initial.allMissions ?? initial.missions).map(normalizeMission);
 
   return {
     ...initial,
