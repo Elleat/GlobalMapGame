@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import {
   Compass,
   FileText,
@@ -16,26 +16,43 @@ import {
   HelpCircle,
   Terminal,
   RotateCw,
-  Plus
+  Plus,
+  Gamepad2,
+  UserRoundCog,
+  CalendarCog,
+  Home
 } from 'lucide-react';
 
-import { GameState, Clan, Adventurer, Mission, Contract } from './types';
+import { GameState, Clan, Adventurer, Mission, Contract, ThemeDefinition } from './types';
 import {
-  DEFAULT_CLANS,
-  generateAdventurersForClans,
-  DEFAULT_SPAWN_POLYGON,
   DEFAULT_EVENT_TEMPLATES,
   getRandomPointInSpawnPolygon,
   calculateMaxHp,
-  getMaxContractLevelForClan,
-  generateMissionsForDay
+  getMaxContractLevelForClan
 } from './utils';
+import {
+  createInitialGameState,
+  GAME_STORAGE_KEY,
+  loadStoredGameState,
+  serializeGameState
+} from './domain/state';
+import { clampRelation } from './domain/economy';
+import { BUILT_IN_THEMES, applyTheme, loadThemeCatalog } from './domain/themes';
+import { deleteMapAsset, loadMapAssetUrl, saveMapAsset } from './domain/mapAssets';
+import { DEFAULT_MAP_URL } from './domain/constants';
+import { createScenarioBundle, importScenarioBundle } from './domain/scenarioBundle';
+import { markMissionScouted } from './domain/missionPresentation';
+import { getActivePlayerClans } from './domain/clans';
 
 import MapTab from './components/MapTab';
 import PhasesTab from './components/PhasesTab';
 import ResultsTab from './components/ResultsTab';
 import AdventurersTab from './components/AdventurersTab';
 import ClansTab from './components/ClansTab';
+import ThemeSelector from './components/ThemeSelector';
+import MainMenu, { FileEditorKind } from './components/MainMenu';
+import type { NewGameSetupValue } from './components/NewGameSetup';
+import { buildNewCampaign } from './domain/dataFiles';
 
 import GmOverlordModal from './components/GmOverlordModal';
 import MissionModal from './components/MissionModal';
@@ -44,58 +61,28 @@ import AdventurerDetailModal from './components/AdventurerDetailModal';
 import ClanDossierModal from './components/ClanDossierModal';
 import ResourceStoreModal from './components/ResourceStoreModal';
 
+const AdventurerEditor = lazy(() => import('./components/AdventurerEditor'));
+const EventEditor = lazy(() => import('./components/EventEditor'));
+const FileEditorWorkspace = lazy(() => import('./components/file-editors/FileEditorWorkspace'));
+const NewGameSetup = lazy(() => import('./components/NewGameSetup'));
+
 export default function App() {
+  const [hasStoredGame, setHasStoredGame] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return loadStoredGameState(localStorage) !== null;
+  });
   const [state, setState] = useState<GameState>(() => {
-    // Attempt local storage load
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('adventurer_guild_state');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed.day === 'number') {
-            if (!parsed.mapBgUrl || parsed.mapBgUrl.includes('Карта') || parsed.mapBgUrl === '/media/GlobalMap' || (!parsed.mapBgUrl.startsWith('http') && parsed.mapBgUrl !== '/media/GlobalMap.png')) {
-              parsed.mapBgUrl = '/media/GlobalMap.png';
-            }
-            return {
-              ...parsed,
-              mapBgUrl: parsed.mapBgUrl || '/media/GlobalMap.png',
-              hqPos: parsed.hqPos || { x: 50, y: 50 }
-            };
-          }
-        } catch (e) {
-          console.error("Failed to parse saved game state", e);
-        }
-      }
+      const stored = loadStoredGameState(localStorage);
+      if (stored) return stored;
     }
-
-    // Default Initial State: generate missions count equal to clans count (6)
-    const defaultMissions = generateMissionsForDay(6, 1, DEFAULT_SPAWN_POLYGON);
-
-    return {
-      day: 1,
-      nClans: 6,
-      hCost: 10,
-      isDmMode: false,
-      mapBgUrl: '/media/GlobalMap.png',
-      mapWidth: 910,
-      mapHeight: 1303,
-      currentPhase: 1,
-      isDaySimulated: false,
-      assignedClanFilter: 'ALL',
-      spawnPolygon: DEFAULT_SPAWN_POLYGON,
-      clans: DEFAULT_CLANS,
-      adventurers: generateAdventurersForClans(6),
-      missions: defaultMissions,
-      contracts: [],
-      history: [],
-      selectedMissionId: null,
-      lastDistributionLogs: [],
-      hqPos: { x: 50, y: 50 }
-    };
+    return createInitialGameState();
   });
 
-  // Active Tab state: 'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS' | 'HISTORY'
-  const [activeTab, setActiveTab] = useState<'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS' | 'HISTORY'>('MAP');
+  const [mainSection, setMainSection] = useState<'HOME' | 'NEW_GAME' | 'GAME' | 'ADVENTURER_EDITOR' | 'EVENT_EDITOR' | 'FILE_EDITOR'>('HOME');
+  const [gameChoicesOpen, setGameChoicesOpen] = useState(false);
+  const [fileEditorKind, setFileEditorKind] = useState<FileEditorKind>('ADVENTURERS');
+  const [activeTab, setActiveTab] = useState<'MAP' | 'PHASES' | 'RESULTS' | 'ADVENTURERS' | 'CLANS'>('MAP');
 
   // Modals view toggles
   const [isGmOpen, setIsGmOpen] = useState(false);
@@ -104,14 +91,64 @@ export default function App() {
   const [selectedAdvId, setSelectedAdvId] = useState<string | null>(null);
   const [selectedClanId, setSelectedClanId] = useState<string | null>(null);
   const [storeClanId, setStoreClanId] = useState<string | null>(null);
+  const [themes, setThemes] = useState<ThemeDefinition[]>(BUILT_IN_THEMES);
+  const [runtimeMapUrl, setRuntimeMapUrl] = useState<string | null>(null);
 
   // Custom visual toast alerts
   const [toast, setToast] = useState<{ message: string; isError?: boolean } | null>(null);
 
   // Auto-save state updates
   useEffect(() => {
-    localStorage.setItem('adventurer_guild_state', JSON.stringify(state));
-  }, [state]);
+    if (hasStoredGame) localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(state));
+  }, [hasStoredGame, state]);
+
+  useEffect(() => {
+    if (!state.isDmMode && (mainSection === 'ADVENTURER_EDITOR' || mainSection === 'EVENT_EDITOR')) {
+      setMainSection('GAME');
+    }
+  }, [mainSection, state.isDmMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadThemeCatalog().then(catalog => {
+      if (!cancelled) setThemes(catalog);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const selectedTheme = themes.find(theme => theme.id === state.themeId) ?? BUILT_IN_THEMES[0];
+    applyTheme(selectedTheme);
+  }, [state.themeId, themes]);
+
+  useEffect(() => {
+    document.title = mainSection === 'HOME' || mainSection === 'FILE_EDITOR' || mainSection === 'NEW_GAME'
+      ? 'Глобальная Карта'
+      : `${state.guildName} — Глобальная Карта`;
+  }, [mainSection, state.guildName]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    if (!state.mapAssetId) {
+      setRuntimeMapUrl(null);
+      return;
+    }
+    loadMapAssetUrl(state.mapAssetId)
+      .then(url => {
+        if (cancelled) {
+          if (url) URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setRuntimeMapUrl(url);
+      })
+      .catch(() => setRuntimeMapUrl(null));
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [state.mapAssetId]);
 
   const showToast = (message: string, isError = false) => {
     setToast({ message, isError });
@@ -122,6 +159,102 @@ export default function App() {
 
   const updateState = (newState: Partial<GameState>) => {
     setState(prev => ({ ...prev, ...newState }));
+  };
+
+  const handleSelectMapFile = async (file: File) => {
+    try {
+      const previousId = state.mapAssetId;
+      const asset = await saveMapAsset(file);
+      updateState({ mapAssetId: asset.id, mapWidth: asset.width, mapHeight: asset.height });
+      if (previousId && previousId !== asset.id) await deleteMapAsset(previousId);
+      showToast(`Карта «${file.name}» сохранена локально (${asset.width}×${asset.height}).`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Не удалось загрузить карту.', true);
+    }
+  };
+
+  const handleRestoreDefaultMap = async () => {
+    try {
+      await deleteMapAsset(state.mapAssetId);
+      updateState({ mapAssetId: null, mapBgUrl: DEFAULT_MAP_URL, mapWidth: 910, mapHeight: 1303 });
+      showToast('Восстановлена карта GlobalMap.webp.');
+    } catch {
+      showToast('Не удалось восстановить карту по умолчанию.', true);
+    }
+  };
+
+  const handleExportScenario = async () => {
+    try {
+      const bundle = await createScenarioBundle(state);
+      const url = URL.createObjectURL(bundle.blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = bundle.fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      showToast(`Сценарий сохранён в файл «${bundle.fileName}».`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Не удалось сохранить сценарий.', true);
+    }
+  };
+
+  const handleImportScenario = async (file: File) => {
+    try {
+      const previousMapAssetId = state.mapAssetId;
+      const imported = await importScenarioBundle(file, state.isDmMode);
+      setState(imported);
+      setHasStoredGame(true);
+      if (previousMapAssetId && previousMapAssetId !== imported.mapAssetId) {
+        await deleteMapAsset(previousMapAssetId);
+      }
+      setMainSection('GAME');
+      setActiveTab('MAP');
+      setIsGmOpen(false);
+      showToast(`Сценарий «${file.name}» открыт. Начат день 1.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Не удалось открыть сценарий.', true);
+    }
+  };
+
+  const handleContinueGame = () => {
+    if (!hasStoredGame) return;
+    setMainSection('GAME');
+    setActiveTab('MAP');
+    setGameChoicesOpen(false);
+  };
+
+  const handleStartNewGame = () => {
+    setMainSection('NEW_GAME');
+    setGameChoicesOpen(false);
+  };
+
+  const handleCreateNewGame = async (setup: NewGameSetupValue) => {
+    if (hasStoredGame && !window.confirm('Начать новую игру? Текущее локальное сохранение будет заменено.')) return false;
+    const previousMapAssetId = state.mapAssetId;
+    const newState = buildNewCampaign(setup);
+    if (setup.mapFile) {
+      const mapAsset = await saveMapAsset(setup.mapFile);
+      newState.mapAssetId = mapAsset.id;
+      newState.mapWidth = mapAsset.width;
+      newState.mapHeight = mapAsset.height;
+    }
+    setState(newState);
+    setHasStoredGame(true);
+    setMainSection('GAME');
+    setActiveTab('MAP');
+    if (previousMapAssetId && previousMapAssetId !== newState.mapAssetId) {
+      await deleteMapAsset(previousMapAssetId).catch(() => undefined);
+    }
+    showToast(`Новая кампания «${newState.guildName}» начата.`);
+    return true;
+  };
+
+  const handleOpenFileEditor = (kind: FileEditorKind) => {
+    setFileEditorKind(kind);
+    setMainSection('FILE_EDITOR');
+    setGameChoicesOpen(false);
   };
 
   // Payout of resources and budget override
@@ -158,7 +291,12 @@ export default function App() {
       region: missionData.region || 'ДИКИЕ ЗЕМЛИ',
       intelRevealed: missionData.intelRevealed !== undefined ? missionData.intelRevealed : false,
       goldReward: missionData.goldReward,
-      pinned: missionData.pinned || false
+      pinned: missionData.pinned || false,
+      checks: missionData.checks ? structuredClone(missionData.checks) : undefined,
+      complications: missionData.complications ? { ...missionData.complications } : undefined,
+      rewardSpecialItems: missionData.rewardSpecialItems ? [...missionData.rewardSpecialItems] : undefined,
+      prerequisiteMissionIds: missionData.prerequisiteMissionIds ? [...missionData.prerequisiteMissionIds] : [],
+      prerequisiteMode: missionData.prerequisiteMode ?? 'ALL'
     };
 
     updateState({
@@ -170,36 +308,18 @@ export default function App() {
   };
 
   const handleResetToDay1 = () => {
-    // Generate default missions equal to number of clans (6)
-    const defaultMissions = generateMissionsForDay(6, 1, DEFAULT_SPAWN_POLYGON);
-
-    // Reset clans to default clans
-    const defaultClans = JSON.parse(JSON.stringify(DEFAULT_CLANS)) as Clan[];
-
-    const newState: GameState = {
-      day: 1,
-      nClans: 6,
-      hCost: 10,
-      isDmMode: state.isDmMode, // preserve current GM mode setting!
-      mapBgUrl: '/media/GlobalMap.png',
-      mapWidth: 910,
-      mapHeight: 1303,
-      currentPhase: 1,
-      isDaySimulated: false,
-      assignedClanFilter: 'ALL',
-      spawnPolygon: DEFAULT_SPAWN_POLYGON,
-      clans: defaultClans,
-      adventurers: generateAdventurersForClans(6),
-      missions: defaultMissions,
-      contracts: [],
-      history: [],
-      selectedMissionId: null,
-      lastDistributionLogs: [],
-      hqPos: { x: 50, y: 50 }
-    };
+    const newState = createInitialGameState({ isDmMode: state.isDmMode, clansCount: state.nClans });
+    newState.guildName = state.guildName;
+    newState.guildShortName = state.guildShortName;
+    newState.themeId = state.themeId;
+    newState.mapBgUrl = state.mapBgUrl;
+    newState.mapAssetId = state.mapAssetId;
+    newState.mapWidth = state.mapWidth;
+    newState.mapHeight = state.mapHeight;
+    newState.clans = newState.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: state.guildName } : clan);
 
     setState(newState);
-    localStorage.setItem('adventurer_guild_state', JSON.stringify(newState));
+    localStorage.setItem(GAME_STORAGE_KEY, serializeGameState(newState));
     showToast('🧙‍♂️ Игровой мир успешно сброшен к началу Дня 1!');
   };
 
@@ -236,7 +356,7 @@ export default function App() {
       status: 'READY',
       successfulMissions: 0,
       totalMissions: 0,
-      reputation: clanId !== 'FREE_GM' ? { [clanId]: 1 } : {},
+      relations: clanId !== 'FREE_GM' ? { [clanId]: 1 } : {},
       isPlayer
     };
 
@@ -264,16 +384,16 @@ export default function App() {
     showToast('Герой полностью исцелен.');
   };
 
-  // reputation overriding
+  // relation adjustment
   const handleAdjustReputation = (advId: string, clanId: string, delta: number) => {
     const updated = state.adventurers.map(a => {
       if (a.id === advId) {
-        const currentRep = a.reputation?.[clanId] || 0;
+        const currentRep = a.relations?.[clanId] || 0;
         return {
           ...a,
-          reputation: {
-            ...a.reputation,
-            [clanId]: Math.max(0, currentRep + delta)
+          relations: {
+            ...a.relations,
+            [clanId]: clampRelation(currentRep + delta)
           }
         };
       }
@@ -333,7 +453,7 @@ export default function App() {
     // Mark mission revealed
     const updatedMissions = state.missions.map(m => {
       if (m.id === missionId) {
-        return { ...m, intelRevealed: true };
+        return markMissionScouted(m, clanId);
       }
       return m;
     });
@@ -362,42 +482,6 @@ export default function App() {
   const handleBuyResource = (clanId: string, resourceType: string) => {
     const clan = state.clans.find(c => c.id === clanId);
     if (!clan) return;
-
-    if (resourceType.startsWith('special-')) {
-      const idx = parseInt(resourceType.split('-')[1]);
-      const specialItems = clan.resources.specialItems || [];
-      const item = specialItems[idx];
-      if (!item) return;
-
-      const updatedClans = state.clans.map(c => {
-        if (c.id === clanId) {
-          const newSpecialItems = [...specialItems];
-          newSpecialItems.splice(idx, 1);
-          return {
-            ...c,
-            resources: {
-              ...c.resources,
-              specialItems: newSpecialItems
-            }
-          };
-        }
-        if (c.id === 'clan_guild') {
-          const guildSpecial = c.resources.specialItems || [];
-          return {
-            ...c,
-            resources: {
-              ...c.resources,
-              specialItems: [...guildSpecial, item]
-            }
-          };
-        }
-        return c;
-      });
-
-      updateState({ clans: updatedClans });
-      showToast(`🛒 Особый товар "${item}" перевезен в посольство Гильдии.`);
-      return;
-    }
 
     const h = state.hCost;
     const multipliers: Record<string, number> = {
@@ -451,28 +535,121 @@ export default function App() {
     showToast(`🛒 Закуплено: +1 ед. ресурсов (${resourceType}) для ${clan.name}.`);
   };
 
+  const handleTransferSpecialItem = (fromClanId: string, itemIndex: number, toClanId: string) => {
+    if (!toClanId || fromClanId === toClanId) return;
+    const source = state.clans.find(clan => clan.id === fromClanId);
+    const target = state.clans.find(clan => clan.id === toClanId);
+    const item = source?.resources.specialItems?.[itemIndex];
+    if (!source || !target || !item) return;
+    const isReserved = state.contracts.some(contract =>
+      contract.clanId === fromClanId && (contract.reservedSpecialItems ?? []).includes(item)
+    );
+    if (isReserved) {
+      showToast(`Особый предмет «${item}» зарезервирован активным контрактом.`, true);
+      return;
+    }
+    updateState({
+      clans: state.clans.map(clan => {
+        if (clan.id === fromClanId) {
+          const specialItems = [...(clan.resources.specialItems ?? [])];
+          specialItems.splice(itemIndex, 1);
+          return { ...clan, resources: { ...clan.resources, specialItems } };
+        }
+        if (clan.id === toClanId) {
+          return {
+            ...clan,
+            resources: { ...clan.resources, specialItems: [...(clan.resources.specialItems ?? []), item] }
+          };
+        }
+        return clan;
+      })
+    });
+    showToast(`💎 «${item}» передан: ${source.name} → ${target.name}.`);
+  };
+
+  const isLiveWorkspace = mainSection === 'GAME'
+    || (state.isDmMode && (mainSection === 'ADVENTURER_EDITOR' || mainSection === 'EVENT_EDITOR'));
+
   return (
     <div className="min-h-screen bg-[#060606] text-neutral-300 flex flex-col relative selection:bg-emerald-500 selection:text-black">
       
       {/* Visual background scanning noise */}
       <div className="absolute inset-0 bg-[radial-gradient(rgba(18,18,18,0.15)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none z-0" />
 
-      {/* Primary CRT Header */}
-      <header className="border-b border-emerald-500/15 bg-black/90 p-4 sticky top-0 z-[100] backdrop-blur shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
+      {mainSection === 'HOME' && (
+        <MainMenu
+          guildName={state.guildName}
+          hasSavedGame={hasStoredGame}
+          gameChoicesOpen={gameChoicesOpen}
+          onOpenGameChoices={() => setGameChoicesOpen(true)}
+          onCloseGameChoices={() => setGameChoicesOpen(false)}
+          onContinue={handleContinueGame}
+          onNewGame={handleStartNewGame}
+          onLoadScenario={handleImportScenario}
+          onOpenFileEditor={handleOpenFileEditor}
+        />
+      )}
+
+      {mainSection === 'FILE_EDITOR' && (
+        <Suspense fallback={<div className="relative z-10 p-10 text-center font-mono text-xs text-emerald-400">Открываем файловый редактор…</div>}>
+          <FileEditorWorkspace kind={fileEditorKind} onBack={() => setMainSection('HOME')} />
+        </Suspense>
+      )}
+
+      {mainSection === 'NEW_GAME' && (
+        <Suspense fallback={<div className="relative z-10 p-10 text-center font-mono text-xs text-emerald-400">Открываем мастер новой игры…</div>}>
+          <NewGameSetup
+            hasStoredGame={hasStoredGame}
+            defaultGuildName={state.guildName}
+            onBack={() => setMainSection('HOME')}
+            onStart={handleCreateNewGame}
+          />
+        </Suspense>
+      )}
+
+      {/* Primary game header */}
+      {isLiveWorkspace && <header className="border-b border-emerald-500/15 bg-black/90 p-4 sticky top-0 z-[100] backdrop-blur shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           
           {/* Logo Title */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={() => setMainSection('HOME')} className="rounded border border-neutral-800 bg-[#0d0d0d] p-2 text-neutral-500 transition hover:border-emerald-500/40 hover:text-emerald-300" title="Главное меню">
+              <Home className="h-4 w-4" />
+            </button>
             <Compass className="w-8 h-8 text-emerald-500 animate-spin-slow" />
-            <div>
+            <div className="mr-2">
               <h1 className="text-lg font-mono font-bold uppercase tracking-widest text-emerald-400">
-                Гильдия Приключенцев
+                {state.guildName}
               </h1>
             </div>
+            {state.isDmMode && (
+              <div className="flex flex-wrap items-center gap-1 rounded-lg border border-amber-500/20 bg-amber-500/5 p-1 font-mono text-[10px] uppercase">
+                <button type="button" onClick={() => setMainSection('GAME')} className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition ${mainSection === 'GAME' ? 'bg-amber-500 text-black' : 'text-amber-300/70 hover:bg-amber-500/10 hover:text-amber-200'}`}>
+                  <Gamepad2 className="h-3.5 w-3.5" /> Игра
+                </button>
+                <button type="button" onClick={() => setMainSection('ADVENTURER_EDITOR')} className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition ${mainSection === 'ADVENTURER_EDITOR' ? 'bg-amber-500 text-black' : 'text-amber-300/70 hover:bg-amber-500/10 hover:text-amber-200'}`}>
+                  <UserRoundCog className="h-3.5 w-3.5" /> Авантюристы
+                </button>
+                <button type="button" onClick={() => setMainSection('EVENT_EDITOR')} className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 transition ${mainSection === 'EVENT_EDITOR' ? 'bg-amber-500 text-black' : 'text-amber-300/70 hover:bg-amber-500/10 hover:text-amber-200'}`}>
+                  <CalendarCog className="h-3.5 w-3.5" /> События
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Quick Stats Ribbon */}
           <div className="flex items-center gap-4 sm:gap-6 font-mono text-xs">
+            {state.isDmMode && (
+              <ThemeSelector
+                themes={themes}
+                value={state.themeId}
+                onChange={themeId => updateState({ themeId })}
+                onRefresh={() => loadThemeCatalog().then(catalog => {
+                  setThemes(catalog);
+                  showToast(`Список тем обновлён: ${catalog.length}.`);
+                })}
+              />
+            )}
             
             <div className="flex items-center gap-2 bg-[#0d0d0d] border border-emerald-500/10 px-3 py-1.5 rounded">
               <Clock className="w-4 h-4 text-emerald-500" />
@@ -502,10 +679,10 @@ export default function App() {
           </div>
 
         </div>
-      </header>
+      </header>}
 
-      {/* Main Tab Links */}
-      <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">
+      {/* Game workspace tabs */}
+      {mainSection === 'GAME' && <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap gap-2.5 font-mono text-xs">
           
           <button
@@ -540,17 +717,17 @@ export default function App() {
             onClick={() => setActiveTab('CLANS')}
             className={`px-4 py-2 rounded-md cursor-pointer transition-all ${activeTab === 'CLANS' ? 'bg-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.35)]' : 'bg-transparent text-neutral-400 hover:bg-[#111] hover:text-neutral-200'}`}
           >
-            🏛️ Посольства ({state.clans.slice(0, state.nClans).filter(c => c.id !== 'clan_guild').length})
+            🏛️ Посольства ({getActivePlayerClans(state.clans, state.nClans).length})
           </button>
 
         </div>
-      </nav>
+      </nav>}
 
       {/* Main Container Workspace */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 z-10">
+      {isLiveWorkspace && <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 z-10">
         
         {/* Render Active View Tab */}
-        {activeTab === 'MAP' && (
+        {mainSection === 'GAME' && activeTab === 'MAP' && (
           <MapTab
             state={state}
             updateState={updateState}
@@ -559,10 +736,11 @@ export default function App() {
               updateState({ selectedMissionId: id });
               setIsMissionOpen(true);
             }}
+            mapDisplayUrl={runtimeMapUrl}
           />
         )}
 
-        {activeTab === 'PHASES' && (
+        {mainSection === 'GAME' && activeTab === 'PHASES' && (
           <PhasesTab
             state={state}
             updateState={updateState}
@@ -572,11 +750,11 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'RESULTS' && (
+        {mainSection === 'GAME' && activeTab === 'RESULTS' && (
           <ResultsTab state={state} updateState={updateState} showToast={showToast} />
         )}
 
-        {activeTab === 'ADVENTURERS' && (
+        {mainSection === 'GAME' && activeTab === 'ADVENTURERS' && (
           <AdventurersTab
             state={state}
             onOpenRecruit={() => setIsRecruitOpen(true)}
@@ -585,7 +763,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'CLANS' && (
+        {mainSection === 'GAME' && activeTab === 'CLANS' && (
           <ClansTab
             state={state}
             onSelectClan={(id) => setSelectedClanId(id)}
@@ -593,10 +771,20 @@ export default function App() {
           />
         )}
 
-      </main>
+        <Suspense fallback={<div className="rounded-xl border border-emerald-500/15 bg-[#0b0b0b] p-8 text-center font-mono text-xs text-emerald-400">Открываем инструменты ГМа…</div>}>
+          {state.isDmMode && mainSection === 'ADVENTURER_EDITOR' && (
+            <AdventurerEditor state={state} updateState={updateState} showToast={showToast} />
+          )}
+
+          {state.isDmMode && mainSection === 'EVENT_EDITOR' && (
+            <EventEditor state={state} updateState={updateState} showToast={showToast} />
+          )}
+        </Suspense>
+
+      </main>}
 
       {/* Retro scan footer */}
-      <footer className="border-t border-emerald-500/5 bg-black/50 py-2 font-mono text-[10px] text-neutral-600 text-center z-40 mt-auto" />
+      {isLiveWorkspace && <footer className="border-t border-emerald-500/5 bg-black/50 py-2 font-mono text-[10px] text-neutral-600 text-center z-40 mt-auto" />}
 
       {/* ==============================================
           MODALS & FLOATING DIALOGS VAULT
@@ -621,6 +809,10 @@ export default function App() {
         onCreateCustomMission={handleCreateCustomMission}
         onImportState={(importedState) => updateState(importedState)}
         onResetToDay1={handleResetToDay1}
+        onSelectMapFile={handleSelectMapFile}
+        onRestoreDefaultMap={handleRestoreDefaultMap}
+        onExportScenario={handleExportScenario}
+        onImportScenario={handleImportScenario}
       />
 
       {/* Mission Scouting / Contract Binder Modal */}
@@ -676,6 +868,7 @@ export default function App() {
         selectedClanId={storeClanId}
         state={state}
         onBuyResource={handleBuyResource}
+        onTransferSpecialItem={handleTransferSpecialItem}
       />
 
     </div>

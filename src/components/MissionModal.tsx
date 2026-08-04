@@ -6,7 +6,14 @@
 import React from 'react';
 import { X, Calendar, Compass, Search, HelpCircle, Shield, AlertTriangle } from 'lucide-react';
 import { Mission, Clan, GameState } from '../types';
+import { willMissionExpireAfterDay } from '../domain/missions';
+import {
+  cleanMissionTitle,
+  getMissionPresentation,
+  getScoutingClanNames
+} from '../domain/missionPresentation';
 import { getResourceNameRu, getTypeRu } from '../utils';
+import { getActivePlayerClans } from '../domain/clans';
 
 interface MissionModalProps {
   isOpen: boolean;
@@ -32,11 +39,17 @@ export default function MissionModal({
   const m = state.missions.find(x => x.id === selectedMissionId);
   if (!m) return null;
 
-  const isUrgent = m.lifespan <= 1;
+  const isUrgent = willMissionExpireAfterDay(m);
   const isRevealed = state.isDmMode || m.intelRevealed;
+  const presentation = getMissionPresentation(m, state.day, state.isDmMode);
+  const scoutingClanNames = getScoutingClanNames(m, state.clans);
+  const scoutingCaption = scoutingClanNames.length > 0
+    ? scoutingClanNames.join(', ')
+    : 'источник не указан';
 
   // Find clans with at least 1 intelligence
-  const eligibleClans = state.clans.filter(c => c.id !== 'clan_guild' && (c.resources.Intelligence || 0) >= 1);
+  const eligibleClans = getActivePlayerClans(state.clans, state.nClans)
+    .filter(clan => (clan.resources.Intelligence || 0) >= 1);
 
   const handleIntelConfirm = () => {
     const sel = document.getElementById('select-intel-clan') as HTMLSelectElement;
@@ -53,7 +66,7 @@ export default function MissionModal({
         <div className="px-6 py-4 border-b border-emerald-500/20 flex justify-between items-center bg-[#080808]">
           <h2 className="text-emerald-400 font-mono text-sm font-bold tracking-wider uppercase flex items-center gap-2">
             <Compass className={`w-5 h-5 ${isUrgent ? 'text-rose-500 animate-spin' : 'text-emerald-500'}`} />
-            Донесение: {m.title}
+            Донесение: {cleanMissionTitle(m.title)}
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-[#161616] rounded text-rose-500 transition-colors">
             <X className="w-5 h-5" />
@@ -67,7 +80,7 @@ export default function MissionModal({
           <div className="flex gap-2">
             <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${isUrgent ? 'bg-rose-950/35 border border-rose-500 text-rose-400 animate-pulse' : 'bg-emerald-950/35 border border-emerald-500/40 text-emerald-400'}`}>
               <Calendar className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
-              Осталось дней: {m.lifespan}
+              {m.lifespan === null ? 'Без срока' : `Осталось дней: ${m.lifespan}`}
             </span>
             <span className="px-2 py-0.5 bg-[#161616] border border-neutral-700 rounded text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
               Регион: {m.region}
@@ -84,10 +97,12 @@ export default function MissionModal({
             <div className="bg-emerald-950/10 border border-emerald-500/40 p-4 rounded-md space-y-3">
               <div className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Search className="w-4 h-4 text-emerald-400" />
-                Рассекреченные Данные (Разведка Клана):
+                {m.intelRevealed
+                  ? `Рассекреченные данные (разведано: ${scoutingCaption})`
+                  : 'Скрытые данные ГМа'}
               </div>
               <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs font-mono">
-                <div className="text-neutral-400 col-span-2">Тип события: <span className="text-white font-bold">{getTypeRu(m.type)}</span></div>
+                <div className="text-neutral-400 col-span-2">Тип события: <span className="text-white font-bold">{getTypeRu(presentation.visibleType)}</span></div>
                 
                 {m.type === 'DUMMY' ? (
                   <div className="text-neutral-300 col-span-2 bg-neutral-900/60 p-2.5 rounded border border-neutral-700/50 text-xs font-mono">
@@ -99,11 +114,14 @@ export default function MissionModal({
                     {m.checks.map((ch, idx) => (
                       <div key={idx} className="pl-2 border-l border-emerald-500/30 text-white flex justify-between items-center bg-black/25 px-2 py-1 rounded">
                         <span>Этап {idx + 1}: <span className="text-amber-400 font-bold">DC {ch.dc}</span></span>
-                        {ch.reqResource && ch.reqResource !== 'None' ? (
-                          <span className="text-neutral-400 text-[10px]">Ресурс: <span className="text-emerald-400 underline">{getResourceNameRu(ch.reqResource)}</span></span>
-                        ) : (
-                          <span className="text-neutral-500 text-[10px]">Ресурса обхода нет</span>
-                        )}
+                        <span className="text-right text-[10px]">
+                          {ch.reqResource && ch.reqResource !== 'None' ? (
+                            <span className="block text-neutral-400">Ресурс: <span className="text-emerald-400 underline">{getResourceNameRu(ch.reqResource)}</span></span>
+                          ) : (
+                            <span className="block text-neutral-500">Ресурса обхода нет</span>
+                          )}
+                          {ch.requiredSpecialItem && <span className="block text-amber-400">💎 {ch.requiredSpecialItem}</span>}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -116,12 +134,6 @@ export default function MissionModal({
                   </>
                 )}
                 
-                {m.requiredSpecialItem && (
-                  <div className="text-amber-400 font-bold col-span-2 bg-amber-950/20 border border-amber-500/30 p-2 rounded text-xs mt-1 flex items-center gap-1.5">
-                    <span>💎 Требуется особый предмет для старта: <strong className="text-amber-300 underline">{m.requiredSpecialItem}</strong></span>
-                  </div>
-                )}
-
                 <div className="text-neutral-400 col-span-2 mt-2 pt-2 border-t border-emerald-500/10">
                   Награда за успех: <span className="text-amber-500 font-bold">{m.type === 'DUMMY' ? '0г' : (m.goldReward !== undefined ? `${m.goldReward}г` : `${state.hCost * 2}г`)}</span>
                   {m.rewardSpecialItems && m.rewardSpecialItems.length > 0 && (
@@ -156,7 +168,7 @@ export default function MissionModal({
           {(() => {
             const activeContract = state.contracts.find(c => c.missionId === selectedMissionId);
             if (!activeContract) return null;
-            const customerClan = state.clans.find(c => c.id === activeContract.clanId)?.name || 'Гильдия';
+            const customerClan = state.clans.find(c => c.id === activeContract.clanId)?.name || state.guildName;
             return (
               <div className="bg-[#121212] border border-emerald-500/40 p-4 rounded-md space-y-2 font-mono">
                 <div className="text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center justify-between">

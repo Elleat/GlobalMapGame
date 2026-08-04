@@ -5,7 +5,10 @@
 
 import React, { useState } from 'react';
 import { Calendar, CheckCircle, XCircle, Search, Clock, Shield, Coins, AlertTriangle, Edit2, Check, X } from 'lucide-react';
-import { GameState, SimulationReport } from '../types';
+import { BasicResourceKey, Contract, GameState, SimulationReport } from '../types';
+import { recalculateReportEffects } from '../domain/reportEffects';
+import { reconcileScenarioHistory } from '../domain/day';
+import { getResourceNameRu } from '../utils';
 
 interface ResultsTabProps {
   state: GameState;
@@ -19,6 +22,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
 
   // Form states for GM Editing
   const [editSuccess, setEditSuccess] = useState<boolean>(false);
+  const [editBaseObjective, setEditBaseObjective] = useState<boolean>(false);
+  const [editRewardGranted, setEditRewardGranted] = useState<boolean>(false);
+  const [editNarrative, setEditNarrative] = useState<string>('');
   const [editAutoSuccess, setEditAutoSuccess] = useState<boolean>(false);
   const [editAutoReason, setEditAutoReason] = useState<string>('');
   const [editRoll, setEditRoll] = useState<number>(10);
@@ -27,6 +33,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
   const [editGold, setEditGold] = useState<number>(0);
   const [editDamage, setEditDamage] = useState<number>(0);
   const [editSquadIds, setEditSquadIds] = useState<string[]>([]);
+  const [editReturnedIds, setEditReturnedIds] = useState<string[]>([]);
   const [editResources, setEditResources] = useState<string[]>([]);
 
   const history = state.history || [];
@@ -39,6 +46,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
   const startEditing = (idx: number, rep: SimulationReport) => {
     setEditingReportIdx(idx);
     setEditSuccess(rep.isSuccess);
+    setEditBaseObjective(rep.baseObjectiveCompleted ?? rep.isSuccess);
+    setEditRewardGranted(rep.rewardGranted ?? rep.isSuccess);
+    setEditNarrative(rep.narrativeText);
     setEditAutoSuccess(rep.isResourceAutoSuccess);
     setEditAutoReason(rep.autoSuccessReason || '');
     setEditRoll(rep.roll);
@@ -47,108 +57,126 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
     setEditGold(rep.goldReward);
     setEditDamage(rep.damageDealt);
     setEditSquadIds(rep.squadAdvIds || []);
+    setEditReturnedIds(rep.returnedAdventurerIds ?? rep.squadAdvIds ?? []);
     setEditResources(rep.attachedResourcesUsed || []);
   };
 
   const handleApplyChanges = (idx: number, originalRep: SimulationReport) => {
     if (!selectedDay) return;
+    const context = originalRep.context;
+    if (!context || originalRep.isExpired) {
+      showToast('Этот старый или просроченный рапорт не содержит данных для безопасного пересчёта.', true);
+      return;
+    }
 
-    // Recalculate total roll if not auto-success
-    const calculatedTotal = editRoll + editBonus;
-    const finalSuccess = editAutoSuccess ? true : (calculatedTotal >= editDc);
-
-    // Form updated report
-    const updatedRep: SimulationReport = {
+    const activeContract = selectedDay === state.day
+      ? state.contracts.find(contract => contract.missionId === originalRep.missionId)
+      : undefined;
+    const reportContract: Contract = activeContract ?? {
+      missionId: originalRep.missionId,
+      title: originalRep.missionTitle,
+      clanId: context.clanId,
+      confirmed: true,
+      contractLevel: context.contractLevel,
+      paymentAmount: 0,
+      maxPartySize: context.maxPartySize,
+      attachedResources: [...context.attachedResources],
+      partyAdvIds: [...originalRep.squadAdvIds]
+    };
+    const finalSuccess = editAutoSuccess ? true : editSuccess;
+    const editedReport: SimulationReport = {
       ...originalRep,
       isSuccess: finalSuccess,
       isResourceAutoSuccess: editAutoSuccess,
       autoSuccessReason: editAutoSuccess ? editAutoReason || 'Особое снаряжение' : null,
       roll: editRoll,
       partyBonus: editBonus,
-      totalRoll: calculatedTotal,
+      totalRoll: editRoll + editBonus,
       dc: editDc,
       goldReward: editGold,
+      rewardGranted: editRewardGranted && finalSuccess,
+      rewardAwardedAmount: editRewardGranted && finalSuccess ? editGold : 0,
+      rewardRecipientClanId: context.clanId,
       damageDealt: editDamage,
+      narrativeText: editNarrative,
       squadAdvIds: editSquadIds,
-      squadNames: state.adventurers.filter(a => editSquadIds.includes(a.id)).map(a => a.name),
-      attachedResourcesUsed: editResources
+      returnedAdventurerIds: editReturnedIds.filter(id => editSquadIds.includes(id)),
+      attachedResourcesUsed: editResources,
+      baseObjectiveCompleted: editBaseObjective
     };
-
-    // Calculate HP adjustments for adventurers
-    const damageDiff = originalRep.damageDealt - editDamage; // Positive means we reduced damage (heal), negative means we increased damage
-    const updatedAdvs = state.adventurers.map(adv => {
-      if (editSquadIds.includes(adv.id)) {
-        let nextHp = adv.hp + damageDiff;
-        let nextStatus = adv.status;
-
-        if (nextHp > adv.maxHp) nextHp = adv.maxHp;
-        if (nextHp <= 0) {
-          nextHp = 0;
-          nextStatus = 'DEAD';
-        } else {
-          if (nextStatus === 'DEAD') nextStatus = 'READY';
-          if (nextHp < adv.maxHp && nextStatus === 'READY') {
-            nextStatus = 'WOUNDED';
-          } else if (nextHp === adv.maxHp && nextStatus === 'WOUNDED') {
-            nextStatus = 'READY';
-          }
-        }
-
-        return {
-          ...adv,
-          hp: nextHp,
-          status: nextStatus
-        };
-      }
-      return adv;
+    const recalculated = originalRep.invalidated
+      ? { report: { ...editedReport, invalidated: true, effects: originalRep.effects }, adventurers: state.adventurers, clans: state.clans }
+      : recalculateReportEffects({
+          originalReport: originalRep,
+          editedReport,
+          contract: reportContract,
+          mission: context.mission,
+          adventurers: state.adventurers,
+          clans: state.clans,
+          day: selectedDay
+        });
+    const updatedHistory = history.map(dayEntry => dayEntry.day !== selectedDay ? dayEntry : {
+      ...dayEntry,
+      reports: dayEntry.reports.map((report, reportIndex) => reportIndex === idx ? recalculated.report : report)
     });
-
-    // Calculate Gold adjustment for clans
-    const goldDiff = editGold - originalRep.goldReward;
-    const updatedClans = state.clans.map(clan => {
-      if (clan.name === originalRep.clanName) {
-        return {
-          ...clan,
-          gold: Math.max(0, clan.gold + goldDiff)
-        };
-      }
-      return clan;
-    });
-
-    // Update history day entry
-    const updatedHistory = history.map(dayEntry => {
-      if (dayEntry.day !== selectedDay) return dayEntry;
-      const updatedReports = dayEntry.reports.map((r, i) => (i === idx ? updatedRep : r));
-      return {
-        ...dayEntry,
-        reports: updatedReports
-      };
+    const updatedContracts = selectedDay === state.day
+      ? state.contracts.map(contract => contract.missionId === originalRep.missionId
+          ? { ...contract, simulationReport: recalculated.report }
+          : contract
+        )
+      : state.contracts;
+    const scenarioProgress = reconcileScenarioHistory({
+      allMissions: state.allMissions,
+      missions: state.missions,
+      contracts: updatedContracts,
+      history: updatedHistory,
+      currentDay: state.day,
+      adventurers: recalculated.adventurers,
+      clans: recalculated.clans
     });
 
     updateState({
-      adventurers: updatedAdvs,
-      clans: updatedClans,
-      history: updatedHistory
+      adventurers: scenarioProgress.adventurers,
+      clans: scenarioProgress.clans,
+      contracts: updatedContracts,
+      history: scenarioProgress.history,
+      missions: scenarioProgress.missions,
+      completedMissionIds: scenarioProgress.completedMissionIds,
+      closedMissionIds: scenarioProgress.closedMissionIds,
+      expiredMissionIds: scenarioProgress.expiredMissionIds
     });
 
-    showToast('⚖️ Рапорт успешно изменен ГМом и показатели пересчитаны!');
+    showToast('Рапорт изменён: все игровые последствия пересчитаны.');
     setEditingReportIdx(null);
   };
 
   const toggleHeroInSquad = (heroId: string) => {
     if (editSquadIds.includes(heroId)) {
       setEditSquadIds(editSquadIds.filter(id => id !== heroId));
+      setEditReturnedIds(editReturnedIds.filter(id => id !== heroId));
     } else {
       setEditSquadIds([...editSquadIds, heroId]);
+      setEditReturnedIds([...new Set([...editReturnedIds, heroId])]);
     }
   };
 
-  const toggleResource = (res: string) => {
-    if (editResources.includes(res)) {
-      setEditResources(editResources.filter(r => r !== res));
-    } else {
-      setEditResources([...editResources, res]);
+  const toggleHeroReturned = (heroId: string) => {
+    if (!editSquadIds.includes(heroId)) return;
+    setEditReturnedIds(editReturnedIds.includes(heroId)
+      ? editReturnedIds.filter(id => id !== heroId)
+      : [...editReturnedIds, heroId]
+    );
+  };
+
+  const adjustResourceCount = (resource: BasicResourceKey, delta: 1 | -1, attached: BasicResourceKey[]) => {
+    const usedCount = editResources.filter(item => item === resource).length;
+    const availableCount = attached.filter(item => item === resource).length;
+    if (delta > 0) {
+      if (usedCount < availableCount) setEditResources([...editResources, resource]);
+      return;
     }
+    const index = editResources.lastIndexOf(resource);
+    if (index >= 0) setEditResources(editResources.filter((_, itemIndex) => itemIndex !== index));
   };
 
   return (
@@ -177,8 +205,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
             ) : (
               [...history].reverse().map(h => {
                 const isSelected = selectedDay === h.day;
-                const successes = h.reports.filter(r => r.isSuccess).length;
-                const fails = h.reports.filter(r => !r.isSuccess && !r.isExpired).length;
+                const successes = h.reports.filter(r => r.isSuccess && !r.invalidated).length;
+                const fails = h.reports.filter(r => !r.isSuccess && !r.isExpired && !r.invalidated).length;
 
                 return (
                   <div
@@ -237,7 +265,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                           return (
                             <div
                               key={idx}
-                              className={`p-4 bg-[#121212] border rounded-lg space-y-3 font-mono text-xs ${rep.isSuccess ? 'border-emerald-500/30' : 'border-rose-500/30'}`}
+                              className={`p-4 bg-[#121212] border rounded-lg space-y-3 font-mono text-xs ${rep.invalidated ? 'border-amber-500/40 opacity-75' : rep.isSuccess ? 'border-emerald-500/30' : 'border-rose-500/30'}`}
                             >
                               <div className="flex justify-between items-start gap-4">
                                 <div>
@@ -273,6 +301,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                               {/* Normal non-editing view */}
                               {!isEditing && (
                                 <>
+                                  {rep.invalidated && <div className="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-amber-300">⚠️ Последствия этого рапорта отменены: {rep.invalidationReason}</div>}
                                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/60 p-2.5 rounded text-[10px] text-neutral-400">
                                     {rep.isResourceAutoSuccess ? (
                                       <div className="col-span-4 text-emerald-400 font-bold">
@@ -320,7 +349,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                   <div className="flex justify-between items-center text-[10px] text-neutral-400 pt-2 border-t border-neutral-900">
                                     <span className="flex items-center gap-1">
                                       <Coins className="w-3.5 h-3.5 text-amber-500" />
-                                      Прибыль казны: <strong className="text-amber-500 text-xs">{rep.goldReward} Золота</strong>
+                                      Награда: <strong className="text-amber-500 text-xs">{rep.goldReward} Золота</strong> · {rep.rewardGranted ? 'выдана' : 'не выдана'}
                                     </span>
                                     {rep.damageDealt > 0 && (
                                       <span className="flex items-center gap-1 text-rose-500">
@@ -338,6 +367,41 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                   <div className="text-amber-400 font-bold uppercase tracking-wider border-b border-amber-500/10 pb-1.5 mb-3 flex items-center justify-between">
                                     <span>⚙️ Панель Редактирования ГМа</span>
                                     <span className="text-[9px] bg-amber-500/10 text-amber-500 px-1 rounded">ИЗМЕНЕНИЕ ДАННЫХ</span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between gap-3 bg-neutral-950 border border-neutral-800 rounded p-3">
+                                    <div>
+                                      <span className="text-neutral-300 font-bold uppercase block">Финальный результат</span>
+                                      <small className="text-neutral-600">Пересчитывает опыт, отношения, HP, награды и ресурсы.</small>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const nextSuccess = !editSuccess;
+                                        setEditSuccess(nextSuccess);
+                                        setEditRewardGranted(false);
+                                        if (!nextSuccess) setEditAutoSuccess(false);
+                                      }}
+                                      className={`px-3 py-1.5 rounded border font-bold uppercase cursor-pointer ${editSuccess ? 'text-emerald-400 border-emerald-500 bg-emerald-950/20' : 'text-rose-400 border-rose-500 bg-rose-950/20'}`}
+                                    >
+                                      {editSuccess ? 'Успех' : 'Провал'}
+                                    </button>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">
+                                      <input type="checkbox" checked={editBaseObjective} onChange={event => setEditBaseObjective(event.target.checked)} />
+                                      Основная задача выполнена
+                                    </label>
+                                    <label className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">
+                                      <input type="checkbox" checked={editRewardGranted} disabled={!editSuccess} onChange={event => setEditRewardGranted(event.target.checked)} />
+                                      Награда фактически выдана
+                                    </label>
+                                  </div>
+
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-neutral-500 text-[10px] uppercase">Художественное описание:</label>
+                                    <textarea value={editNarrative} onChange={event => setEditNarrative(event.target.value)} className="min-h-20 bg-neutral-900 border border-neutral-800 text-neutral-200 px-2.5 py-2 rounded" />
                                   </div>
 
                                   {/* Row 1: DC and Auto-success */}
@@ -401,7 +465,10 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                         <input
                                           type="checkbox"
                                           checked={editAutoSuccess}
-                                          onChange={(e) => setEditAutoSuccess(e.target.checked)}
+                                          onChange={(e) => {
+                                            setEditAutoSuccess(e.target.checked);
+                                            if (e.target.checked) setEditSuccess(true);
+                                          }}
                                           className="w-4 h-4 cursor-pointer"
                                         />
                                         <span className="text-neutral-400">Задействовать ресурс</span>
@@ -424,18 +491,53 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
 
                                   {/* Squad list selector */}
                                   <div className="flex flex-col gap-1.5 pt-1">
-                                    <label className="text-neutral-500 text-[10px] uppercase block font-bold">Выбранные приключенцы отряда:</label>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[140px] overflow-y-auto pr-1 bg-black/40 p-2 rounded border border-neutral-800">
+                                    <label className="text-neutral-500 text-[10px] uppercase block font-bold">Фактические участники:</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1 bg-black/40 p-2 rounded border border-neutral-800">
                                       {state.adventurers.map(a => {
                                         const isChecked = editSquadIds.includes(a.id);
+                                        const returned = editReturnedIds.includes(a.id);
                                         return (
                                           <div
                                             key={a.id}
-                                            onClick={() => toggleHeroInSquad(a.id)}
-                                            className={`p-1.5 rounded border text-[10px] cursor-pointer flex justify-between items-center transition-all ${isChecked ? 'bg-amber-500/10 border-amber-500 text-amber-400 font-bold' : 'bg-transparent border-neutral-900 text-neutral-400 hover:border-neutral-800'}`}
+                                            className={`p-2 rounded border text-[10px] flex justify-between items-center gap-2 transition-all ${isChecked ? 'bg-amber-500/10 border-amber-500/60 text-amber-400 font-bold' : 'bg-transparent border-neutral-900 text-neutral-400'}`}
                                           >
-                                            <span className="line-clamp-1">🛡️ {a.name} (Ур.{a.level})</span>
-                                            {isChecked && <Check className="w-3 h-3 text-amber-400 shrink-0" />}
+                                            <button
+                                              type="button"
+                                              onClick={() => toggleHeroInSquad(a.id)}
+                                              className="flex-1 text-left cursor-pointer"
+                                            >
+                                              🛡️ {a.name} (Ур.{a.level}){a.isPlayer ? ' · Игрок' : ''}
+                                            </button>
+                                            {isChecked && (
+                                              <button
+                                                type="button"
+                                                onClick={() => toggleHeroReturned(a.id)}
+                                                className={`px-2 py-1 rounded border text-[9px] uppercase cursor-pointer ${returned ? 'border-emerald-500/30 text-emerald-400' : 'border-rose-500/30 text-rose-400'}`}
+                                              >
+                                                {returned ? 'Вернулся' : 'Не вернулся'}
+                                              </button>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <label className="text-neutral-500 text-[10px] uppercase block font-bold">Фактически потраченные ресурсы:</label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                      {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as BasicResourceKey[]).map(resource => {
+                                        const attached = (rep.context?.attachedResources ?? []) as BasicResourceKey[];
+                                        const attachedCount = attached.filter(item => item === resource).length;
+                                        const usedCount = editResources.filter(item => item === resource).length;
+                                        return (
+                                          <div key={resource} className="bg-black/40 border border-neutral-800 rounded p-2 text-center">
+                                            <span className="block text-[9px] text-neutral-500">{getResourceNameRu(resource)} · {usedCount}/{attachedCount}</span>
+                                            <div className="flex items-center justify-center gap-2 mt-1">
+                                              <button type="button" disabled={usedCount === 0} onClick={() => adjustResourceCount(resource, -1, attached)} className="px-2 border border-neutral-700 disabled:opacity-30 rounded cursor-pointer">−</button>
+                                              <strong>{usedCount}</strong>
+                                              <button type="button" disabled={usedCount >= attachedCount} onClick={() => adjustResourceCount(resource, 1, attached)} className="px-2 border border-neutral-700 disabled:opacity-30 rounded cursor-pointer">+</button>
+                                            </div>
                                           </div>
                                         );
                                       })}

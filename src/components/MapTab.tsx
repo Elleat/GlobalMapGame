@@ -4,22 +4,37 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, HelpCircle, Shield, RotateCw, Maximize2, Search, Plus, MapPin, Award } from 'lucide-react';
-import { GameState, Mission, MissionType } from '../types';
+import { Compass, HelpCircle, Shield, RotateCw, Maximize2, Search, Plus, MapPin, Award, Layers3 } from 'lucide-react';
+import { GameState, MapRegion, Mission, MissionResourceKey, MissionType } from '../types';
+import { DEFAULT_MAP_URL } from '../domain/constants';
+import { willMissionExpireAfterDay } from '../domain/missions';
+import {
+  cleanMissionTitle,
+  getMissionPresentation,
+  getScoutingClanNames
+} from '../domain/missionPresentation';
 import { getResourceNameRu } from '../utils';
+import RegionEditorPanel from './RegionEditorPanel';
+import {
+  createMapRegion,
+  getFogOpacity,
+  getRegionClipPath
+} from '../domain/mapRegions';
 
 interface MapTabProps {
   state: GameState;
   updateState: (newState: Partial<GameState>) => void;
   showToast: (msg: string, isError?: boolean) => void;
   onSelectMission: (id: string) => void;
+  mapDisplayUrl?: string | null;
 }
 
 export default function MapTab({
   state,
   updateState,
   showToast,
-  onSelectMission
+  onSelectMission,
+  mapDisplayUrl
 }: MapTabProps) {
   const [zoom, setZoom] = useState(60);
   const [rotate, setRotate] = useState(90);
@@ -30,7 +45,7 @@ export default function MapTab({
   // Story Mission Form inputs
   const [storyTitle, setStoryTitle] = useState('');
   const [storyDesc, setStoryDesc] = useState('');
-  const [storyReq, setStoryReq] = useState('Supplies');
+  const [storyReq, setStoryReq] = useState<MissionResourceKey>('Supplies');
   const [storySpecialItem, setStorySpecialItem] = useState('');
   const [storyDc, setStoryDc] = useState(12);
   const [storyLifespan, setStoryLifespan] = useState(3);
@@ -43,6 +58,60 @@ export default function MapTab({
   const [draggingMissionId, setDraggingMissionId] = useState<string | null>(null);
   const [isDraggingHq, setIsDraggingHq] = useState(false);
   const [draggedDistance, setDraggedDistance] = useState(0);
+  const [isRegionEditorOpen, setIsRegionEditorOpen] = useState(false);
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(state.mapRegions[0]?.id ?? null);
+  const [isAddingRegionPoint, setIsAddingRegionPoint] = useState(false);
+  const [isPlayerRegionPreview, setIsPlayerRegionPreview] = useState(false);
+  const [draggingRegionVertex, setDraggingRegionVertex] = useState<{ regionId: string; index: number } | null>(null);
+  const [draggingRegionLabelId, setDraggingRegionLabelId] = useState<string | null>(null);
+
+  const updateRegion = (regionId: string, change: Partial<MapRegion>) => {
+    updateState({
+      mapRegions: state.mapRegions.map(region => region.id === regionId ? { ...region, ...change } : region)
+    });
+  };
+
+  const handleCreateRegion = () => {
+    const region = createMapRegion(state.mapRegions.length, { x: storyX, y: storyY });
+    updateState({ mapRegions: [...state.mapRegions, region] });
+    setSelectedRegionId(region.id);
+    setIsPlayerRegionPreview(false);
+    showToast(`🗺️ Создан скрытый регион «${region.name}».`);
+  };
+
+  const handleDuplicateRegion = (regionId: string) => {
+    const source = state.mapRegions.find(region => region.id === regionId);
+    if (!source) return;
+    const copy: MapRegion = {
+      ...structuredClone(source),
+      id: `region_${Date.now().toString(36)}_copy`,
+      name: `${source.name} — копия`,
+      visibleToPlayers: false,
+      points: source.points.map(point => ({ x: Math.min(100, point.x + 2), y: Math.min(100, point.y + 2) })),
+      labelPosition: {
+        x: Math.min(100, source.labelPosition.x + 2),
+        y: Math.min(100, source.labelPosition.y + 2)
+      }
+    };
+    updateState({ mapRegions: [...state.mapRegions, copy] });
+    setSelectedRegionId(copy.id);
+  };
+
+  const handleDeleteRegion = (regionId: string) => {
+    const next = state.mapRegions.filter(region => region.id !== regionId);
+    updateState({ mapRegions: next });
+    setSelectedRegionId(next[0]?.id ?? null);
+    setIsAddingRegionPoint(false);
+  };
+
+  const handleMoveRegion = (regionId: string, direction: -1 | 1) => {
+    const index = state.mapRegions.findIndex(region => region.id === regionId);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= state.mapRegions.length) return;
+    const next = [...state.mapRegions];
+    [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+    updateState({ mapRegions: next });
+  };
 
   const getMapCoordsFromEvent = (e: React.MouseEvent) => {
     if (!mapContainerRef.current) return { x: 50, y: 50 };
@@ -141,6 +210,18 @@ export default function MapTab({
       const updatedPolygon = [...state.spawnPolygon];
       updatedPolygon[activeVertexIndex] = coords;
       updateState({ spawnPolygon: updatedPolygon });
+    } else if (draggingRegionVertex !== null && mapContainerRef.current) {
+      setDraggedDistance(distance => distance + 1);
+      const coords = getMapCoordsFromEvent(e);
+      const region = state.mapRegions.find(item => item.id === draggingRegionVertex.regionId);
+      if (region) {
+        updateRegion(region.id, {
+          points: region.points.map((point, index) => index === draggingRegionVertex.index ? coords : point)
+        });
+      }
+    } else if (draggingRegionLabelId !== null && mapContainerRef.current) {
+      setDraggedDistance(distance => distance + 1);
+      updateRegion(draggingRegionLabelId, { labelPosition: getMapCoordsFromEvent(e) });
     } else if (draggingMissionId !== null && mapContainerRef.current) {
       setDraggedDistance(d => d + 1);
       const coords = getMapCoordsFromEvent(e);
@@ -159,6 +240,8 @@ export default function MapTab({
     setActiveVertexIndex(null);
     setDraggingMissionId(null);
     setIsDraggingHq(false);
+    setDraggingRegionVertex(null);
+    setDraggingRegionLabelId(null);
   };
 
   // Map click for GM coordinate selection
@@ -170,8 +253,21 @@ export default function MapTab({
     if (target.closest('.no-pan') || activeVertexIndex !== null || panning) {
       return;
     }
+    if (draggedDistance > 5) {
+      setDraggedDistance(0);
+      return;
+    }
 
     const coords = getMapCoordsFromEvent(e);
+    if (isRegionEditorOpen && selectedRegionId && isAddingRegionPoint) {
+      const region = state.mapRegions.find(item => item.id === selectedRegionId);
+      if (region) {
+        updateRegion(region.id, { points: [...region.points, coords] });
+        showToast(`📐 В регион «${region.name}» добавлена новая вершина.`);
+      }
+      return;
+    }
+    if (isRegionEditorOpen) return;
     setStoryX(coords.x);
     setStoryY(coords.y);
     showToast(`📍 Выбраны координаты спавна: X=${coords.x}%, Y=${coords.y}%`);
@@ -262,7 +358,7 @@ export default function MapTab({
     }
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
+  const handleWheel = (e: WheelEvent | React.WheelEvent) => {
     e.preventDefault();
     if (!mapContainerRef.current) return;
     const rect = mapContainerRef.current.getBoundingClientRect();
@@ -272,6 +368,22 @@ export default function MapTab({
     const delta = e.deltaY > 0 ? -15 : 15;
     applyZoomAtPoint(zoom + delta, focusX, focusY);
   };
+
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const listener = (event: WheelEvent) => handleWheel(event);
+    container.addEventListener('wheel', listener, { passive: false });
+    return () => container.removeEventListener('wheel', listener);
+  }, [zoom, panOffset, rotate, state.mapWidth, state.mapHeight]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsAddingRegionPoint(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -284,6 +396,11 @@ export default function MapTab({
     setPanOffset(prev => getClampedPanOffset(prev, zoom, rotate));
   }, [zoom, rotate]);
 
+  useEffect(() => {
+    if (selectedRegionId && state.mapRegions.some(region => region.id === selectedRegionId)) return;
+    setSelectedRegionId(state.mapRegions[0]?.id ?? null);
+  }, [selectedRegionId, state.mapRegions]);
+
   // Create story mission handler
   const handleCreateStoryMission = (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,7 +412,6 @@ export default function MapTab({
       title,
       desc,
       reqResource: storyReq,
-      requiredSpecialItem: storySpecialItem.trim() || undefined,
       dc: storyDc,
       type: 'STORY',
       lifespan: storyLifespan,
@@ -305,7 +421,16 @@ export default function MapTab({
       y: storyY,
       region: 'СЮЖЕТНАЯ ЗОНА',
       pinned: true,
-      intelRevealed: true
+      intelRevealed: false,
+      scoutedByClanIds: [],
+      storyStatus: 'AVAILABLE',
+      checks: [{
+        id: `story-stage-${Date.now().toString(36)}`,
+        label: 'Сюжетный этап',
+        reqResource: storyReq,
+        requiredSpecialItem: storySpecialItem.trim() || undefined,
+        dc: storyDc
+      }]
     };
 
     updateState({
@@ -389,6 +514,21 @@ export default function MapTab({
             🏰 Штаб
           </button>
 
+          {state.isDmMode && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegionEditorOpen(open => !open);
+                setIsAddingRegionPoint(false);
+                setIsPlayerRegionPreview(false);
+              }}
+              className={`px-2.5 py-1 border text-xs rounded transition-all uppercase font-bold flex items-center gap-1.5 ${isRegionEditorOpen ? 'bg-sky-500 border-sky-400 text-black' : 'bg-sky-500/10 border-sky-500/35 text-sky-300 hover:bg-sky-500/20'}`}
+              title="Редактировать регионы карты"
+            >
+              <Layers3 className="h-3.5 w-3.5" /> Регионы
+            </button>
+          )}
+
           <button
             onClick={resetMap}
             className="px-2.5 py-1 bg-rose-950/20 hover:bg-rose-900/30 border border-rose-500/20 text-rose-400 text-xs rounded transition-all uppercase"
@@ -411,7 +551,6 @@ export default function MapTab({
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
             onContextMenu={(e) => e.preventDefault()}
             className={`w-full h-full cursor-grab ${panning ? 'cursor-grabbing' : ''}`}
             style={{ position: 'relative' }}
@@ -420,6 +559,7 @@ export default function MapTab({
             {/* Navigational Canvas Wrapper */}
             <div
               className="absolute origin-top-left transition-transform duration-75"
+              onClick={handleMapClick}
               style={{
                 transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom / 100}) rotate(${rotate}deg)`,
                 width: `${state.mapWidth}px`,
@@ -430,20 +570,99 @@ export default function MapTab({
               {/* Map Image Backdrop */}
               <img
                 ref={mapImageRef}
-                src={state.mapBgUrl || '/media/GlobalMap.png'}
+                src={mapDisplayUrl || state.mapBgUrl || DEFAULT_MAP_URL}
                 alt="Поле Боя"
-                onClick={handleMapClick}
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.src.endsWith('/media/GlobalMap.png')) {
-                    target.src = '/media/GlobalMap.png';
-                    updateState({ mapBgUrl: '/media/GlobalMap.png' });
+                  if (!target.src.endsWith(DEFAULT_MAP_URL)) {
+                    target.src = DEFAULT_MAP_URL;
+                    if (!mapDisplayUrl) updateState({ mapBgUrl: DEFAULT_MAP_URL, mapAssetId: null });
                   }
                 }}
                 className="w-full h-full object-cover rounded pointer-events-auto"
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
               />
+
+              {/* Atmospheric fog clipped to region polygons. */}
+              {state.mapEffectsEnabled && state.mapRegions.map(region => {
+                const editingView = state.isDmMode && isRegionEditorOpen && !isPlayerRegionPreview;
+                const fogIsVisible = region.fog.enabled && (editingView || region.visibleToPlayers);
+                if (!fogIsVisible) return null;
+                const playbackRate = region.fog.speed === 'FAST' ? 1.35 : region.fog.speed === 'SLOW' ? 0.65 : 1;
+                return (
+                  <div
+                    key={`fog-${region.id}`}
+                    className="absolute inset-0 pointer-events-none overflow-hidden region-fog-mask"
+                    style={{
+                      zIndex: 4,
+                      clipPath: getRegionClipPath(region.points),
+                      opacity: getFogOpacity(region.fog.density)
+                    } as React.CSSProperties}
+                    aria-hidden="true"
+                  >
+                    <video
+                      className="region-fog-video"
+                      src="/effects/AmbientFog001_001_Loop_White_1200x1200.webm"
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      preload="metadata"
+                      onLoadedMetadata={event => { event.currentTarget.playbackRate = playbackRate; }}
+                    />
+                  </div>
+                );
+              })}
+
+              {/* Configurable region fill and boundary layers. */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                style={{ zIndex: 5 }}
+              >
+                {state.mapRegions.map(region => {
+                  const editingView = state.isDmMode && isRegionEditorOpen && !isPlayerRegionPreview;
+                  if (!editingView && !region.visibleToPlayers) return null;
+                  const selected = region.id === selectedRegionId;
+                  const configuredFillVisible = region.visibleToPlayers && region.showFill;
+                  const configuredBoundaryVisible = region.visibleToPlayers && region.showBoundary;
+                  const fillVisible = editingView ? region.showFill : configuredFillVisible;
+                  const boundaryVisible = editingView || configuredBoundaryVisible;
+                  const hiddenFromPlayers = !region.visibleToPlayers;
+                  const strokeOpacity = configuredBoundaryVisible
+                    ? region.borderOpacity
+                    : editingView ? (selected ? 0.85 : 0.4) : 0;
+                  const fillOpacity = fillVisible
+                    ? editingView && hiddenFromPlayers
+                      ? Math.min(region.fillOpacity, selected ? 0.16 : 0.08)
+                      : region.fillOpacity
+                    : editingView && selected ? 0.035 : 0;
+                  return (
+                    <polygon
+                      key={region.id}
+                      className={editingView ? 'no-pan cursor-pointer' : undefined}
+                      points={region.points.map(point => `${point.x},${point.y}`).join(' ')}
+                      fill={region.color}
+                      fillOpacity={fillOpacity}
+                      stroke={boundaryVisible ? region.color : 'transparent'}
+                      strokeOpacity={strokeOpacity}
+                      strokeWidth={selected && editingView ? 0.75 : 0.45}
+                      strokeDasharray={editingView && (!configuredBoundaryVisible || hiddenFromPlayers) ? '1.2 0.8' : undefined}
+                      vectorEffect="non-scaling-stroke"
+                      style={{ pointerEvents: editingView && !isAddingRegionPoint ? 'auto' : 'none' }}
+                      onClick={event => {
+                        if (!editingView) return;
+                        event.stopPropagation();
+                        setSelectedRegionId(region.id);
+                      }}
+                    >
+                      <title>{region.name}{hiddenFromPlayers ? ' · скрыт от игроков' : ''}</title>
+                    </polygon>
+                  );
+                })}
+              </svg>
 
               {/* GM Spawn Area Polygon - Drawn relative using SVG viewBox */}
               <svg
@@ -452,7 +671,7 @@ export default function MapTab({
                 preserveAspectRatio="none"
                 style={{ zIndex: 5 }}
               >
-                {state.isDmMode && (
+                {state.isDmMode && !isRegionEditorOpen && (
                   <polygon
                     points={polygonPointsString}
                     fill="rgba(245, 158, 11, 0.22)"
@@ -467,6 +686,7 @@ export default function MapTab({
                   const mission = state.missions.find(m => m.id === c.missionId);
                   if (!mission) return null;
                   const hq = state.hqPos || { x: 50, y: 50 };
+                  const { isDelayedStory } = getMissionPresentation(mission, state.day, state.isDmMode);
                   return (
                     <line
                       key={c.missionId}
@@ -474,9 +694,9 @@ export default function MapTab({
                       y1={hq.y}
                       x2={mission.x}
                       y2={mission.y}
-                      stroke="#10b981"
-                      strokeWidth="0.8"
-                      strokeDasharray="2 1.5"
+                      stroke={isDelayedStory ? 'var(--story-delayed, #f59e0b)' : 'var(--contract-line, #10b981)'}
+                      strokeWidth={isDelayedStory ? '1.4' : '0.8'}
+                      strokeDasharray={isDelayedStory ? '0.8 0.8' : '2 1.5'}
                     >
                       <animate
                         attributeName="stroke-dashoffset"
@@ -490,8 +710,40 @@ export default function MapTab({
                 })}
               </svg>
 
+              {/* Region names rotate back so they remain readable. */}
+              {state.mapRegions.map(region => {
+                const editingView = state.isDmMode && isRegionEditorOpen && !isPlayerRegionPreview;
+                const labelVisible = editingView || (region.visibleToPlayers && region.showLabel);
+                if (!labelVisible) return null;
+                const selected = region.id === selectedRegionId;
+                return (
+                  <div
+                    key={`label-${region.id}`}
+                    className={`no-pan absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded border px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider shadow-md ${editingView ? 'cursor-move' : 'pointer-events-none'} ${region.visibleToPlayers ? 'bg-black/70' : 'border-dashed bg-black/45'}`}
+                    style={{
+                      left: `${region.labelPosition.x}%`,
+                      top: `${region.labelPosition.y}%`,
+                      color: region.color,
+                      borderColor: region.color,
+                      opacity: region.visibleToPlayers ? 1 : selected ? 0.95 : 0.6,
+                      transform: `translate(-50%, -50%) rotate(${-rotate}deg)`,
+                      zIndex: 12
+                    }}
+                    onMouseDown={event => {
+                      if (!editingView) return;
+                      event.stopPropagation();
+                      setSelectedRegionId(region.id);
+                      setDraggingRegionLabelId(region.id);
+                      setDraggedDistance(0);
+                    }}
+                  >
+                    {region.name}{editingView && !region.visibleToPlayers ? ' · скрыт' : ''}
+                  </div>
+                );
+              })}
+
               {/* GM Mode Spawn Zone Label */}
-              {state.isDmMode && state.spawnPolygon.length > 0 && (() => {
+              {state.isDmMode && !isRegionEditorOpen && state.spawnPolygon.length > 0 && (() => {
                 const avgX = state.spawnPolygon.reduce((acc, p) => acc + p.x, 0) / state.spawnPolygon.length;
                 const avgY = state.spawnPolygon.reduce((acc, p) => acc + p.y, 0) / state.spawnPolygon.length;
                 return (
@@ -518,7 +770,7 @@ export default function MapTab({
                     onClick={(e) => {
                       e.stopPropagation();
                       if (draggedDistance > 5) return;
-                      showToast('🏰 Штаб-квартира Гильдии Приключенцев' + (state.isDmMode ? ' (ГМ: можно перетащить)' : ''));
+                      showToast(`🏰 Штаб-квартира «${state.guildName}»` + (state.isDmMode ? ' (ГМ: можно перетащить)' : ''));
                     }}
                     className="no-pan absolute w-12 h-12 cursor-pointer flex items-center justify-center group"
                     style={{
@@ -532,7 +784,7 @@ export default function MapTab({
                     <div className={`relative w-10 h-10 rounded-full border-2 border-amber-400 bg-[#121212] flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.5)] transition-all group-hover:scale-110 ${state.isDmMode ? 'cursor-move' : 'cursor-pointer'}`}>
                       <Shield className="w-5 h-5 text-amber-400 fill-amber-500/20" />
                       <span className="absolute bottom-11 bg-black border border-amber-500 text-amber-400 text-[10px] font-mono px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                        🏰 Штаб Гильдии {state.isDmMode && '(GM: Перетащите)'}
+                        🏰 Штаб «{state.guildName}» {state.isDmMode && '(ГМ: перетащите)'}
                       </span>
                     </div>
                   </div>
@@ -540,7 +792,7 @@ export default function MapTab({
               })()}
 
               {/* GM Vertex Drag Handles */}
-              {state.isDmMode && state.spawnPolygon.map((v, idx) => (
+              {state.isDmMode && !isRegionEditorOpen && state.spawnPolygon.map((v, idx) => (
                 <div
                   key={idx}
                   className="no-pan absolute w-5 h-5 bg-amber-500 hover:bg-emerald-400 border-2 border-white rounded-full cursor-move flex items-center justify-center text-[9px] font-bold text-black select-none"
@@ -559,9 +811,42 @@ export default function MapTab({
                 </div>
               ))}
 
+              {/* Selected region vertex handles. */}
+              {state.isDmMode && isRegionEditorOpen && !isPlayerRegionPreview && (() => {
+                const selectedRegion = state.mapRegions.find(region => region.id === selectedRegionId);
+                if (!selectedRegion) return null;
+                return selectedRegion.points.map((point, index) => (
+                  <div
+                    key={`${selectedRegion.id}-vertex-${index}`}
+                    className="no-pan absolute flex h-5 w-5 cursor-move items-center justify-center rounded-full border-2 border-white bg-sky-500 text-[8px] font-bold text-black shadow-[0_0_8px_rgba(56,189,248,0.7)] hover:bg-amber-400"
+                    style={{
+                      left: `${point.x}%`,
+                      top: `${point.y}%`,
+                      transform: `translate(-50%, -50%) rotate(${-rotate}deg)`,
+                      zIndex: 25
+                    }}
+                    onMouseDown={event => {
+                      event.stopPropagation();
+                      setDraggingRegionVertex({ regionId: selectedRegion.id, index });
+                      setDraggedDistance(0);
+                    }}
+                    title={`Вершина ${index + 1}`}
+                  >
+                    {index + 1}
+                  </div>
+                ));
+              })()}
+
               {/* Draggable/Selectable Active Mission Pins */}
               {state.missions.map((m) => {
-                const isUrgent = m.lifespan <= 1;
+                const isUrgent = willMissionExpireAfterDay(m);
+                const presentation = getMissionPresentation(m, state.day, state.isDmMode);
+                const isStory = presentation.showStoryIdentity;
+                const isDelayedStory = presentation.isDelayedStory;
+                const scoutingClanNames = getScoutingClanNames(m, state.clans);
+                const scoutingSuffix = m.intelRevealed
+                  ? ` · разведано: ${scoutingClanNames.length > 0 ? scoutingClanNames.join(', ') : 'источник не указан'}`
+                  : '';
                 return (
                   <div
                     key={m.id}
@@ -591,15 +876,15 @@ export default function MapTab({
                       style={{ animationDuration: isUrgent ? '0.8s' : '2s' }}
                     >
                       {/* Pulsing halo */}
-                      <div className={`absolute inset-0 rounded-full animate-ping opacity-35 ${isUrgent ? 'bg-rose-500' : 'bg-emerald-400'}`} />
+                      <div className={`absolute inset-0 rounded-full animate-ping opacity-35 ${isDelayedStory ? 'bg-amber-400' : isUrgent ? 'bg-rose-500' : isStory ? 'bg-violet-400' : 'bg-emerald-400'}`} />
                       
                       {/* Floating pinpoint flag */}
-                      <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-125 ${isUrgent ? 'bg-rose-950 border-rose-500 text-rose-400' : 'bg-black/90 border-emerald-500 text-emerald-400'}`}>
-                        <MapPin className="w-4 h-4" />
+                      <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-125 ${isDelayedStory ? 'bg-amber-950 border-amber-400 text-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.7)]' : isUrgent ? 'bg-rose-950 border-rose-500 text-rose-400' : isStory ? 'bg-violet-950 border-violet-400 text-violet-300' : 'bg-black/90 border-emerald-500 text-emerald-400'}`}>
+                        {isStory ? <span className="text-base leading-none">◆</span> : <MapPin className="w-4 h-4" />}
                         
                         {/* Floating tooltip badge */}
                         <span className="absolute bottom-9 bg-black border border-emerald-500/40 text-neutral-200 text-[10px] font-mono px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                          {m.title} {m.intelRevealed && `(DC ${m.dc})`}
+                          {isDelayedStory ? '⏳ Сюжетная миссия ожидает рапорта · ' : isStory ? '◆ Сюжетная миссия · ' : ''}{cleanMissionTitle(m.title)} {m.intelRevealed && `(DC ${m.dc})`}{scoutingSuffix}
                         </span>
                       </div>
                     </div>
@@ -617,6 +902,27 @@ export default function MapTab({
           
           {/* GM Story Creator Panel */}
           {state.isDmMode ? (
+            isRegionEditorOpen ? (
+              <RegionEditorPanel
+                regions={state.mapRegions}
+                selectedRegionId={selectedRegionId}
+                effectsEnabled={state.mapEffectsEnabled}
+                playerPreview={isPlayerRegionPreview}
+                addPointMode={isAddingRegionPoint}
+                onSelect={regionId => {
+                  setSelectedRegionId(regionId);
+                  setIsAddingRegionPoint(false);
+                }}
+                onCreate={handleCreateRegion}
+                onUpdate={updateRegion}
+                onDuplicate={handleDuplicateRegion}
+                onDelete={handleDeleteRegion}
+                onMove={handleMoveRegion}
+                onToggleAddPoint={() => setIsAddingRegionPoint(active => !active)}
+                onEffectsEnabledChange={mapEffectsEnabled => updateState({ mapEffectsEnabled })}
+                onPlayerPreviewChange={setIsPlayerRegionPreview}
+              />
+            ) : (
             <div className="bg-[#0d0d0d] border border-amber-500/30 p-4 rounded-lg space-y-3.5 shadow-md">
               <h3 className="text-amber-500 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border-b border-amber-500/10 pb-2">
                 <Shield className="w-4 h-4" />
@@ -677,7 +983,7 @@ export default function MapTab({
                     <label className="text-neutral-400 uppercase text-[10px]">Ключевой Ресурс:</label>
                     <select
                       value={storyReq}
-                      onChange={(e) => setStoryReq(e.target.value)}
+                      onChange={(e) => setStoryReq(e.target.value as MissionResourceKey)}
                       className="w-full bg-black border border-amber-500/20 text-neutral-200 px-2 py-1.5 rounded outline-none"
                     >
                       <option value="Supplies">🎒 Припасы</option>
@@ -714,6 +1020,7 @@ export default function MapTab({
 
               </form>
             </div>
+            )
           ) : (
             <div className="bg-[#0d0d0d] border border-emerald-500/10 p-4 rounded-lg space-y-3 shadow-md">
               <h3 className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border-b border-emerald-500/10 pb-2">
@@ -733,7 +1040,10 @@ export default function MapTab({
                       onClick={() => onSelectMission(m.id)}
                       className="p-2 bg-[#121212] border border-emerald-500/5 hover:border-emerald-500/30 rounded cursor-pointer transition-all text-xs font-mono flex flex-col gap-1 hover:translate-x-1"
                     >
-                      <strong className="text-neutral-200">{m.title}</strong>
+                      <strong className="text-neutral-200">
+                        {cleanMissionTitle(m.title)}
+                        {m.intelRevealed && ` (разведано: ${getScoutingClanNames(m, state.clans).join(', ') || 'источник не указан'})`}
+                      </strong>
                       <span className="text-[10px] text-neutral-400 uppercase">Регион: {m.region}</span>
                     </div>
                   ))

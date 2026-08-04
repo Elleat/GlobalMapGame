@@ -1,6 +1,0 @@
-{
-  "name": "Гильдия Приключенцев",
-  "description": "Панель управления мета-игрой Гильдии Приключенцев в стиле This Is The Police для ГМа и игроков",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

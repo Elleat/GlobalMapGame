@@ -1,37 +1,79 @@
 {
-  "name": "react-example",
+  "name": "global-map-adventurers-guild",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.6.0",
+  "description": "Локальная глобальная карта для D&D-кампании с контрактами, кланами и автоматической симуляцией.",
+  "author": "ГМ проекта",
+  "main": "electron/main.mjs",
   "type": "module",
   "scripts": {
+    "predev": "npm run sync-themes",
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "prebuild": "npm run sync-themes",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "desktop": "electron .",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:dir": "npm run build && electron-builder --dir",
+    "desktop:win": "npm run build && electron-builder --win nsis portable",
+    "clean": "node scripts/clean.mjs",
+    "lint": "tsc --noEmit",
+    "test": "tsx --test src/domain/economy.test.ts src/domain/simulation.test.ts src/domain/scenarioEditor.test.ts src/domain/dataFiles.test.ts src/domain/missionPresentation.test.ts src/domain/mapRegions.test.ts",
+    "sync-themes": "node scripts/sync-themes.mjs"
   },
-  "dependencies": {
-    "@google/genai": "^2.4.0",
+  "dependencies": {},
+  "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
-    "lucide-react": "^0.546.0",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "vite": "^6.2.3",
-    "express": "^4.21.2",
-    "dotenv": "^17.2.3",
-    "motion": "^12.23.24"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "autoprefixer": "^10.4.21",
+    "electron": "43.2.0",
+    "electron-builder": "26.15.3",
     "esbuild": "^0.25.0",
+    "lucide-react": "^0.546.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
+  },
+  "build": {
+    "appId": "ru.globalmap.adventurersguild",
+    "productName": "Глобальная Карта",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "GlobalMap-Setup-${version}-${arch}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Глобальная Карта"
+    },
+    "portable": {
+      "artifactName": "GlobalMap-Portable-${version}-${arch}.${ext}"
+    }
   }
 }

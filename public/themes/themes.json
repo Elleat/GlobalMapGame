@@ -1,0 +1,16 @@
+[
+  {
+    "id": "dark-wardens",
+    "name": "Dark Wardens",
+    "description": "Исходная чёрно-зелёная тема глобальной карты.",
+    "version": "1",
+    "cssFile": "/themes/dark-wardens.css"
+  },
+  {
+    "id": "fantasy",
+    "name": "Fantasy",
+    "description": "Тёплая фэнтезийная тема с золотом, бронзой и пергаментом.",
+    "version": "1",
+    "cssFile": "/themes/fantasy.css"
+  }
+]

@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { X, Shield, Coins, Users, UserCheck } from 'lucide-react';
 import { GameState, Clan } from '../types';
+import { getActivePlayerClans } from '../domain/clans';
 
 interface RecruitModalProps {
   isOpen: boolean;
@@ -36,7 +37,7 @@ export default function RecruitModal({
   ];
 
   const cost = 5 * state.hCost;
-  const clansList = state.clans.slice(0, state.nClans).filter(c => c.id !== 'clan_guild');
+  const clansList = getActivePlayerClans(state.clans, state.nClans);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

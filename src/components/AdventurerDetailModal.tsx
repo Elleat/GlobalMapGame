@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { X, Heart, Shield, Award, Users, Plus, Minus } from 'lucide-react';
+import { X, Heart, Shield, Award, Users, Plus, Minus, BookOpen } from 'lucide-react';
 import { Adventurer, Clan, GameState } from '../types';
 import { getStatusNameRu, getAdvClassIcon } from '../utils';
+import { getActiveClansGuildFirst } from '../domain/clans';
 
 interface AdventurerDetailModalProps {
   isOpen: boolean;
@@ -27,6 +28,12 @@ export default function AdventurerDetailModal({
   onAdjustReputation,
   onUpdateAdventurer
 }: AdventurerDetailModalProps) {
+  const [isDescriptionOpen, setIsDescriptionOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsDescriptionOpen(false);
+  }, [selectedAdvId, isOpen]);
+
   if (!isOpen || !selectedAdvId) return null;
 
   const adv = state.adventurers.find(a => a.id === selectedAdvId);
@@ -180,19 +187,37 @@ export default function AdventurerDetailModal({
             </div>
           </div>
 
+          {adv.description?.trim() && (
+            <div className="rounded border border-emerald-500/15 bg-[#111] p-3">
+              <button
+                type="button"
+                onClick={() => setIsDescriptionOpen(value => !value)}
+                className="flex w-full items-center justify-between gap-3 font-mono text-xs font-bold uppercase text-emerald-400"
+              >
+                <span className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> Описание персонажа</span>
+                <span className="text-[10px] text-neutral-500">{isDescriptionOpen ? 'Скрыть' : 'Показать'}</span>
+              </button>
+              {isDescriptionOpen && (
+                <p className="mt-3 whitespace-pre-wrap border-t border-neutral-800 pt-3 text-sm leading-relaxed text-neutral-300">
+                  {adv.description.trim()}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Faction Reputation List */}
           <div>
             <h3 className="text-amber-500 font-mono text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Users className="w-4 h-4 text-amber-500" />
-              🏛️ Репутация в Кланах и Домах
+              🏛️ Отношения с Кланами и Домами
             </h3>
             <p className="text-[10px] font-mono text-neutral-500 leading-relaxed mb-3">
-              *Повышается автоматически при успешном завершении миссий с ресурсами клана без потерь в отряде.
+              *Меняются в зависимости от подготовки и результатов контрактов этого заказчика.
             </p>
 
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {state.clans.map(clan => {
-                const currentRep = adv.reputation?.[clan.id] || 0;
+              {getActiveClansGuildFirst(state.clans, state.nClans).map(clan => {
+                const currentRep = adv.relations?.[clan.id] || 0;
                 return (
                   <div
                     key={clan.id}
@@ -201,7 +226,7 @@ export default function AdventurerDetailModal({
                     <div>
                       <strong className="text-xs font-mono text-emerald-400">{clan.name}</strong>
                       <div className="text-[10px] font-mono text-neutral-500">
-                        Фракционная репутация: <span className="text-amber-500 font-bold">+{currentRep}</span>
+                        Отношения: <span className="text-amber-500 font-bold">{currentRep} / 10</span>
                       </div>
                     </div>
 

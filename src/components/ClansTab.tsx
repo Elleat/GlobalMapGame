@@ -7,6 +7,7 @@ import React from 'react';
 import { Shield, Coins, Star, Package, HelpCircle, Eye, ShoppingCart } from 'lucide-react';
 import { GameState, Clan } from '../types';
 import { getResourceNameRu, getMaxContractLevelForClan } from '../utils';
+import { getActivePlayerClans } from '../domain/clans';
 
 interface ClansTabProps {
   state: GameState;
@@ -20,8 +21,7 @@ export default function ClansTab({
   onOpenStore
 }: ClansTabProps) {
   const clans = state.clans || [];
-  // Limit shown clans to state.nClans, and also append 'clan_guild' if it isn't inside that slice
-  const activeClans = clans.slice(0, state.nClans).filter(c => c.id !== 'clan_guild');
+  const activeClans = getActivePlayerClans(clans, state.nClans);
   const guildClan = clans.find(c => c.id === 'clan_guild');
 
   const renderClanCard = (clan: Clan, isGuild: boolean = false) => {
@@ -55,7 +55,7 @@ export default function ClansTab({
             <div className="text-right">
               {isGuild ? (
                 <span className="px-2 py-0.5 bg-amber-950/20 border border-amber-500/30 text-amber-500 text-[9px] font-mono font-bold uppercase rounded">
-                  Оверлорд-Гильдия
+                  Независимый участник
                 </span>
               ) : (
                 <span className="px-1.5 py-0.5 bg-neutral-900 border border-neutral-800 text-neutral-400 text-[9px] font-mono uppercase rounded">
@@ -68,7 +68,7 @@ export default function ClansTab({
           {/* Description line */}
           <p className="text-[11px] font-mono text-neutral-400 leading-snug mb-4">
             {isGuild
-              ? 'Главный штаб Гроссмейстера. Получает комиссионные 15% за все симулируемые контракты.'
+              ? `${state.guildName}: независимый заказчик и посредник. Получает комиссию 15% с контрактов игроков.`
               : `Клиентский клан уровня доверия ${clan.trustLevel}. Доступные уровни заказов: 1..${maxContractLvl}.`}
           </p>
 
