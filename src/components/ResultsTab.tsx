@@ -5,8 +5,9 @@
 
 import React, { useState } from 'react';
 import { Calendar, CheckCircle, XCircle, Search, Clock, Shield, Coins, AlertTriangle, Edit2, Check, X } from 'lucide-react';
-import { BasicResourceKey, Contract, GameState, SimulationReport } from '../types';
+import { BasicResourceKey, Contract, GameState, MissionOutcome, SimulationReport } from '../types';
 import { recalculateReportEffects } from '../domain/reportEffects';
+import RetreatReportBlock from './RetreatReportBlock';
 import { reconcileScenarioHistory } from '../domain/day';
 import { getResourceNameRu } from '../utils';
 
@@ -21,7 +22,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
   const [editingReportIdx, setEditingReportIdx] = useState<number | null>(null);
 
   // Form states for GM Editing
-  const [editSuccess, setEditSuccess] = useState<boolean>(false);
+  const [editOutcome, setEditOutcome] = useState<MissionOutcome>('OBJECTIVE_FAILED');
   const [editBaseObjective, setEditBaseObjective] = useState<boolean>(false);
   const [editRewardGranted, setEditRewardGranted] = useState<boolean>(false);
   const [editNarrative, setEditNarrative] = useState<string>('');
@@ -45,7 +46,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
 
   const startEditing = (idx: number, rep: SimulationReport) => {
     setEditingReportIdx(idx);
-    setEditSuccess(rep.isSuccess);
+    setEditOutcome(rep.outcome ?? (rep.isSuccess ? 'SUCCESS' : ((rep.returnedAdventurerIds?.length ?? 0) === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED')));
     setEditBaseObjective(rep.baseObjectiveCompleted ?? rep.isSuccess);
     setEditRewardGranted(rep.rewardGranted ?? rep.isSuccess);
     setEditNarrative(rep.narrativeText);
@@ -83,10 +84,15 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
       attachedResources: [...context.attachedResources],
       partyAdvIds: [...originalRep.squadAdvIds]
     };
-    const finalSuccess = editAutoSuccess ? true : editSuccess;
+    const outcome: MissionOutcome = editAutoSuccess ? 'SUCCESS' : editOutcome;
+    const finalSuccess = outcome === 'SUCCESS';
+    const returnedIds = outcome === 'PARTY_LOST'
+      ? []
+      : editReturnedIds.filter(id => editSquadIds.includes(id));
     const editedReport: SimulationReport = {
       ...originalRep,
       isSuccess: finalSuccess,
+      outcome,
       isResourceAutoSuccess: editAutoSuccess,
       autoSuccessReason: editAutoSuccess ? editAutoReason || 'Особое снаряжение' : null,
       roll: editRoll,
@@ -98,9 +104,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
       rewardAwardedAmount: editRewardGranted && finalSuccess ? editGold : 0,
       rewardRecipientClanId: context.clanId,
       damageDealt: editDamage,
-      narrativeText: editNarrative,
+      narrativeText: outcome === 'PARTY_LOST' ? 'Отряд не вернулся.' : editNarrative,
       squadAdvIds: editSquadIds,
-      returnedAdventurerIds: editReturnedIds.filter(id => editSquadIds.includes(id)),
+      returnedAdventurerIds: returnedIds,
       attachedResourcesUsed: editResources,
       baseObjectiveCompleted: editBaseObjective
     };
@@ -132,7 +138,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
       history: updatedHistory,
       currentDay: state.day,
       adventurers: recalculated.adventurers,
-      clans: recalculated.clans
+      clans: recalculated.clans,
+      missionRecurrences: state.missionRecurrences
     });
 
     updateState({
@@ -143,7 +150,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
       missions: scenarioProgress.missions,
       completedMissionIds: scenarioProgress.completedMissionIds,
       closedMissionIds: scenarioProgress.closedMissionIds,
-      expiredMissionIds: scenarioProgress.expiredMissionIds
+      expiredMissionIds: scenarioProgress.expiredMissionIds,
+      missionRecurrences: scenarioProgress.missionRecurrences
     });
 
     showToast('Рапорт изменён: все игровые последствия пересчитаны.');
@@ -261,6 +269,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                           if (rep.isExpired) return null;
 
                           const isEditing = editingReportIdx === idx;
+                          const outcome = rep.outcome ?? (rep.isSuccess ? 'SUCCESS' : ((rep.returnedAdventurerIds?.length ?? 0) === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED'));
+                          const hideLostPartyDetails = !state.isDmMode && outcome === 'PARTY_LOST';
 
                           return (
                             <div
@@ -284,7 +294,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                     </button>
                                   )}
 
-                                  {rep.isSuccess ? (
+                                  {outcome === 'SUCCESS' ? (
                                     <span className="px-2 py-0.5 bg-emerald-950/25 border border-emerald-500 text-emerald-400 text-[10px] font-bold uppercase rounded flex items-center gap-1">
                                       <CheckCircle className="w-3.5 h-3.5" />
                                       Успех
@@ -292,7 +302,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                   ) : (
                                     <span className="px-2 py-0.5 bg-rose-950/25 border border-rose-500 text-rose-400 text-[10px] font-bold uppercase rounded flex items-center gap-1">
                                       <XCircle className="w-3.5 h-3.5" />
-                                      Провал
+                                      {outcome === 'PARTY_LOST' ? 'Отряд не вернулся' : 'Провал задачи'}
                                     </span>
                                   )}
                                 </div>
@@ -302,7 +312,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                               {!isEditing && (
                                 <>
                                   {rep.invalidated && <div className="rounded border border-amber-500/30 bg-amber-500/10 p-2 text-amber-300">⚠️ Последствия этого рапорта отменены: {rep.invalidationReason}</div>}
-                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/60 p-2.5 rounded text-[10px] text-neutral-400">
+                                  {!hideLostPartyDetails && <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-black/60 p-2.5 rounded text-[10px] text-neutral-400">
                                     {rep.isResourceAutoSuccess ? (
                                       <div className="col-span-4 text-emerald-400 font-bold">
                                         ✨ {rep.autoSuccessReason}
@@ -315,9 +325,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                         <div>Итоговый бросок: <strong className={rep.isSuccess ? 'text-emerald-400' : 'text-rose-500'}>{rep.totalRoll}</strong></div>
                                       </>
                                     )}
-                                  </div>
+                                  </div>}
 
-                                  {rep.checkResults && rep.checkResults.length > 0 && (
+                                  {!hideLostPartyDetails && rep.checkResults && rep.checkResults.length > 0 && (
                                     <div className="bg-black/80 p-2.5 rounded border border-emerald-500/10 space-y-1">
                                       <span className="text-[10px] text-amber-400 font-bold uppercase block tracking-wider">
                                         Этапы миссии ({rep.checkResults.length}):
@@ -331,11 +341,15 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                     </div>
                                   )}
 
+                                  {state.isDmMode && rep.retreat?.wasTriggered && (
+                                    <RetreatReportBlock retreat={rep.retreat} squadAdvIds={rep.squadAdvIds} squadNames={rep.squadNames} />
+                                  )}
+
                                   <p className="text-neutral-300 leading-relaxed italic border-l-2 border-emerald-500/20 pl-3">
                                     {rep.narrativeText}
                                   </p>
 
-                                  <div className="flex flex-col gap-1.5 pt-1.5 border-t border-neutral-900">
+                                  {!hideLostPartyDetails && <div className="flex flex-col gap-1.5 pt-1.5 border-t border-neutral-900">
                                     <span className="text-[10px] text-neutral-500 uppercase">Участники отряда:</span>
                                     <div className="flex flex-wrap gap-1.5 text-[10px]">
                                       {rep.squadNames.map((n, i) => (
@@ -344,9 +358,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                         </span>
                                       ))}
                                     </div>
-                                  </div>
+                                  </div>}
 
-                                  <div className="flex justify-between items-center text-[10px] text-neutral-400 pt-2 border-t border-neutral-900">
+                                  {!hideLostPartyDetails && <div className="flex justify-between items-center text-[10px] text-neutral-400 pt-2 border-t border-neutral-900">
                                     <span className="flex items-center gap-1">
                                       <Coins className="w-3.5 h-3.5 text-amber-500" />
                                       Награда: <strong className="text-amber-500 text-xs">{rep.goldReward} Золота</strong> · {rep.rewardGranted ? 'выдана' : 'не выдана'}
@@ -357,7 +371,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                         Урон героям: <strong className="text-rose-500">-{rep.damageDealt} HP</strong>
                                       </span>
                                     )}
-                                  </div>
+                                  </div>}
                                 </>
                               )}
 
@@ -374,18 +388,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                       <span className="text-neutral-300 font-bold uppercase block">Финальный результат</span>
                                       <small className="text-neutral-600">Пересчитывает опыт, отношения, HP, награды и ресурсы.</small>
                                     </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const nextSuccess = !editSuccess;
-                                        setEditSuccess(nextSuccess);
-                                        setEditRewardGranted(false);
-                                        if (!nextSuccess) setEditAutoSuccess(false);
-                                      }}
-                                      className={`px-3 py-1.5 rounded border font-bold uppercase cursor-pointer ${editSuccess ? 'text-emerald-400 border-emerald-500 bg-emerald-950/20' : 'text-rose-400 border-rose-500 bg-rose-950/20'}`}
-                                    >
-                                      {editSuccess ? 'Успех' : 'Провал'}
-                                    </button>
+                                    <select value={editOutcome} onChange={event => { const next = event.target.value as MissionOutcome; setEditOutcome(next); setEditRewardGranted(false); if (next !== 'SUCCESS') setEditAutoSuccess(false); if (next === 'PARTY_LOST') setEditReturnedIds([]); }} className="editor-input max-w-[280px] font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
                                   </div>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -394,7 +397,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                       Основная задача выполнена
                                     </label>
                                     <label className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">
-                                      <input type="checkbox" checked={editRewardGranted} disabled={!editSuccess} onChange={event => setEditRewardGranted(event.target.checked)} />
+                                      <input type="checkbox" checked={editRewardGranted} disabled={editOutcome !== 'SUCCESS' && !editAutoSuccess} onChange={event => setEditRewardGranted(event.target.checked)} />
                                       Награда фактически выдана
                                     </label>
                                   </div>
@@ -467,7 +470,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                           checked={editAutoSuccess}
                                           onChange={(e) => {
                                             setEditAutoSuccess(e.target.checked);
-                                            if (e.target.checked) setEditSuccess(true);
+                                            if (e.target.checked) setEditOutcome('SUCCESS');
                                           }}
                                           className="w-4 h-4 cursor-pointer"
                                         />

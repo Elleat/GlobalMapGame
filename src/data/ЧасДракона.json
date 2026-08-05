@@ -1,0 +1,3890 @@
+{
+  "type": "global-map-events",
+  "version": 1,
+  "name": "Штормград Час Дракона",
+  "events": [
+    {
+      "id": "story_ocean_wreck",
+      "title": "Затонувший корабль",
+      "desc": "Слухи подтверждаются. Контрабандный галеон, перевозивший то, за чем охотятся сразу несколько влиятельных фракций, пропал. Скорее всего, он сбился с курса в плотных туманах Ленстера так и не пройдя до городов Ульстера. Ваша текущая позиция в Ульстере позволяет выдвинуться к предполагаемому месту крушения первыми. Орден настоятельно рекомендует опередить сторонних наемников и изъять содержимое капитана раньше, чем до него доберутся фоморы или грабители.",
+      "reqResource": "Supplies",
+      "dc": 13,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 13,
+      "y": 42,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "ocean_wreck_1",
+          "label": "Добраться до разбитого корабля",
+          "reqResource": "Supplies",
+          "dc": 13
+        },
+        {
+          "id": "ocean_wreck_2",
+          "label": "Украсть реликвию из обломков",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "ocean_wreck_3",
+          "label": "Не дать наемникам отнять реликвию",
+          "reqResource": "Equipment",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_ocean_leviathan",
+      "title": "Левиафан-Скелет",
+      "desc": "След реликвии ведёт к исполинскому скелету Левиафана. Его хребет медленно спускается в морскую тьму, образуя путь к самому дну. Там, далеко внизу, над краем ещё более глубокой бездны мерцает забытый Коралловый трон.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 9,
+      "y": 55,
+      "region": "БЕЗДНА ЛЕВИАФАНА",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "ocean_leviathan_1",
+          "label": "Отыскать начало костяного пути",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "ocean_leviathan_2",
+          "label": "Спуститься по хребту Левиафана",
+          "reqResource": "Supplies",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_ocean_wreck"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_ocean_throne",
+      "title": "Коралловый трон",
+      "desc": "Кости гигантской твари уходят в бесконечный океан и теряются над бездной. Пока невозможно понять, зачем был оставлен этот путь и кто ожидал путников у Кораллового трона. Отряду предстоит найти способ закрепить и продолжить скелет Левиафана, превратив его в лестницу до океанского дна.",
+      "reqResource": "Equipment",
+      "dc": 16,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 7,
+      "y": 68,
+      "region": "КОРАЛЛОВАЯ БЕЗДНА",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "ocean_throne_1",
+          "label": "Укрепить костяную лестницу",
+          "reqResource": "Equipment",
+          "dc": 16
+        },
+        {
+          "id": "ocean_throne_2",
+          "label": "Пережить давление глубин",
+          "reqResource": "Alchemy",
+          "dc": 17
+        },
+        {
+          "id": "ocean_throne_3",
+          "label": "Достичь Кораллового трона",
+          "reqResource": "None",
+          "dc": 18
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_ocean_leviathan"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_shield_frozen_ship",
+      "title": "Замёрзший корабль",
+      "desc": "Неподалёку от Ирландии вновь и вновь поднимается густой ледяной туман. В его сердце покоится древний корабль, намертво вмёрзший в прозрачный лёд. Записи на борту рассказывают, как часть представителей Седьмого дома предала Гвейлод и бежала, унеся осколки Расколотого Щита. Однако несколько свидетельств утверждают, что часть осколков не была похищена — она попросту испарилась.",
+      "reqResource": "Supplies",
+      "dc": 13,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 26,
+      "y": 20,
+      "region": "ЛЕДЯНОЙ ТУМАН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "shield_ship_1",
+          "label": "Пройти сквозь ледяной туман",
+          "reqResource": "Supplies",
+          "dc": 13
+        },
+        {
+          "id": "shield_ship_2",
+          "label": "Проникнуть в замёрзшие руины",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "shield_ship_3",
+          "label": "Расшифровать записи Седьмого дома",
+          "reqResource": "Intelligence",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_shield_portal",
+      "title": "Древний портал",
+      "desc": "В сердце Ирландии сокрыто древнее устройство, открывающее дорогу через Изнанку мира. Его четыре направления ведут туда, где бежавшие фоморы спрятали уцелевшие осколки Расколотого Щита. Чтобы пробудить механизм, придётся восстановить утраченную последовательность знаков и пережить отклик пространства между мирами.",
+      "reqResource": "Intelligence",
+      "dc": 15,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 56,
+      "y": 46,
+      "region": "ЦЕНТР ИРЛАНДИИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "shield_portal_1",
+          "label": "Найти управляющие знаки",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "shield_portal_2",
+          "label": "Запустить древний механизм",
+          "reqResource": "Equipment",
+          "dc": 16
+        },
+        {
+          "id": "shield_portal_3",
+          "label": "Удержать проход через Изнанку",
+          "reqResource": "Alchemy",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_shield_frozen_ship"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_shield_valkyrie",
+      "title": "Кладбище со статуей валькирии",
+      "desc": "Зелёный путь портала выводит на безмолвное имперское кладбище. Над рядами забытых могил возвышается статуя валькирии, в каменном щите которой мерцает след искомого осколка.",
+      "reqResource": "Intelligence",
+      "dc": 16,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 53.5,
+      "y": 43.5,
+      "region": "ЗЕЛЁНЫЙ ПРЕДЕЛ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "shield_valkyrie_1",
+          "label": "Пробудить память кладбища",
+          "reqResource": "Intelligence",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_shield_portal"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_shield_elven_portal",
+      "title": "Эльфийский портал",
+      "desc": "Белый путь ведёт к эльфийскому механизму, где магия сплетена с невозможной геометрией. Один из осколков Щита служит сердцем портала и удерживает его от окончательного распада.",
+      "reqResource": "Alchemy",
+      "dc": 16,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 58.5,
+      "y": 43.5,
+      "region": "БЕЛЫЙ ПРЕДЕЛ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "shield_elven_1",
+          "label": "Разомкнуть эльфийский контур",
+          "reqResource": "Alchemy",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_shield_portal"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_shield_sand_tomb",
+      "title": "Гробница под песками",
+      "desc": "Жёлтый путь заканчивается под раскалёнными песками, у погребённой гробницы безымянного царя. Осколок Щита запечатан среди сокровищ, которые слишком долго ждали новых хозяев.",
+      "reqResource": "Supplies",
+      "dc": 16,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 53.5,
+      "y": 48.5,
+      "region": "ЖЁЛТЫЙ ПРЕДЕЛ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "shield_sand_1",
+          "label": "Открыть погребальную печать",
+          "reqResource": "Supplies",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_shield_portal"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_shield_dragon_lair",
+      "title": "Логово дракона тьмы",
+      "desc": "Красный путь обрывается в логове кошмарного дракона. В чёрной чешуе чудовища отражается багровый свет осколка — возможно, реликвия уже стала частью его силы.",
+      "reqResource": "Equipment",
+      "dc": 18,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 58.5,
+      "y": 48.5,
+      "region": "КРАСНЫЙ ПРЕДЕЛ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "shield_dragon_1",
+          "label": "Добраться до сердца логова",
+          "reqResource": "Equipment",
+          "dc": 18
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "story_shield_portal"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "story_fairy_tavern",
+      "title": "Таверна между кругами",
+      "desc": "В глубине пещеры, среди исполинских светящихся грибов, скрыта тропа, которой нет на обычных картах. Споровый ключ трактирщика заставляет грибы сложиться в дверной проём. За ним ждёт фейская таверна — место, где платят обещаниями, а выход никогда не ведёт туда, откуда вошёл путник.",
+      "reqResource": "None",
+      "dc": 14,
+      "type": "STORY",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 72,
+      "y": 64,
+      "region": "ГРИБНЫЕ ПЕЩЕРЫ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [
+        {
+          "id": "fairy_tavern_1",
+          "label": "Открыть грибной проход",
+          "reqResource": "None",
+          "dc": 14,
+          "requiredSpecialItem": "Споровый ключ трактирщика"
+        },
+        {
+          "id": "fairy_tavern_2",
+          "label": "Заключить сделку с хозяином таверны",
+          "reqResource": "Intelligence",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_chain_ink_1",
+      "title": "Чернила на чёрной воде",
+      "desc": "Рыбаки нашли бочки с чернилами, которые продолжают писать знаки даже на поверхности моря. Следует собрать образцы и выяснить, откуда их принесло течением.",
+      "reqResource": "Alchemy",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 18,
+      "y": 35,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 14,
+      "checks": [
+        {
+          "id": "ink_1_1",
+          "label": "Собрать живые чернила",
+          "reqResource": "Alchemy",
+          "dc": 12
+        },
+        {
+          "id": "ink_1_2",
+          "label": "Проследить морское течение",
+          "reqResource": "Intelligence",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_chain_ink_2",
+      "title": "Карта, написанная приливом",
+      "desc": "Собранные чернила проявили карту только во время отлива. Отряду предстоит пройти по исчезающей дороге раньше, чем море вновь скроет её.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 21,
+      "y": 39,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 2,
+      "goldReward": 18,
+      "checks": [
+        {
+          "id": "ink_2_1",
+          "label": "Прочесть приливную карту",
+          "reqResource": "Intelligence",
+          "dc": 13
+        },
+        {
+          "id": "ink_2_2",
+          "label": "Пройти по обнажившемуся дну",
+          "reqResource": "Supplies",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "op_chain_ink_1"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_chain_ink_3",
+      "title": "Архив утонувшего картографа",
+      "desc": "Исчезающая дорога приводит к затопленному архиву. Внутри сохранились карты берегов, которых больше нет, и координаты опасных проходов.",
+      "reqResource": "Equipment",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 24,
+      "y": 44,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 24,
+      "checks": [
+        {
+          "id": "ink_3_1",
+          "label": "Вскрыть затопленный архив",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "ink_3_2",
+          "label": "Спасти уцелевшие карты",
+          "reqResource": "None",
+          "dc": 15
+        },
+        {
+          "id": "ink_3_3",
+          "label": "Вернуться до прилива",
+          "reqResource": "Supplies",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [
+        "Атлас утонувшего картографа"
+      ],
+      "prerequisiteMissionIds": [
+        "op_chain_ink_2"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_multi_rune_a",
+      "title": "Руна северного замка",
+      "desc": "На воротах заброшенной крепости каждую ночь вспыхивает половина древней печати. Необходимо снять точную копию знака, не разбудив стражей руин.",
+      "reqResource": "Equipment",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 42,
+      "y": 17,
+      "region": "СЕВЕРНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 15,
+      "checks": [
+        {
+          "id": "rune_a_1",
+          "label": "Проникнуть в крепость",
+          "reqResource": "Equipment",
+          "dc": 13
+        },
+        {
+          "id": "rune_a_2",
+          "label": "Скопировать северную руну",
+          "reqResource": "None",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_multi_rune_b",
+      "title": "Руна южного кургана",
+      "desc": "В погребальном кургане найдена вторая половина печати. Она проявляется лишь в дыму редких трав и исчезает на рассвете.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 45,
+      "y": 76,
+      "region": "ЮЖНЫЕ КУРГАНЫ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 2,
+      "goldReward": 15,
+      "checks": [
+        {
+          "id": "rune_b_1",
+          "label": "Найти погребальную камеру",
+          "reqResource": "Intelligence",
+          "dc": 13
+        },
+        {
+          "id": "rune_b_2",
+          "label": "Проявить южную руну",
+          "reqResource": "Alchemy",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_multi_vault",
+      "title": "Хранилище расколотой печати",
+      "desc": "Две руны складываются в ключ от подземного хранилища. Только совместное завершение обоих исследований позволяет открыть его двери.",
+      "reqResource": "Intelligence",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 44,
+      "y": 48,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 28,
+      "checks": [
+        {
+          "id": "vault_1",
+          "label": "Совместить половины печати",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "vault_2",
+          "label": "Остановить каменных стражей",
+          "reqResource": "Equipment",
+          "dc": 16
+        },
+        {
+          "id": "vault_3",
+          "label": "Исследовать хранилище",
+          "reqResource": "None",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [
+        "Ключ Лунного погреба"
+      ],
+      "prerequisiteMissionIds": [
+        "op_multi_rune_a",
+        "op_multi_rune_b"
+      ],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_fairy_key",
+      "title": "Споры под старой мельницей",
+      "desc": "Под старой мельницей разрослась колония разумных грибов. В её центре лежит бронзовый ключ, покрытый светящейся пыльцой и крошечными письменами.",
+      "reqResource": "Supplies",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 68,
+      "y": 58,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 16,
+      "checks": [
+        {
+          "id": "fairy_key_1",
+          "label": "Спуститься в грибницу",
+          "reqResource": "Supplies",
+          "dc": 12
+        },
+        {
+          "id": "fairy_key_2",
+          "label": "Усыпить споровых стражей",
+          "reqResource": "Alchemy",
+          "dc": 14
+        },
+        {
+          "id": "fairy_key_3",
+          "label": "Забрать бронзовый ключ",
+          "reqResource": "None",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [
+        "Споровый ключ трактирщика"
+      ],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_item_moon_use",
+      "title": "Лунный погреб",
+      "desc": "Под виноградниками обнаружена дверь, открывающаяся только Ключом Лунного погреба. За ней слышен звон стекла и шёпот давно закупоренных голосов.",
+      "reqResource": "None",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 63,
+      "y": 47,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 25,
+      "checks": [
+        {
+          "id": "moon_1",
+          "label": "Открыть лунную дверь",
+          "reqResource": "None",
+          "dc": 14,
+          "requiredSpecialItem": "Ключ Лунного погреба"
+        },
+        {
+          "id": "moon_2",
+          "label": "Усмирить закупоренные голоса",
+          "reqResource": "Alchemy",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_any_refuge",
+      "title": "Убежище последнего гонца",
+      "desc": "Сведения о тайном убежище можно получить либо по карте прилива, либо из записей южного кургана. Внутри гонец всё ещё охраняет послание, которое некому доставить.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 37,
+      "y": 61,
+      "region": "ЮЖНЫЕ КУРГАНЫ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 4,
+      "goldReward": 22,
+      "checks": [
+        {
+          "id": "refuge_1",
+          "label": "Найти скрытый вход",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "refuge_2",
+          "label": "Убедить последнего гонца",
+          "reqResource": "None",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [
+        "op_chain_ink_1",
+        "op_multi_rune_b"
+      ],
+      "prerequisiteMode": "ANY",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_stage_item_reward",
+      "title": "Разбитая обсерватория",
+      "desc": "В руинах обсерватории сохранился компас, стрелка которого указывает не на север, а на ближайший разрыв пространства.",
+      "reqResource": "Supplies",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 79,
+      "y": 24,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 2,
+      "goldReward": 20,
+      "checks": [
+        {
+          "id": "compass_1",
+          "label": "Подняться к обсерватории",
+          "reqResource": "Supplies",
+          "dc": 13
+        },
+        {
+          "id": "compass_2",
+          "label": "Собрать звёздный механизм",
+          "reqResource": "Equipment",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [
+        "Сердце пространственного компаса"
+      ],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_stage_item_use",
+      "title": "Разрыв над вересковой пустошью",
+      "desc": "Над пустошью открылся нестабильный разрыв. Обычные измерения бесполезны: найти его безопасный центр позволит только Сердце пространственного компаса.",
+      "reqResource": "Equipment",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 74,
+      "y": 40,
+      "region": "ВЕРЕСКОВАЯ ПУСТОШЬ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 4,
+      "goldReward": 27,
+      "checks": [
+        {
+          "id": "rift_1",
+          "label": "Оградить область разрыва",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "rift_2",
+          "label": "Найти безопасный центр",
+          "reqResource": "Intelligence",
+          "dc": 16,
+          "requiredSpecialItem": "Сердце пространственного компаса"
+        },
+        {
+          "id": "rift_3",
+          "label": "Стабилизировать пространство",
+          "reqResource": "Alchemy",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "op_no_expiry_watch",
+      "title": "Дозор у спящей башни",
+      "desc": "Башня на границе леса не проявляет враждебности, но каждую ночь поворачивается на несколько градусов. Наблюдение можно начать в любой день: донесение не исчезнет само.",
+      "reqResource": "Supplies",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": null,
+      "maxLifespan": null,
+      "x": 84,
+      "y": 56,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 4,
+      "goldReward": 18,
+      "checks": [
+        {
+          "id": "watch_1",
+          "label": "Установить наблюдательный пост",
+          "reqResource": "Supplies",
+          "dc": 12
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0,
+        "baseDc": 12,
+        "allowMultiple": false
+      }
+    },
+    {
+      "id": "op_day01_01",
+      "title": "Колокола под болотом",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 11,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 12,
+      "y": 14,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 15,
+      "checks": [
+        {
+          "id": "op_d01_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 11
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0.06,
+        "baseDc": 12,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day01_02",
+      "title": "Пропавший обоз алхимиков",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 29,
+      "y": 37,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 18,
+      "checks": [
+        {
+          "id": "op_d01_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 12
+        },
+        {
+          "id": "op_d01_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day01_03",
+      "title": "Стражи разрушенного моста",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 11,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 46,
+      "y": 60,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 21,
+      "checks": [
+        {
+          "id": "op_d01_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 11
+        },
+        {
+          "id": "op_d01_3_s2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 12
+        },
+        {
+          "id": "op_d01_3_s3",
+          "label": "Этап 3",
+          "reqResource": "Supplies",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day02_01",
+      "title": "Пепел на виноградниках",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 63,
+      "y": 83,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 2,
+      "goldReward": 26,
+      "checks": [
+        {
+          "id": "op_d02_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 12
+        },
+        {
+          "id": "op_d02_1_s2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 13
+        },
+        {
+          "id": "op_d02_1_s3",
+          "label": "Этап 3",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "op_d02_1_s4",
+          "label": "Этап 4",
+          "reqResource": "Alchemy",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day02_02",
+      "title": "Шёпот в каменоломне",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 11,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 80,
+      "y": 36,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 2,
+      "goldReward": 17,
+      "checks": [
+        {
+          "id": "op_d02_2_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 11
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day02_03",
+      "title": "Охота на зеркального волка",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 21,
+      "y": 59,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 2,
+      "goldReward": 20,
+      "checks": [
+        {
+          "id": "op_d02_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 12
+        },
+        {
+          "id": "op_d02_3_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day03_01",
+      "title": "Ночная переправа",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 38,
+      "y": 82,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 25,
+      "checks": [
+        {
+          "id": "op_d03_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 12
+        },
+        {
+          "id": "op_d03_1_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 13
+        },
+        {
+          "id": "op_d03_1_s3",
+          "label": "Этап 3",
+          "reqResource": "None",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day03_02",
+      "title": "Письма из пустого монастыря",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 55,
+      "y": 35,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 28,
+      "checks": [
+        {
+          "id": "op_d03_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 13
+        },
+        {
+          "id": "op_d03_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 14
+        },
+        {
+          "id": "op_d03_2_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "op_d03_2_s4",
+          "label": "Этап 4",
+          "reqResource": "Equipment",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day03_03",
+      "title": "Заражённый источник",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 72,
+      "y": 58,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 19,
+      "checks": [
+        {
+          "id": "op_d03_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 12
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day04_01",
+      "title": "Следы медного великана",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 13,
+      "y": 81,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 4,
+      "goldReward": 24,
+      "checks": [
+        {
+          "id": "op_d04_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 13
+        },
+        {
+          "id": "op_d04_1_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.06,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day04_02",
+      "title": "Похитители маячного огня",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 30,
+      "y": 34,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 4,
+      "goldReward": 27,
+      "checks": [
+        {
+          "id": "op_d04_2_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 12
+        },
+        {
+          "id": "op_d04_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Supplies",
+          "dc": 13
+        },
+        {
+          "id": "op_d04_2_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day04_03",
+      "title": "Гнездо костяных ворон",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 47,
+      "y": 57,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 4,
+      "goldReward": 30,
+      "checks": [
+        {
+          "id": "op_d04_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 13
+        },
+        {
+          "id": "op_d04_3_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "op_d04_3_s3",
+          "label": "Этап 3",
+          "reqResource": "Alchemy",
+          "dc": 15
+        },
+        {
+          "id": "op_d04_3_s4",
+          "label": "Этап 4",
+          "reqResource": "Intelligence",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day05_01",
+      "title": "Караван без теней",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 64,
+      "y": 80,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 23,
+      "checks": [
+        {
+          "id": "op_d05_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 12
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day05_02",
+      "title": "Трещина в соляной шахте",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 81,
+      "y": 33,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 26,
+      "checks": [
+        {
+          "id": "op_d05_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 13
+        },
+        {
+          "id": "op_d05_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day05_03",
+      "title": "Проклятый урожай",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 22,
+      "y": 56,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 29,
+      "checks": [
+        {
+          "id": "op_d05_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 12
+        },
+        {
+          "id": "op_d05_3_s2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 13
+        },
+        {
+          "id": "op_d05_3_s3",
+          "label": "Этап 3",
+          "reqResource": "Supplies",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day05_04",
+      "title": "Разорённая сторожевая башня",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 39,
+      "y": 79,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 32,
+      "checks": [
+        {
+          "id": "op_d05_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 13
+        },
+        {
+          "id": "op_d05_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d05_4_s3",
+          "label": "Этап 3",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "op_d05_4_s4",
+          "label": "Этап 4",
+          "reqResource": "Alchemy",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day05_05",
+      "title": "Песнь подземной реки",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 56,
+      "y": 32,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 23,
+      "checks": [
+        {
+          "id": "op_d05_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 12
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day05_06",
+      "title": "Беглецы из стеклянной клетки",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 73,
+      "y": 55,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 26,
+      "checks": [
+        {
+          "id": "op_d05_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 13
+        },
+        {
+          "id": "op_d05_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day06_01",
+      "title": "Часовня забытых имён",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 14,
+      "y": 78,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 6,
+      "goldReward": 31,
+      "checks": [
+        {
+          "id": "op_d06_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 13
+        },
+        {
+          "id": "op_d06_1_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d06_1_s3",
+          "label": "Этап 3",
+          "reqResource": "None",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.06,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day06_02",
+      "title": "След серебряной лисицы",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 31,
+      "y": 31,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 6,
+      "goldReward": 34,
+      "checks": [
+        {
+          "id": "op_d06_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "op_d06_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 15
+        },
+        {
+          "id": "op_d06_2_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 16
+        },
+        {
+          "id": "op_d06_2_s4",
+          "label": "Этап 4",
+          "reqResource": "Equipment",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day06_03",
+      "title": "Затихший лагерь лесорубов",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 48,
+      "y": 54,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 6,
+      "goldReward": 25,
+      "checks": [
+        {
+          "id": "op_d06_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day06_04",
+      "title": "Звёздный камень",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 65,
+      "y": 77,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 6,
+      "goldReward": 28,
+      "checks": [
+        {
+          "id": "op_d06_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 14
+        },
+        {
+          "id": "op_d06_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day06_05",
+      "title": "Разбитые часы на площади",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 82,
+      "y": 30,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 6,
+      "goldReward": 31,
+      "checks": [
+        {
+          "id": "op_d06_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 13
+        },
+        {
+          "id": "op_d06_5_s2",
+          "label": "Этап 2",
+          "reqResource": "Supplies",
+          "dc": 14
+        },
+        {
+          "id": "op_d06_5_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day06_06",
+      "title": "Тропа исчезающих следов",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 23,
+      "y": 53,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 6,
+      "goldReward": 34,
+      "checks": [
+        {
+          "id": "op_d06_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d06_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "op_d06_6_s3",
+          "label": "Этап 3",
+          "reqResource": "Alchemy",
+          "dc": 16
+        },
+        {
+          "id": "op_d06_6_s4",
+          "label": "Этап 4",
+          "reqResource": "Intelligence",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day07_01",
+      "title": "Налётчики в старом форте",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 40,
+      "y": 76,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 27,
+      "checks": [
+        {
+          "id": "op_d07_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day07_02",
+      "title": "Плачущий дуб",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 57,
+      "y": 29,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 30,
+      "checks": [
+        {
+          "id": "op_d07_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "op_d07_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day07_03",
+      "title": "Ядовитая ярмарка",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 74,
+      "y": 52,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 33,
+      "checks": [
+        {
+          "id": "op_d07_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 13
+        },
+        {
+          "id": "op_d07_3_s2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 14
+        },
+        {
+          "id": "op_d07_3_s3",
+          "label": "Этап 3",
+          "reqResource": "Supplies",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day07_04",
+      "title": "Свет подо льдом",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 15,
+      "y": 75,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 36,
+      "checks": [
+        {
+          "id": "op_d07_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 14
+        },
+        {
+          "id": "op_d07_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "op_d07_4_s3",
+          "label": "Этап 3",
+          "reqResource": "Equipment",
+          "dc": 16
+        },
+        {
+          "id": "op_d07_4_s4",
+          "label": "Этап 4",
+          "reqResource": "Alchemy",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.06,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day07_05",
+      "title": "Колодец чужих голосов",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 32,
+      "y": 28,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 27,
+      "checks": [
+        {
+          "id": "op_d07_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day07_06",
+      "title": "Мост из красного тумана",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 49,
+      "y": 51,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 30,
+      "checks": [
+        {
+          "id": "op_d07_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d07_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day08_01",
+      "title": "Бродячая библиотека",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 66,
+      "y": 74,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 8,
+      "goldReward": 35,
+      "checks": [
+        {
+          "id": "op_d08_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 13
+        },
+        {
+          "id": "op_d08_1_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d08_1_s3",
+          "label": "Этап 3",
+          "reqResource": "None",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day08_02",
+      "title": "Пещера стеклянных пауков",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 83,
+      "y": 27,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 8,
+      "goldReward": 38,
+      "checks": [
+        {
+          "id": "op_d08_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 14
+        },
+        {
+          "id": "op_d08_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 15
+        },
+        {
+          "id": "op_d08_2_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 16
+        },
+        {
+          "id": "op_d08_2_s4",
+          "label": "Этап 4",
+          "reqResource": "Equipment",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day08_03",
+      "title": "Потерянный гербовый груз",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 24,
+      "y": 50,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 8,
+      "goldReward": 29,
+      "checks": [
+        {
+          "id": "op_d08_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 13
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day08_04",
+      "title": "Пожиратель дорожных знаков",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 41,
+      "y": 73,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 8,
+      "goldReward": 32,
+      "checks": [
+        {
+          "id": "op_d08_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 14
+        },
+        {
+          "id": "op_d08_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day08_05",
+      "title": "Осада одинокой фермы",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 13,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 58,
+      "y": 26,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 8,
+      "goldReward": 35,
+      "checks": [
+        {
+          "id": "op_d08_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 13
+        },
+        {
+          "id": "op_d08_5_s2",
+          "label": "Этап 2",
+          "reqResource": "Supplies",
+          "dc": 14
+        },
+        {
+          "id": "op_d08_5_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day08_06",
+      "title": "Камни, падающие вверх",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 75,
+      "y": 49,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 8,
+      "goldReward": 38,
+      "checks": [
+        {
+          "id": "op_d08_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d08_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "op_d08_6_s3",
+          "label": "Этап 3",
+          "reqResource": "Alchemy",
+          "dc": 16
+        },
+        {
+          "id": "op_d08_6_s4",
+          "label": "Этап 4",
+          "reqResource": "Intelligence",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day09_01",
+      "title": "Призрак королевского тракта",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 16,
+      "y": 72,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 31,
+      "checks": [
+        {
+          "id": "op_d09_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.06,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day09_02",
+      "title": "Тайник болотных контрабандистов",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 33,
+      "y": 25,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 34,
+      "checks": [
+        {
+          "id": "op_d09_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "op_d09_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day09_03",
+      "title": "Зверь у тёплых ключей",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 50,
+      "y": 48,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 37,
+      "checks": [
+        {
+          "id": "op_d09_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d09_3_s2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 15
+        },
+        {
+          "id": "op_d09_3_s3",
+          "label": "Этап 3",
+          "reqResource": "Supplies",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day09_04",
+      "title": "Пробуждение медного колокола",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 67,
+      "y": 71,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 40,
+      "checks": [
+        {
+          "id": "op_d09_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 15
+        },
+        {
+          "id": "op_d09_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 16
+        },
+        {
+          "id": "op_d09_4_s3",
+          "label": "Этап 3",
+          "reqResource": "Equipment",
+          "dc": 17
+        },
+        {
+          "id": "op_d09_4_s4",
+          "label": "Этап 4",
+          "reqResource": "Alchemy",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day09_05",
+      "title": "Ловцы чужих снов",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 84,
+      "y": 24,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 31,
+      "checks": [
+        {
+          "id": "op_d09_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day09_06",
+      "title": "Исчезнувшая роща",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 25,
+      "y": 47,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 34,
+      "checks": [
+        {
+          "id": "op_d09_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "op_d09_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day10_01",
+      "title": "Склад зачарованных цепей",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 42,
+      "y": 70,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 10,
+      "goldReward": 39,
+      "checks": [
+        {
+          "id": "op_d10_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 14
+        },
+        {
+          "id": "op_d10_1_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "op_d10_1_s3",
+          "label": "Этап 3",
+          "reqResource": "None",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day10_02",
+      "title": "Знамя без армии",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 59,
+      "y": 23,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 10,
+      "goldReward": 42,
+      "checks": [
+        {
+          "id": "op_d10_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "op_d10_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 16
+        },
+        {
+          "id": "op_d10_2_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 17
+        },
+        {
+          "id": "op_d10_2_s4",
+          "label": "Этап 4",
+          "reqResource": "Equipment",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day10_03",
+      "title": "Огни в заброшенной гавани",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 76,
+      "y": 46,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 10,
+      "goldReward": 33,
+      "checks": [
+        {
+          "id": "op_d10_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day10_04",
+      "title": "Сломанный круг друидов",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 17,
+      "y": 69,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 10,
+      "goldReward": 36,
+      "checks": [
+        {
+          "id": "op_d10_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 15
+        },
+        {
+          "id": "op_d10_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.06,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day10_05",
+      "title": "Хищные чернильницы",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 34,
+      "y": 22,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 10,
+      "goldReward": 39,
+      "checks": [
+        {
+          "id": "op_d10_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 14
+        },
+        {
+          "id": "op_d10_5_s2",
+          "label": "Этап 2",
+          "reqResource": "Supplies",
+          "dc": 15
+        },
+        {
+          "id": "op_d10_5_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day10_06",
+      "title": "Курганы, меняющие места",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 51,
+      "y": 45,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 10,
+      "goldReward": 42,
+      "checks": [
+        {
+          "id": "op_d10_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "op_d10_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 16
+        },
+        {
+          "id": "op_d10_6_s3",
+          "label": "Этап 3",
+          "reqResource": "Alchemy",
+          "dc": 17
+        },
+        {
+          "id": "op_d10_6_s4",
+          "label": "Этап 4",
+          "reqResource": "Intelligence",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day11_01",
+      "title": "Пыльца лунных мотыльков",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 68,
+      "y": 68,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 35,
+      "checks": [
+        {
+          "id": "op_d11_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day11_02",
+      "title": "Сторожевой голем без хозяина",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 85,
+      "y": 21,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 38,
+      "checks": [
+        {
+          "id": "op_d11_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 15
+        },
+        {
+          "id": "op_d11_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day11_03",
+      "title": "Всадник на белом олене",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 26,
+      "y": 44,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 41,
+      "checks": [
+        {
+          "id": "op_d11_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 14
+        },
+        {
+          "id": "op_d11_3_s2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 15
+        },
+        {
+          "id": "op_d11_3_s3",
+          "label": "Этап 3",
+          "reqResource": "Supplies",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day11_04",
+      "title": "Утечка из алхимического колодца",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 43,
+      "y": 67,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 44,
+      "checks": [
+        {
+          "id": "op_d11_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 15
+        },
+        {
+          "id": "op_d11_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 16
+        },
+        {
+          "id": "op_d11_4_s3",
+          "label": "Этап 3",
+          "reqResource": "Equipment",
+          "dc": 17
+        },
+        {
+          "id": "op_d11_4_s4",
+          "label": "Этап 4",
+          "reqResource": "Alchemy",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day11_05",
+      "title": "Рынок потерянных воспоминаний",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 14,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 60,
+      "y": 20,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 35,
+      "checks": [
+        {
+          "id": "op_d11_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 14
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day11_06",
+      "title": "Затонувшая звонница",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 77,
+      "y": 43,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 38,
+      "checks": [
+        {
+          "id": "op_d11_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 15
+        },
+        {
+          "id": "op_d11_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 16
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day12_01",
+      "title": "Стая громовых ящеров",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 18,
+      "y": 66,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 12,
+      "goldReward": 43,
+      "checks": [
+        {
+          "id": "op_d12_1_s1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 15
+        },
+        {
+          "id": "op_d12_1_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 16
+        },
+        {
+          "id": "op_d12_1_s3",
+          "label": "Этап 3",
+          "reqResource": "None",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.06,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day12_02",
+      "title": "Последний фонарь шахтёров",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 16,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 35,
+      "y": 19,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 12,
+      "goldReward": 46,
+      "checks": [
+        {
+          "id": "op_d12_2_s1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 16
+        },
+        {
+          "id": "op_d12_2_s2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 17
+        },
+        {
+          "id": "op_d12_2_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 17
+        },
+        {
+          "id": "op_d12_2_s4",
+          "label": "Этап 4",
+          "reqResource": "Equipment",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": false,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day12_03",
+      "title": "Письмо, доставленное на сто лет позже",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 52,
+      "y": 42,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 12,
+      "goldReward": 37,
+      "checks": [
+        {
+          "id": "op_d12_3_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 15
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": false
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day12_04",
+      "title": "Окаменевший сад",
+      "desc": "Старинные руины внезапно проявили признаки активности. Требуется исследовать их, сохранить находки и не допустить распространения опасности.",
+      "reqResource": "Alchemy",
+      "dc": 16,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 69,
+      "y": 65,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 12,
+      "goldReward": 40,
+      "checks": [
+        {
+          "id": "op_d12_4_s1",
+          "label": "Этап 1",
+          "reqResource": "Alchemy",
+          "dc": 16
+        },
+        {
+          "id": "op_d12_4_s2",
+          "label": "Этап 2",
+          "reqResource": "Intelligence",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day12_05",
+      "title": "Сеть подземных лазов",
+      "desc": "Несколько жителей исчезли при схожих обстоятельствах. Следы ведут за пределы безопасных дорог, где обычные правила больше не действуют.",
+      "reqResource": "None",
+      "dc": 15,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 86,
+      "y": 18,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 12,
+      "goldReward": 43,
+      "checks": [
+        {
+          "id": "op_d12_5_s1",
+          "label": "Этап 1",
+          "reqResource": "None",
+          "dc": 15
+        },
+        {
+          "id": "op_d12_5_s2",
+          "label": "Этап 2",
+          "reqResource": "Supplies",
+          "dc": 16
+        },
+        {
+          "id": "op_d12_5_s3",
+          "label": "Этап 3",
+          "reqResource": "Intelligence",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "op_day12_06",
+      "title": "Портрет, зовущий на помощь",
+      "desc": "В регион прибыл повреждённый караван с противоречивыми рассказами. Нужно восстановить ход событий и вернуть потерянный груз.",
+      "reqResource": "Intelligence",
+      "dc": 16,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 27,
+      "y": 41,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 12,
+      "goldReward": 46,
+      "checks": [
+        {
+          "id": "op_d12_6_s1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 16
+        },
+        {
+          "id": "op_d12_6_s2",
+          "label": "Этап 2",
+          "reqResource": "Equipment",
+          "dc": 17
+        },
+        {
+          "id": "op_d12_6_s3",
+          "label": "Этап 3",
+          "reqResource": "Alchemy",
+          "dc": 17
+        },
+        {
+          "id": "op_d12_6_s4",
+          "label": "Этап 4",
+          "reqResource": "Intelligence",
+          "dc": 17
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 13,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ."
+    },
+    {
+      "id": "dummy_day01",
+      "title": "Свет в пустом окне",
+      "desc": "Донесение оказалось ложной тревогой. Клан может отказаться от выхода без штрафа; за проверку пустышки опыт не начисляется.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 16,
+      "y": 82,
+      "region": "ЛЕС ТЕЙН",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "dummy_day03",
+      "title": "Следы у старого брода",
+      "desc": "Донесение оказалось ложной тревогой. Клан может отказаться от выхода без штрафа; за проверку пустышки опыт не начисляется.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 29,
+      "y": 72,
+      "region": "ГОРНЫЙ ПИК",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 3,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "dummy_day05",
+      "title": "Дым над заброшенным хутором",
+      "desc": "Донесение оказалось ложной тревогой. Клан может отказаться от выхода без штрафа; за проверку пустышки опыт не начисляется.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 42,
+      "y": 62,
+      "region": "ГИБЛОЕ БОЛОТО",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 5,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "dummy_day07",
+      "title": "Крик в прибрежных скалах",
+      "desc": "Донесение оказалось ложной тревогой. Клан может отказаться от выхода без штрафа; за проверку пустышки опыт не начисляется.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 55,
+      "y": 52,
+      "region": "ПЕСКИ ЗАБВЕНИЯ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 7,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "dummy_day09",
+      "title": "Подозрительная телега",
+      "desc": "Донесение оказалось ложной тревогой. Клан может отказаться от выхода без штрафа; за проверку пустышки опыт не начисляется.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 68,
+      "y": 42,
+      "region": "ЗАПАДНОЕ ПОБЕРЕЖЬЕ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 9,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    },
+    {
+      "id": "dummy_day11",
+      "title": "Тень на колокольне",
+      "desc": "Донесение оказалось ложной тревогой. Клан может отказаться от выхода без штрафа; за проверку пустышки опыт не начисляется.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 81,
+      "y": 32,
+      "region": "ЦЕНТРАЛЬНЫЕ ЗЕМЛИ",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 11,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      }
+    }
+  ]
+}

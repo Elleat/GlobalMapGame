@@ -60,6 +60,7 @@ import RecruitModal from './components/RecruitModal';
 import AdventurerDetailModal from './components/AdventurerDetailModal';
 import ClanDossierModal from './components/ClanDossierModal';
 import ResourceStoreModal from './components/ResourceStoreModal';
+import HelpModal from './components/HelpModal';
 
 const AdventurerEditor = lazy(() => import('./components/AdventurerEditor'));
 const EventEditor = lazy(() => import('./components/EventEditor'));
@@ -86,6 +87,7 @@ export default function App() {
 
   // Modals view toggles
   const [isGmOpen, setIsGmOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isMissionOpen, setIsMissionOpen] = useState(false);
   const [isRecruitOpen, setIsRecruitOpen] = useState(false);
   const [selectedAdvId, setSelectedAdvId] = useState<string | null>(null);
@@ -666,6 +668,7 @@ export default function App() {
             </div>
 
             {/* Overlord Settings gear button */}
+            <button type="button" onClick={() => setIsHelpOpen(true)} className="p-1.5 bg-[#121212] hover:bg-[#222] border border-emerald-500/20 text-emerald-400 rounded transition-all" title="Справка и управление"><HelpCircle className="w-4 h-4" /></button>
             {state.isDmMode && (
               <button
                 onClick={() => setIsGmOpen(true)}
@@ -680,6 +683,7 @@ export default function App() {
 
         </div>
       </header>}
+      {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
 
       {/* Game workspace tabs */}
       {mainSection === 'GAME' && <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">

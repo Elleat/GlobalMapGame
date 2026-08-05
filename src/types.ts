@@ -37,6 +37,8 @@ export interface Clan {
   freeResourceBudget?: number;
   freeSuppliesBudget?: number;
   description?: string;
+  /** Current campaign participation. Omitted in legacy files and derived from nClans. */
+  isActive?: boolean;
 }
 
 export type AdventurerStatus = 'READY' | 'WOUNDED' | 'ON_MISSION' | 'DEAD';
@@ -79,6 +81,48 @@ export interface ComplicationSettings {
   allowMultiple: boolean;
 }
 
+export type ComplicationResourceMode = 'RANDOM' | 'FIXED';
+export type ComplicationDcMode = 'AUTO' | 'FIXED';
+
+/** One independently configured complication opportunity in the mission timeline. */
+export interface MissionComplicationSlot {
+  id: string;
+  /** 0 = outward journey, 1..checks.length = after that check / return journey. */
+  position: number;
+  enabled: boolean;
+  chance: number;
+  resourceMode: ComplicationResourceMode;
+  resource: MissionResourceKey;
+  dcMode: ComplicationDcMode;
+  dc: number;
+  baseDc: number;
+  gmDescription?: string;
+}
+
+export type MissionOutcome = 'SUCCESS' | 'OBJECTIVE_FAILED' | 'PARTY_LOST';
+export type MissionRepeatTrigger = MissionOutcome | 'EXPIRED';
+
+export interface MissionRepeatSettings {
+  enabled: boolean;
+  cooldownDays: number;
+  /** null means unlimited total appearances. */
+  maxOccurrences: number | null;
+  repeatAfter: MissionRepeatTrigger[];
+}
+
+export interface ScenarioChain {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+}
+
+export interface MissionRecurrence {
+  definitionId: string;
+  nextDay: number;
+  occurrenceIndex: number;
+}
+
 export interface Mission {
   id: string;
   title: string;
@@ -92,6 +136,8 @@ export interface Mission {
   x: number;
   y: number;
   region: string;
+  regionId?: string;
+  regionMode?: 'AUTO' | 'MANUAL';
   pinned?: boolean;
   intelRevealed?: boolean;
   /** Clan IDs that spent Intelligence to reveal this report. */
@@ -108,6 +154,14 @@ export interface Mission {
   prerequisiteMissionIds?: string[];
   prerequisiteMode?: PrerequisiteMode;
   complications?: Partial<ComplicationSettings>;
+  complicationSlots?: MissionComplicationSlot[];
+  repeat?: MissionRepeatSettings;
+  /** Base scenario mission for generated repeat occurrences. */
+  definitionId?: string;
+  occurrenceIndex?: number;
+  chainIds?: string[];
+  graphPosition?: { x: number; y: number };
+  quotaPriority?: number;
   storyStatus?: StoryMissionStatus;
   storyAcceptedDay?: number;
   storyClanId?: string | null;
@@ -213,6 +267,7 @@ export interface SimulationReportContext {
 
 export interface SimulationReport {
   isSuccess: boolean;
+  outcome?: MissionOutcome;
   isResourceAutoSuccess: boolean;
   autoSuccessReason: string | null;
   roll: number;
@@ -356,12 +411,15 @@ export interface ScenarioDefinition {
   clans: Clan[];
   adventurers: Adventurer[];
   missions: Mission[];
+  chains?: ScenarioChain[];
 }
 
 export interface GameState {
   schemaVersion: number;
   day: number;
   nClans: number;
+  /** Clan activity changes selected by the GM and applied on the next day. */
+  pendingClanActivity?: Record<string, boolean>;
   hCost: number;
   guildName: string;
   guildShortName: string;
@@ -383,6 +441,8 @@ export interface GameState {
   adventurers: Adventurer[];
   missions: Mission[];
   allMissions?: Mission[];
+  scenarioChains?: ScenarioChain[];
+  missionRecurrences?: MissionRecurrence[];
   contracts: Contract[];
   history: GameHistoryEntry[];
   completedMissionIds: string[];

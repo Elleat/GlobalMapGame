@@ -136,12 +136,18 @@ export function chooseRandomStageResource(
 export function generateRandomMission(
   id: string,
   startDay: number,
-  polygon: { x: number; y: number }[] = DEFAULT_SPAWN_POLYGON
+  polygon: { x: number; y: number }[] = DEFAULT_SPAWN_POLYGON,
+  forcedType?: 'OPERATION' | 'DUMMY'
 ): Mission {
   const pt = getRandomPointInSpawnPolygon(polygon);
-  const template = DEFAULT_EVENT_TEMPLATES[Math.floor(Math.random() * DEFAULT_EVENT_TEMPLATES.length)];
+  const dummyTemplates = DEFAULT_EVENT_TEMPLATES.filter(item => item.type === 'DUMMY');
+  const operationTemplates = DEFAULT_EVENT_TEMPLATES.filter(item => item.type === 'OPERATION');
+  const generatedType = forcedType ?? (Math.random() < 0.1 ? 'DUMMY' : 'OPERATION');
+  const pool = generatedType === 'DUMMY' ? dummyTemplates : operationTemplates;
+  const template = pool[Math.floor(Math.random() * pool.length)];
 
   if (template.type === 'DUMMY') {
+    const lifespan = Math.floor(Math.random() * 3) + 2;
     return {
       id,
       title: template.title,
@@ -149,12 +155,13 @@ export function generateRandomMission(
       reqResource: 'None',
       dc: 0,
       type: 'DUMMY',
-      lifespan: Math.floor(Math.random() * 3) + 2,
-      maxLifespan: 4,
+      lifespan,
+      maxLifespan: lifespan,
       startDay,
       x: pt.x,
       y: pt.y,
-      region: template.region,
+      region: 'ВНЕ РЕГИОНОВ',
+      regionMode: 'AUTO',
       checks: [],
       successText: template.successText,
       failText: template.failText,
@@ -184,10 +191,12 @@ export function generateRandomMission(
     // Every ordinary stage independently has a 20% chance to have no key
     // resource. The other 80% are distributed between the four resources.
     const res = chooseRandomStageResource(shuffledRes[s % shuffledRes.length]);
-    const dc = 10 + Math.floor(Math.random() * 6); // DC 10..15
+    const difficultyRoll = Math.random();
+    const dc = difficultyRoll < 0.45 ? 8 : difficultyRoll < 0.85 ? 12 : difficultyRoll < 0.98 ? 16 : 20;
     checks.push({ reqResource: res, dc });
   }
 
+  const lifespan = Math.floor(Math.random() * 3) + 2;
   return {
     id,
     title: template.title,
@@ -195,13 +204,15 @@ export function generateRandomMission(
     reqResource: checks[0].reqResource,
     dc: checks[0].dc,
     type: 'OPERATION',
-    lifespan: Math.floor(Math.random() * 3) + 2,
-    maxLifespan: 4,
+    lifespan,
+    maxLifespan: lifespan,
     startDay,
     x: pt.x,
     y: pt.y,
-    region: template.region,
+    region: 'ВНЕ РЕГИОНОВ',
+    regionMode: 'AUTO',
     checks,
+    goldReward: undefined,
     successText: template.successText,
     failText: template.failText,
     intelRevealed: false
@@ -209,16 +220,18 @@ export function generateRandomMission(
 }
 
 export function generateMissionsForDay(
-  count: number,
+  clansCount: number,
   startDay: number,
   polygon: { x: number; y: number }[] = DEFAULT_SPAWN_POLYGON
 ): Mission[] {
   const missions: Mission[] = [];
+  const count = Math.max(0, clansCount) * 2;
+  const dummyCount = Math.round(count * 0.1);
   for (let i = 0; i < count; i++) {
     const id = `mission_day${startDay}_${Math.random().toString(36).substr(2, 6)}`;
-    missions.push(generateRandomMission(id, startDay, polygon));
+    missions.push(generateRandomMission(id, startDay, polygon, i < dummyCount ? 'DUMMY' : 'OPERATION'));
   }
-  return missions;
+  return missions.sort(() => Math.random() - 0.5);
 }
 
 export function getResourceNameRu(key: string): string {

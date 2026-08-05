@@ -84,6 +84,23 @@ export function normalizeMapRegion(region: Partial<MapRegion>, index: number): M
   };
 }
 
+export function pointInMapRegion(point: { x: number; y: number }, region: Pick<MapRegion, 'points'>): boolean {
+  let inside = false;
+  const polygon = region.points;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+    const current = polygon[index];
+    const prior = polygon[previous];
+    const crosses = (current.y > point.y) !== (prior.y > point.y)
+      && point.x < ((prior.x - current.x) * (point.y - current.y)) / ((prior.y - current.y) || Number.EPSILON) + current.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+export function findMapRegionAtPoint(regions: readonly MapRegion[], point: { x: number; y: number }): MapRegion | undefined {
+  return [...regions].reverse().find(region => pointInMapRegion(point, region));
+}
+
 function orientation(a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }): number {
   const value = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
   if (Math.abs(value) < 0.000001) return 0;

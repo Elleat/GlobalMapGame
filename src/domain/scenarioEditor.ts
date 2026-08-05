@@ -105,11 +105,20 @@ export function createScenarioMission(day: number, existingIds: readonly string[
     y: 50,
     region: 'ДИКИЕ ЗЕМЛИ',
     startDay: day,
-    goldReward: 0,
+    goldReward: undefined,
     checks: [{ id: `${id}_stage_1`, label: 'Этап 1', reqResource: 'None', dc: 12 }],
     rewardSpecialItems: [],
     prerequisiteMissionIds: [],
     prerequisiteMode: 'ALL',
+    chainIds: [],
+    regionMode: 'AUTO',
+    quotaPriority: 0,
+    repeat: {
+      enabled: false,
+      cooldownDays: 2,
+      maxOccurrences: null,
+      repeatAfter: ['OBJECTIVE_FAILED']
+    },
     complications: {
       enabled: true,
       chancePerSlot: 0.03,

@@ -1,0 +1,5767 @@
+{
+  "type": "global-map-scenario",
+  "version": 1,
+  "scenario": {
+    "id": "scenario_msesbt7b",
+    "name": "ШтормградЧасДракона",
+    "description": "Компания для глобальной карты для смены \"Час Драконы\" 2026го кода по Воинам Света",
+    "guildName": "Орден Истока",
+    "guildShortName": "Орден",
+    "hCost": 10,
+    "nClans": 15,
+    "themeId": "dark-wardens",
+    "mapWidth": 910,
+    "mapHeight": 1303,
+    "spawnPolygon": [
+      {
+        "x": 49,
+        "y": 11
+      },
+      {
+        "x": 86,
+        "y": 9
+      },
+      {
+        "x": 98,
+        "y": 26
+      },
+      {
+        "x": 86,
+        "y": 39
+      },
+      {
+        "x": 90,
+        "y": 51
+      },
+      {
+        "x": 86,
+        "y": 71
+      },
+      {
+        "x": 68,
+        "y": 74
+      },
+      {
+        "x": 29,
+        "y": 88
+      },
+      {
+        "x": 9,
+        "y": 71
+      },
+      {
+        "x": 31,
+        "y": 55
+      },
+      {
+        "x": 16,
+        "y": 48
+      },
+      {
+        "x": 16,
+        "y": 30
+      },
+      {
+        "x": 26,
+        "y": 26
+      },
+      {
+        "x": 41,
+        "y": 26
+      }
+    ],
+    "mapRegions": [
+      {
+        "id": "region_deep_waters",
+        "name": "Глубокие воды",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 100,
+            "y": 0
+          },
+          {
+            "x": 100,
+            "y": 100
+          },
+          {
+            "x": 0,
+            "y": 100
+          }
+        ],
+        "labelPosition": {
+          "x": 88,
+          "y": 92
+        },
+        "color": "#1e3a8a",
+        "fillOpacity": 0.1,
+        "borderOpacity": 0.35,
+        "visibleToPlayers": false,
+        "showBoundary": true,
+        "showLabel": true,
+        "showFill": true,
+        "fog": {
+          "enabled": false,
+          "density": "LOW",
+          "speed": "SLOW"
+        }
+      },
+      {
+        "id": "region_coastal_waters",
+        "name": "Прибрежные воды",
+        "points": [
+          {
+            "x": 49,
+            "y": 11
+          },
+          {
+            "x": 86,
+            "y": 9
+          },
+          {
+            "x": 98,
+            "y": 26
+          },
+          {
+            "x": 86,
+            "y": 39
+          },
+          {
+            "x": 90,
+            "y": 51
+          },
+          {
+            "x": 86,
+            "y": 71
+          },
+          {
+            "x": 68,
+            "y": 74
+          },
+          {
+            "x": 29,
+            "y": 88
+          },
+          {
+            "x": 9,
+            "y": 71
+          },
+          {
+            "x": 31,
+            "y": 55
+          },
+          {
+            "x": 16,
+            "y": 48
+          },
+          {
+            "x": 16,
+            "y": 30
+          },
+          {
+            "x": 26,
+            "y": 26
+          },
+          {
+            "x": 41,
+            "y": 26
+          }
+        ],
+        "labelPosition": {
+          "x": 8,
+          "y": 55
+        },
+        "color": "#0ea5e9",
+        "fillOpacity": 0.14,
+        "borderOpacity": 0.65,
+        "visibleToPlayers": false,
+        "showBoundary": true,
+        "showLabel": true,
+        "showFill": true,
+        "fog": {
+          "enabled": false,
+          "density": "LOW",
+          "speed": "SLOW"
+        }
+      },
+      {
+        "id": "region_msesdn7d_1",
+        "name": "Ленстер",
+        "points": [
+          {
+            "x": 70.5,
+            "y": 69.9
+          },
+          {
+            "x": 66.2,
+            "y": 68.3
+          },
+          {
+            "x": 64.5,
+            "y": 66.1
+          },
+          {
+            "x": 63.3,
+            "y": 62.9
+          },
+          {
+            "x": 61.4,
+            "y": 60.6
+          },
+          {
+            "x": 60.6,
+            "y": 56.9
+          },
+          {
+            "x": 58.5,
+            "y": 56.4
+          },
+          {
+            "x": 56.5,
+            "y": 57.8
+          },
+          {
+            "x": 53.6,
+            "y": 56.9
+          },
+          {
+            "x": 55.5,
+            "y": 55
+          },
+          {
+            "x": 55.7,
+            "y": 53.7
+          },
+          {
+            "x": 53.8,
+            "y": 52.3
+          },
+          {
+            "x": 54.2,
+            "y": 50.8
+          },
+          {
+            "x": 53.6,
+            "y": 49.3
+          },
+          {
+            "x": 55.7,
+            "y": 48.9
+          },
+          {
+            "x": 54.4,
+            "y": 44
+          },
+          {
+            "x": 55.7,
+            "y": 40.4
+          },
+          {
+            "x": 59.8,
+            "y": 37.8
+          },
+          {
+            "x": 65.2,
+            "y": 40.8
+          },
+          {
+            "x": 71.7,
+            "y": 40.3
+          },
+          {
+            "x": 72.6,
+            "y": 38.8
+          },
+          {
+            "x": 77.1,
+            "y": 37.5
+          },
+          {
+            "x": 78.1,
+            "y": 35.6
+          },
+          {
+            "x": 82.1,
+            "y": 34.7
+          },
+          {
+            "x": 85.4,
+            "y": 36.5
+          },
+          {
+            "x": 81.4,
+            "y": 36.7
+          },
+          {
+            "x": 81.6,
+            "y": 38.2
+          },
+          {
+            "x": 83.1,
+            "y": 39.8
+          },
+          {
+            "x": 84.1,
+            "y": 43.4
+          },
+          {
+            "x": 85.8,
+            "y": 44.9
+          },
+          {
+            "x": 84.9,
+            "y": 46.1
+          },
+          {
+            "x": 86.4,
+            "y": 48.3
+          },
+          {
+            "x": 84.1,
+            "y": 48.8
+          },
+          {
+            "x": 86,
+            "y": 50.7
+          },
+          {
+            "x": 87.4,
+            "y": 53.8
+          },
+          {
+            "x": 87.6,
+            "y": 57.1
+          },
+          {
+            "x": 85.8,
+            "y": 60.7
+          },
+          {
+            "x": 85,
+            "y": 64.2
+          },
+          {
+            "x": 81,
+            "y": 67.5
+          },
+          {
+            "x": 83.7,
+            "y": 69.7
+          },
+          {
+            "x": 81.7,
+            "y": 70.5
+          },
+          {
+            "x": 78.6,
+            "y": 70.8
+          },
+          {
+            "x": 77.5,
+            "y": 70.1
+          },
+          {
+            "x": 75.3,
+            "y": 69.9
+          },
+          {
+            "x": 73,
+            "y": 71.3
+          },
+          {
+            "x": 73.4,
+            "y": 69.9
+          },
+          {
+            "x": 72,
+            "y": 68.4
+          },
+          {
+            "x": 69.7,
+            "y": 69.1
+          }
+        ],
+        "labelPosition": {
+          "x": 72,
+          "y": 53.8
+        },
+        "color": "#10b981",
+        "fillOpacity": 0.18,
+        "borderOpacity": 0.9,
+        "visibleToPlayers": false,
+        "showBoundary": true,
+        "showLabel": true,
+        "showFill": true,
+        "fog": {
+          "enabled": true,
+          "density": "MEDIUM",
+          "speed": "SLOW"
+        }
+      },
+      {
+        "id": "region_msewjix5_2",
+        "name": "Коннахт",
+        "points": [
+          {
+            "x": 39.1,
+            "y": 52.4
+          },
+          {
+            "x": 39.7,
+            "y": 53.7
+          },
+          {
+            "x": 40.8,
+            "y": 54.6
+          },
+          {
+            "x": 41.8,
+            "y": 55.5
+          },
+          {
+            "x": 44.8,
+            "y": 54.6
+          },
+          {
+            "x": 47.3,
+            "y": 55.1
+          },
+          {
+            "x": 49,
+            "y": 55.4
+          },
+          {
+            "x": 50.5,
+            "y": 53.8
+          },
+          {
+            "x": 53.2,
+            "y": 52.1
+          },
+          {
+            "x": 53.7,
+            "y": 49.9
+          },
+          {
+            "x": 55.7,
+            "y": 48.4
+          },
+          {
+            "x": 54,
+            "y": 43.2
+          },
+          {
+            "x": 54.9,
+            "y": 42.3
+          },
+          {
+            "x": 55.6,
+            "y": 39.8
+          },
+          {
+            "x": 61,
+            "y": 37.3
+          },
+          {
+            "x": 60.4,
+            "y": 35.7
+          },
+          {
+            "x": 57.3,
+            "y": 33.7
+          },
+          {
+            "x": 55,
+            "y": 33
+          },
+          {
+            "x": 55.8,
+            "y": 30.6
+          },
+          {
+            "x": 53.1,
+            "y": 29.1
+          },
+          {
+            "x": 50.9,
+            "y": 27.2
+          },
+          {
+            "x": 48.2,
+            "y": 27.5
+          },
+          {
+            "x": 45.2,
+            "y": 29.4
+          },
+          {
+            "x": 47.4,
+            "y": 30.4
+          },
+          {
+            "x": 46.4,
+            "y": 32.2
+          },
+          {
+            "x": 44.9,
+            "y": 31.4
+          },
+          {
+            "x": 42.7,
+            "y": 31.4
+          },
+          {
+            "x": 39.1,
+            "y": 30.8
+          },
+          {
+            "x": 37.2,
+            "y": 32.6
+          },
+          {
+            "x": 36.5,
+            "y": 31
+          },
+          {
+            "x": 34.2,
+            "y": 30.3
+          },
+          {
+            "x": 29.5,
+            "y": 30.2
+          },
+          {
+            "x": 27.7,
+            "y": 29.8
+          },
+          {
+            "x": 27.4,
+            "y": 31.1
+          },
+          {
+            "x": 25.6,
+            "y": 31.9
+          },
+          {
+            "x": 23.7,
+            "y": 30.3
+          },
+          {
+            "x": 22.3,
+            "y": 31.5
+          },
+          {
+            "x": 21.5,
+            "y": 33.8
+          },
+          {
+            "x": 22.6,
+            "y": 34.2
+          },
+          {
+            "x": 20.7,
+            "y": 35.4
+          },
+          {
+            "x": 19.4,
+            "y": 36.7
+          },
+          {
+            "x": 20.8,
+            "y": 37.3
+          },
+          {
+            "x": 23.9,
+            "y": 38.2
+          },
+          {
+            "x": 25.1,
+            "y": 40.4
+          },
+          {
+            "x": 24.7,
+            "y": 42.1
+          },
+          {
+            "x": 24.9,
+            "y": 43.5
+          },
+          {
+            "x": 19.9,
+            "y": 44.1
+          },
+          {
+            "x": 21.7,
+            "y": 45.6
+          },
+          {
+            "x": 20,
+            "y": 46.6
+          },
+          {
+            "x": 21.2,
+            "y": 47.6
+          },
+          {
+            "x": 23.9,
+            "y": 47.6
+          },
+          {
+            "x": 24.8,
+            "y": 48.9
+          },
+          {
+            "x": 27.4,
+            "y": 49
+          },
+          {
+            "x": 28.9,
+            "y": 48
+          },
+          {
+            "x": 29.6,
+            "y": 49.5
+          },
+          {
+            "x": 31.2,
+            "y": 50.8
+          },
+          {
+            "x": 35,
+            "y": 50.4
+          },
+          {
+            "x": 39.7,
+            "y": 49.8
+          },
+          {
+            "x": 40.7,
+            "y": 51.2
+          },
+          {
+            "x": 38.9,
+            "y": 52.2
+          }
+        ],
+        "labelPosition": {
+          "x": 37.7,
+          "y": 41.1
+        },
+        "color": "#38bdf8",
+        "fillOpacity": 0.18,
+        "borderOpacity": 0.9,
+        "visibleToPlayers": false,
+        "showBoundary": true,
+        "showLabel": true,
+        "showFill": true,
+        "fog": {
+          "enabled": false,
+          "density": "MEDIUM",
+          "speed": "SLOW"
+        }
+      },
+      {
+        "id": "region_msewo7ta_3",
+        "name": "Манстер",
+        "points": [
+          {
+            "x": 31.3,
+            "y": 56.4
+          },
+          {
+            "x": 32.3,
+            "y": 55
+          },
+          {
+            "x": 33.8,
+            "y": 53.5
+          },
+          {
+            "x": 34.9,
+            "y": 52.2
+          },
+          {
+            "x": 37,
+            "y": 52.6
+          },
+          {
+            "x": 37.6,
+            "y": 52.1
+          },
+          {
+            "x": 39.7,
+            "y": 52.9
+          },
+          {
+            "x": 41,
+            "y": 54.2
+          },
+          {
+            "x": 42,
+            "y": 55.1
+          },
+          {
+            "x": 45.6,
+            "y": 54.4
+          },
+          {
+            "x": 48.4,
+            "y": 55
+          },
+          {
+            "x": 52.2,
+            "y": 53.3
+          },
+          {
+            "x": 54,
+            "y": 52.8
+          },
+          {
+            "x": 55.3,
+            "y": 54.1
+          },
+          {
+            "x": 54.9,
+            "y": 55.4
+          },
+          {
+            "x": 54.3,
+            "y": 56.5
+          },
+          {
+            "x": 54.4,
+            "y": 57.4
+          },
+          {
+            "x": 58.5,
+            "y": 56.9
+          },
+          {
+            "x": 59.9,
+            "y": 58.2
+          },
+          {
+            "x": 60.2,
+            "y": 59.6
+          },
+          {
+            "x": 62,
+            "y": 61.5
+          },
+          {
+            "x": 63.8,
+            "y": 63.5
+          },
+          {
+            "x": 64.2,
+            "y": 64.7
+          },
+          {
+            "x": 65.7,
+            "y": 67.1
+          },
+          {
+            "x": 67.3,
+            "y": 69
+          },
+          {
+            "x": 70.8,
+            "y": 68.8
+          },
+          {
+            "x": 71.9,
+            "y": 70.4
+          },
+          {
+            "x": 70.6,
+            "y": 71.5
+          },
+          {
+            "x": 68.7,
+            "y": 71.3
+          },
+          {
+            "x": 63.8,
+            "y": 71.6
+          },
+          {
+            "x": 61.2,
+            "y": 72.1
+          },
+          {
+            "x": 62.1,
+            "y": 73.9
+          },
+          {
+            "x": 59.4,
+            "y": 74.9
+          },
+          {
+            "x": 58.1,
+            "y": 73.6
+          },
+          {
+            "x": 56.8,
+            "y": 76.1
+          },
+          {
+            "x": 53,
+            "y": 77.6
+          },
+          {
+            "x": 51.8,
+            "y": 77.4
+          },
+          {
+            "x": 51.9,
+            "y": 76
+          },
+          {
+            "x": 50.2,
+            "y": 76.5
+          },
+          {
+            "x": 50.5,
+            "y": 78.4
+          },
+          {
+            "x": 47.4,
+            "y": 79.6
+          },
+          {
+            "x": 46.9,
+            "y": 80.7
+          },
+          {
+            "x": 43.7,
+            "y": 80.2
+          },
+          {
+            "x": 43.6,
+            "y": 81.4
+          },
+          {
+            "x": 40.8,
+            "y": 81
+          },
+          {
+            "x": 40.3,
+            "y": 81.9
+          },
+          {
+            "x": 37.1,
+            "y": 82
+          },
+          {
+            "x": 34.6,
+            "y": 83.1
+          },
+          {
+            "x": 32.6,
+            "y": 82.6
+          },
+          {
+            "x": 31.5,
+            "y": 82.2
+          },
+          {
+            "x": 29.4,
+            "y": 82.8
+          },
+          {
+            "x": 26.6,
+            "y": 83.2
+          },
+          {
+            "x": 25.6,
+            "y": 82.8
+          },
+          {
+            "x": 29.3,
+            "y": 81.4
+          },
+          {
+            "x": 29.1,
+            "y": 80.7
+          },
+          {
+            "x": 25.5,
+            "y": 81.9
+          },
+          {
+            "x": 24.8,
+            "y": 81.3
+          },
+          {
+            "x": 31.3,
+            "y": 80
+          },
+          {
+            "x": 29.5,
+            "y": 78.3
+          },
+          {
+            "x": 26,
+            "y": 79.5
+          },
+          {
+            "x": 23.5,
+            "y": 80.3
+          },
+          {
+            "x": 19.4,
+            "y": 80.7
+          },
+          {
+            "x": 20.9,
+            "y": 79.4
+          },
+          {
+            "x": 23,
+            "y": 79
+          },
+          {
+            "x": 24.4,
+            "y": 78
+          },
+          {
+            "x": 28.9,
+            "y": 76.5
+          },
+          {
+            "x": 28.6,
+            "y": 76
+          },
+          {
+            "x": 25.7,
+            "y": 76.4
+          },
+          {
+            "x": 22.5,
+            "y": 77.4
+          },
+          {
+            "x": 19.8,
+            "y": 78.2
+          },
+          {
+            "x": 18.9,
+            "y": 77.4
+          },
+          {
+            "x": 18.8,
+            "y": 76.3
+          },
+          {
+            "x": 17.2,
+            "y": 76.9
+          },
+          {
+            "x": 15.6,
+            "y": 76.6
+          },
+          {
+            "x": 15.8,
+            "y": 75.7
+          },
+          {
+            "x": 18,
+            "y": 75.4
+          },
+          {
+            "x": 17.1,
+            "y": 73.6
+          },
+          {
+            "x": 21.4,
+            "y": 73.1
+          },
+          {
+            "x": 26.1,
+            "y": 71.5
+          },
+          {
+            "x": 24.7,
+            "y": 70.6
+          },
+          {
+            "x": 21.1,
+            "y": 71.3
+          },
+          {
+            "x": 17.1,
+            "y": 71.2
+          },
+          {
+            "x": 14.2,
+            "y": 71.2
+          },
+          {
+            "x": 14.2,
+            "y": 70.3
+          },
+          {
+            "x": 17.1,
+            "y": 69.8
+          },
+          {
+            "x": 18.5,
+            "y": 68.8
+          },
+          {
+            "x": 21.3,
+            "y": 68.7
+          },
+          {
+            "x": 23.1,
+            "y": 69.3
+          },
+          {
+            "x": 26.7,
+            "y": 68.8
+          },
+          {
+            "x": 24.3,
+            "y": 68.3
+          },
+          {
+            "x": 24.4,
+            "y": 67.5
+          },
+          {
+            "x": 23.2,
+            "y": 66.5
+          },
+          {
+            "x": 23.7,
+            "y": 65.9
+          },
+          {
+            "x": 26.8,
+            "y": 65
+          },
+          {
+            "x": 24.2,
+            "y": 62.8
+          },
+          {
+            "x": 27.4,
+            "y": 61.1
+          },
+          {
+            "x": 29.9,
+            "y": 59.1
+          },
+          {
+            "x": 31.7,
+            "y": 58
+          },
+          {
+            "x": 31.8,
+            "y": 56.5
+          }
+        ],
+        "labelPosition": {
+          "x": 37.4,
+          "y": 70.2
+        },
+        "color": "#a78bfa",
+        "fillOpacity": 0.18,
+        "borderOpacity": 0.9,
+        "visibleToPlayers": false,
+        "showBoundary": true,
+        "showLabel": true,
+        "showFill": true,
+        "fog": {
+          "enabled": false,
+          "density": "MEDIUM",
+          "speed": "SLOW"
+        }
+      },
+      {
+        "id": "region_msewpfo7_4",
+        "name": "Ольстер",
+        "points": [
+          {
+            "x": 52,
+            "y": 27.9
+          },
+          {
+            "x": 50.7,
+            "y": 26.6
+          },
+          {
+            "x": 52,
+            "y": 25.7
+          },
+          {
+            "x": 53.1,
+            "y": 24.4
+          },
+          {
+            "x": 51,
+            "y": 24.5
+          },
+          {
+            "x": 48.4,
+            "y": 25.6
+          },
+          {
+            "x": 48.2,
+            "y": 24.6
+          },
+          {
+            "x": 46.2,
+            "y": 24.7
+          },
+          {
+            "x": 43.6,
+            "y": 24.1
+          },
+          {
+            "x": 43.5,
+            "y": 23.1
+          },
+          {
+            "x": 45.6,
+            "y": 21.7
+          },
+          {
+            "x": 48.2,
+            "y": 22.1
+          },
+          {
+            "x": 46.8,
+            "y": 20.9
+          },
+          {
+            "x": 49.6,
+            "y": 21
+          },
+          {
+            "x": 50,
+            "y": 19.6
+          },
+          {
+            "x": 47.9,
+            "y": 19.4
+          },
+          {
+            "x": 48.4,
+            "y": 18.2
+          },
+          {
+            "x": 49.4,
+            "y": 17.3
+          },
+          {
+            "x": 50.4,
+            "y": 17.3
+          },
+          {
+            "x": 50.7,
+            "y": 15.4
+          },
+          {
+            "x": 52.7,
+            "y": 15.2
+          },
+          {
+            "x": 54.7,
+            "y": 13.8
+          },
+          {
+            "x": 56.9,
+            "y": 15
+          },
+          {
+            "x": 57.1,
+            "y": 13.8
+          },
+          {
+            "x": 59.7,
+            "y": 13.4
+          },
+          {
+            "x": 61.4,
+            "y": 15.4
+          },
+          {
+            "x": 60.3,
+            "y": 18.2
+          },
+          {
+            "x": 61.9,
+            "y": 18
+          },
+          {
+            "x": 62.6,
+            "y": 16.7
+          },
+          {
+            "x": 62.9,
+            "y": 14
+          },
+          {
+            "x": 62.5,
+            "y": 12.5
+          },
+          {
+            "x": 64.2,
+            "y": 12.4
+          },
+          {
+            "x": 64.3,
+            "y": 10.8
+          },
+          {
+            "x": 66.7,
+            "y": 10.9
+          },
+          {
+            "x": 68.5,
+            "y": 12.3
+          },
+          {
+            "x": 70.4,
+            "y": 12.8
+          },
+          {
+            "x": 68.9,
+            "y": 14
+          },
+          {
+            "x": 67.3,
+            "y": 15.4
+          },
+          {
+            "x": 67.9,
+            "y": 16.4
+          },
+          {
+            "x": 70,
+            "y": 16.5
+          },
+          {
+            "x": 71.5,
+            "y": 14.1
+          },
+          {
+            "x": 74.4,
+            "y": 14
+          },
+          {
+            "x": 78,
+            "y": 12.9
+          },
+          {
+            "x": 85,
+            "y": 13.4
+          },
+          {
+            "x": 85.7,
+            "y": 15.6
+          },
+          {
+            "x": 87.3,
+            "y": 18
+          },
+          {
+            "x": 89.6,
+            "y": 20.1
+          },
+          {
+            "x": 90.1,
+            "y": 21.5
+          },
+          {
+            "x": 88.3,
+            "y": 24.1
+          },
+          {
+            "x": 92,
+            "y": 23.3
+          },
+          {
+            "x": 94.1,
+            "y": 25.1
+          },
+          {
+            "x": 94.1,
+            "y": 29
+          },
+          {
+            "x": 92.3,
+            "y": 30.8
+          },
+          {
+            "x": 89.8,
+            "y": 31.4
+          },
+          {
+            "x": 87.8,
+            "y": 34.4
+          },
+          {
+            "x": 85.3,
+            "y": 35.8
+          },
+          {
+            "x": 80.9,
+            "y": 34.8
+          },
+          {
+            "x": 77.6,
+            "y": 36.2
+          },
+          {
+            "x": 74.4,
+            "y": 38.3
+          },
+          {
+            "x": 70.5,
+            "y": 40.5
+          },
+          {
+            "x": 66.9,
+            "y": 40.6
+          },
+          {
+            "x": 64,
+            "y": 39.9
+          },
+          {
+            "x": 61.9,
+            "y": 37.9
+          },
+          {
+            "x": 61.1,
+            "y": 35.2
+          },
+          {
+            "x": 55.6,
+            "y": 32.7
+          },
+          {
+            "x": 56.5,
+            "y": 30.4
+          },
+          {
+            "x": 52.5,
+            "y": 28.4
+          }
+        ],
+        "labelPosition": {
+          "x": 64.8,
+          "y": 22.2
+        },
+        "color": "#f59e0b",
+        "fillOpacity": 0.18,
+        "borderOpacity": 0.9,
+        "visibleToPlayers": false,
+        "showBoundary": true,
+        "showLabel": true,
+        "showFill": true,
+        "fog": {
+          "enabled": false,
+          "density": "MEDIUM",
+          "speed": "SLOW"
+        }
+      }
+    ],
+    "mapEffectsEnabled": true,
+    "hqPos": {
+      "x": 67.1,
+      "y": 24.5
+    },
+    "clans": [
+      {
+        "id": "clan_guild",
+        "name": "Орден Истока",
+        "trustLevel": 5,
+        "gold": 1000,
+        "resources": {
+          "Supplies": 10,
+          "Equipment": 10,
+          "Intelligence": 10,
+          "Alchemy": 10,
+          "AncientText": "",
+          "specialItems": []
+        }
+      },
+      {
+        "id": "clan_1",
+        "name": "Воины Света Копьё Старых Клятв",
+        "trustLevel": 1,
+        "gold": 120,
+        "resources": {
+          "Supplies": 3,
+          "Equipment": 2,
+          "Intelligence": 1,
+          "Alchemy": 0,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_2",
+        "name": "Круг Вороновых Рыцарей",
+        "trustLevel": 2,
+        "gold": 200,
+        "resources": {
+          "Supplies": 4,
+          "Equipment": 3,
+          "Intelligence": 3,
+          "Alchemy": 1,
+          "AncientText": "Древний Манускрипт",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_3",
+        "name": "Фианна Ульстера",
+        "trustLevel": 1,
+        "gold": 120,
+        "resources": {
+          "Supplies": 2,
+          "Equipment": 4,
+          "Intelligence": 1,
+          "Alchemy": 0,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_4",
+        "name": "Клан Дуглас",
+        "trustLevel": 3,
+        "gold": 350,
+        "resources": {
+          "Supplies": 6,
+          "Equipment": 5,
+          "Intelligence": 5,
+          "Alchemy": 3,
+          "AncientText": "Карта Руин",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_5",
+        "name": "Круг - Тумана Валлийцы",
+        "trustLevel": 2,
+        "gold": 180,
+        "resources": {
+          "Supplies": 3,
+          "Equipment": 3,
+          "Intelligence": 2,
+          "Alchemy": 1,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_6",
+        "name": "Бранденбуржцы",
+        "trustLevel": 1,
+        "gold": 100,
+        "resources": {
+          "Supplies": 2,
+          "Equipment": 2,
+          "Intelligence": 4,
+          "Alchemy": 0,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_7",
+        "name": "Свита Королевы Таильту",
+        "trustLevel": 1,
+        "gold": 120,
+        "resources": {
+          "Supplies": 3,
+          "Equipment": 2,
+          "Intelligence": 2,
+          "Alchemy": 1,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_8",
+        "name": "Свита Королевы Таильту",
+        "trustLevel": 2,
+        "gold": 180,
+        "resources": {
+          "Supplies": 2,
+          "Equipment": 4,
+          "Intelligence": 1,
+          "Alchemy": 2,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_9",
+        "name": "Воины Света Копьё Серебряных Клинков",
+        "trustLevel": 1,
+        "gold": 130,
+        "resources": {
+          "Supplies": 2,
+          "Equipment": 2,
+          "Intelligence": 4,
+          "Alchemy": 1,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_10",
+        "name": "Избранные Стеклянной Башни",
+        "trustLevel": 2,
+        "gold": 210,
+        "resources": {
+          "Supplies": 4,
+          "Equipment": 4,
+          "Intelligence": 2,
+          "Alchemy": 1,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_11",
+        "name": "Фиана Коннахта",
+        "trustLevel": 1,
+        "gold": 110,
+        "resources": {
+          "Supplies": 3,
+          "Equipment": 2,
+          "Intelligence": 3,
+          "Alchemy": 0,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_12",
+        "name": "Баронство Мортимер ",
+        "trustLevel": 3,
+        "gold": 320,
+        "resources": {
+          "Supplies": 5,
+          "Equipment": 4,
+          "Intelligence": 4,
+          "Alchemy": 3,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_13",
+        "name": "Гардикоры Его Величества Короля Франкии",
+        "trustLevel": 1,
+        "gold": 140,
+        "resources": {
+          "Supplies": 4,
+          "Equipment": 4,
+          "Intelligence": 1,
+          "Alchemy": 0,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_14",
+        "name": "Семьи Вероны",
+        "trustLevel": 2,
+        "gold": 190,
+        "resources": {
+          "Supplies": 2,
+          "Equipment": 3,
+          "Intelligence": 3,
+          "Alchemy": 2,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      },
+      {
+        "id": "clan_15",
+        "name": "Королевство Островов",
+        "trustLevel": 1,
+        "gold": 125,
+        "resources": {
+          "Supplies": 3,
+          "Equipment": 4,
+          "Intelligence": 1,
+          "Alchemy": 1,
+          "AncientText": "",
+          "specialItems": []
+        },
+        "isActive": true
+      }
+    ],
+    "adventurers": [],
+    "missions": [
+      {
+        "id": "event_mseszuqn",
+        "title": "Затонувший корабль",
+        "desc": "На побережье Ленстера, ведомый песней гарпий, разбился галеон «Морской Ворон». Судно перевозило груз, за которым уже охотятся люди нескольких домов. Прилив скоро растащит обломки, а чужие наёмники уже идут к рифам. Нужно первыми добраться до корабля и вынести то, что скрыто в капитанском ларце.",
+        "reqResource": "Supplies",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 82,
+        "y": 37,
+        "region": "Прибрежные воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseszuqn_stage_1",
+            "label": "Отыскать обломки «Морского Ворона»",
+            "reqResource": "Supplies",
+            "dc": 12
+          },
+          {
+            "id": "event_mseszuqn_stage_2",
+            "label": "Добраться до капитанского ларца, минуя гарпий",
+            "reqResource": "Alchemy",
+            "dc": 14
+          },
+          {
+            "id": "event_mseszuqn_stage_3",
+            "label": "Удержать находку до прибытия соперников",
+            "reqResource": "Equipment",
+            "dc": 13
+          }
+        ],
+        "rewardSpecialItems": [
+          "Армиллярная сфера Гаранхира"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "В капитанском ларце обнаружена Армиллярная сфера Гаранхира — сложный прибор из потемневших бронзовых колец с бирюзовым кристаллом в центре. Когда сферу вынесли из воды, кольца сами повернулись к югу, словно указывая путь в открытое море.",
+        "failText": "Отряд подтвердил, что корабль погубили гарпии, а в капитанском ларце находился необычный бронзовый прибор. Забрать находку раньше соперников не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_ocean_depths"
+        ],
+        "graphPosition": {
+          "x": 80,
+          "y": 80
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseszuqn_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseszuqn_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseszuqn_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseszuqn_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_coastal_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msetc8xe",
+        "title": "Левиафан-Скелет",
+        "desc": "Под лунным светом Армиллярная сфера Гаранхира сложилась в карту далёких вод. В отмеченной точке из моря выступают кораллы, похожие на рёбра исполинского зверя. Нужно проверить координаты и выяснить, куда ведёт этот путь.",
+        "reqResource": "Supplies",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 69.5,
+        "y": 89.3,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_msetc8xe_stage_1",
+            "label": "Достичь координат сферы",
+            "reqResource": "Supplies",
+            "dc": 12
+          },
+          {
+            "id": "event_msetc8xe_stage_2",
+            "label": "Исследовать останки Левиафана",
+            "reqResource": "Equipment",
+            "dc": 14
+          },
+          {
+            "id": "event_msetc8xe_stage_3",
+            "label": "Спуститься по костям ниже поверхности",
+            "reqResource": "Alchemy",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_mseszuqn"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "Коралловые рёбра оказались частью скелета древнего Левиафана. Его позвоночник уходит по подводному склону далеко вниз, туда, где давление воды ослабевает вопреки природе. На дне разведчики увидели Коралловый трон, висящий над ещё более глубокой бездной.",
+        "failText": "Координаты верны: под кораллами действительно лежит скелет существа невероятных размеров. Спуститься вдоль него достаточно глубоко и установить, что находится внизу, отряд не смог.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_ocean_depths"
+        ],
+        "graphPosition": {
+          "x": 340,
+          "y": 80
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msetc8xe_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msetc8xe_copy_mseto4xn",
+        "title": "Коралловый трон",
+        "desc": "Позвоночник Левиафана тянется в бесконечный океан и может стать лестницей к морскому дну. Над следующей бездной покоится Коралловый трон. Задача отряда — найти способ безопасно пройти по костям гиганта и достичь сооружения.",
+        "reqResource": "Supplies",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 74.5,
+        "y": 89,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_stage_1",
+            "label": "Подготовить спуск по позвоночнику Левиафана",
+            "reqResource": "Supplies",
+            "dc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_stage_2",
+            "label": "Закрепить путь к океанскому дну",
+            "reqResource": "Equipment",
+            "dc": 15
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_stage_3",
+            "label": "Достичь Кораллового трона",
+            "reqResource": "None",
+            "dc": 16
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_msetc8xe"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "Отряд превратил позвоночник Левиафана в надёжный путь и достиг океанского дна. У Кораллового трона обнаружены Хранители Савана — община, говорящая на древневаллийском. Они указали на скрытую в глубине Библиотеку Савана, но не объяснили, что охраняют под троном.",
+        "failText": "Скелет действительно ведёт к океанскому дну, однако часть костей не выдерживает веса живых. Отряд наметил безопасный маршрут, но до Кораллового трона не добрался.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_ocean_depths"
+        ],
+        "graphPosition": {
+          "x": 600,
+          "y": 80
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msett0ra",
+        "title": "Замерзший корабль",
+        "desc": "Неподалёку от Ирландии время от времени возникает густой ледяной туман. Он стоит неподвижно даже при сильном ветре, а корабли, вошедшие в него, не возвращаются. Нужно найти источник аномалии и выяснить, что скрыто во льдах.",
+        "reqResource": "Intelligence",
+        "dc": 11,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 98.6,
+        "y": 52,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_msett0ra_stage_1",
+            "label": "Отыскать ледяной туман",
+            "reqResource": "Intelligence",
+            "dc": 11
+          },
+          {
+            "id": "event_msett0ra_stage_2",
+            "label": "Проложить путь через движущийся лёд",
+            "reqResource": "Equipment",
+            "dc": 13
+          },
+          {
+            "id": "event_msett0ra_stage_3",
+            "label": "Исследовать древний корабль",
+            "reqResource": "None",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Бортовой журнал на древневаллийском"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "В сердце тумана найдено кладбище судов, вмёрзших в «дышащий» ледник. На древнейшем корабле сохранился бортовой журнал: часть представителей Седьмого дома предала Гвейлод, бежала из него и унесла осколки великого щита. Несколько записей утверждают, что часть осколков исчезла ещё до бегства.",
+        "failText": "Отряд подтвердил существование движущегося ледника и заметил среди обломков древний корабль со знаками Гвейлода. Добраться до его внутренних помещений не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 80,
+          "y": 300
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msett0ra_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msett0ra_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msett0ra_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msett0ra_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix",
+        "title": "Древний портал",
+        "desc": "Повреждённый журнал указывает в сердце Ирландии. Его авторы преследовали предателей Седьмого дома, укрывших осколки щита за проходами через Изнанку. В отмеченном месте должно находиться древнее устройство, способное открыть эти пути.",
+        "reqResource": "Intelligence",
+        "dc": 13,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.9,
+        "y": 44.9,
+        "region": "Ленстер",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseu92ix_stage_1",
+            "label": "Найти устройство по записям журнала",
+            "reqResource": "Intelligence",
+            "dc": 13
+          },
+          {
+            "id": "event_mseu92ix_stage_2",
+            "label": "Запустить механизм Изнанки",
+            "reqResource": "Alchemy",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_msett0ra"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "Под озером обнаружено древнее устройство, открывающее путь через Изнанку. После запуска вокруг него возникли четверо врат — белые, зелёные, жёлтые и красные. Каждый проход ведёт туда, где беглые фоморы могли спрятать один из осколков Расколотого Щита.",
+        "failText": "Устройство найдено и опознано как узел переходов через Изнанку, однако его повреждённые кольца не удалось привести в правильное положение.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 340,
+          "y": 300
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm",
+        "title": "Эльфийский портал",
+        "desc": "Белые врата отражают зал, которого нет по эту сторону Изнанки: тонкие эльфийские арки, холодный свет и механизм, продолжающий работать без хозяев. Нужно пройти через портал и найти след осколка щита.",
+        "reqResource": "Alchemy",
+        "dc": 10,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 54.1,
+        "y": 44.9,
+        "region": "Коннахт",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_stage_1",
+            "label": "Стабилизировать белые врата",
+            "reqResource": "Alchemy",
+            "dc": 10
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_stage_2",
+            "label": "Пройти эльфийский комплекс",
+            "reqResource": "Intelligence",
+            "dc": 14
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_stage_3",
+            "label": "Извлечь осколок из механизма",
+            "reqResource": "Equipment",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Белый осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "За белыми вратами найден заброшенный эльфийский комплекс. Его центральный механизм удерживал Белый осколок Расколотого Щита и использовал заключённую в нём силу для поддержания портала.",
+        "failText": "Отряд прошёл через белые врата и подтвердил, что портал ведёт в эльфийский комплекс. Внутренний механизм питается силой, похожей на магию щита, но добраться до её источника не удалось.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 620,
+          "y": 190
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewjix5_2",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y",
+        "title": "Кладбище со статуей валькирии",
+        "desc": "За зелёными вратами виднеется старое кладбище. Над могилами возвышается статуя валькирии, а её каменные глаза поворачиваются вслед каждому, кто приближается к центру некрополя.",
+        "reqResource": "Supplies",
+        "dc": 10,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.9,
+        "y": 46.1,
+        "region": "Ленстер",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_stage_1",
+            "label": "Пересечь зелёные врата",
+            "reqResource": "Supplies",
+            "dc": 10
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_stage_2",
+            "label": "Разгадать клятву валькирии",
+            "reqResource": "Intelligence",
+            "dc": 14
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_stage_3",
+            "label": "Открыть запечатанную гробницу",
+            "reqResource": "Equipment",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Зелёный осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "Статуя оказалась хранительницей погребальной клятвы. Когда отряд назвал имена предателей, валькирия открыла гробницу и позволила забрать Зелёный осколок Расколотого Щита.",
+        "failText": "За зелёными вратами действительно находится кладбище фоморов. Осколок скрыт под статуей валькирии, но открыть гробницу без исполнения старой клятвы не удалось.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 620,
+          "y": 300
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv",
+        "title": "Логово дракона тьмы",
+        "desc": "Красные врата открываются в обугленную пещеру, где свет гаснет раньше, чем касается стен. В глубине слышно дыхание существа, обвившего сокровище телом и тенью.",
+        "reqResource": "Alchemy",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 57.6,
+        "y": 44.9,
+        "region": "Ленстер",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_stage_1",
+            "label": "Защититься от живой тьмы",
+            "reqResource": "Alchemy",
+            "dc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_stage_2",
+            "label": "Добраться до сокровищницы дракона",
+            "reqResource": "None",
+            "dc": 16
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_stage_3",
+            "label": "Вырвать осколок из драконьей брони",
+            "reqResource": "Equipment",
+            "dc": 16
+          }
+        ],
+        "rewardSpecialItems": [
+          "Красный осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "Красный осколок был вросшим в нагрудную чешую дракона тьмы. Отряд отделил его от чудовища и вернулся до того, как логово окончательно обрушилось в Изнанку.",
+        "failText": "Красные врата ведут в логово живого дракона тьмы. Искомый осколок виден в его нагрудной броне, но приблизиться к чудовищу отряд не смог.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 620,
+          "y": 410
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k",
+        "title": "Гробница под песками",
+        "desc": "За жёлтыми вратами лежит погребённая пустыней гробница. Песок течёт вверх по ступеням, стирает следы и снова запечатывает каждый открытый проход.",
+        "reqResource": "Supplies",
+        "dc": 10,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.9,
+        "y": 43.6,
+        "region": "Ленстер",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_stage_1",
+            "label": "Подготовиться к переходу через пустыню",
+            "reqResource": "Supplies",
+            "dc": 10
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_stage_2",
+            "label": "Прочитать знаки погребального пути",
+            "reqResource": "Intelligence",
+            "dc": 14
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_stage_3",
+            "label": "Удержать гробницу открытой",
+            "reqResource": "Equipment",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Жёлтый осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "В погребальной камере найден Жёлтый осколок Расколотого Щита. Его сила удерживала гробницу между мгновениями, не позволяя пескам окончательно поглотить её.",
+        "failText": "Отряд добрался до погребальной камеры и увидел жёлтое сияние под саркофагом. Песчаные печати сомкнулись раньше, чем находку удалось извлечь.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 620,
+          "y": 520
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1",
+        "title": "Ты не представляешь…",
+        "desc": "Жители Манстера иногда пропадают на несколько дней, а возвращаются навеселе, в чужих одеждах и с одинаковой фразой: «Ты не представляешь, где я был и что я там видел… Только жене не говори». Их рассказы противоречат друг другу, но в каждом мелькает запах мокрых грибов и шум отлива.",
+        "reqResource": "Intelligence",
+        "dc": 8,
+        "type": "OPERATION",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.5,
+        "y": 67.4,
+        "region": "Манстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_stage_1",
+            "label": "Найти общее в рассказах пропавших",
+            "reqResource": "Intelligence",
+            "dc": 8
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Все следы сошлись у подводной пещеры, открывающейся только во время особенно низкого отлива. Из глубины тянет сладковатым запахом спор, однако вход слишком быстро снова скрылся под водой.",
+        "failText": "Рассказы действительно связаны: несколько пропавших независимо упомянули пещеру, доступную во время отлива. Установить её местоположение пока не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 80,
+          "y": 680
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1_copy_msev7s58",
+        "title": "Где я был…",
+        "desc": "Время следующего низкого отлива известно. Нужно войти в найденную пещеру, пока море не закрыло проход, и выяснить, куда исчезали жители Манстера.",
+        "reqResource": "Equipment",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 43,
+        "y": 61.3,
+        "region": "Манстер",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_stage_1",
+            "label": "Исследовать пещеру во время отлива",
+            "reqResource": "Equipment",
+            "dc": 10
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_mseuu5r1"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "В глубине пещеры найдена колония грибов, складывающихся в подобие дверного проёма. Грибы разговаривали голосами пропавших и отказались открыть путь без «Спорового ключа». Отряд вернулся до прилива, хотя никто не смог объяснить появившиеся на доспехах следы недавней драки.",
+        "failText": "В пещере обнаружены говорящие грибы и следы множества посетителей. Прилив вынудил отряд отступить прежде, чем удалось понять, как открыть скрытый проход.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 340,
+          "y": 630
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku",
+        "title": "И что я там видел…",
+        "desc": "Грибная дверь существует, а Споровый ключ найден. За ней должно скрываться место, куда исчезают жители Манстера. Нужно открыть проход и разобраться, почему вернувшиеся помнят веселье, но не помнят дороги обратно.",
+        "reqResource": "Supplies",
+        "dc": 9,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 44.7,
+        "y": 61.4,
+        "region": "Манстер",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_stage_1",
+            "label": "Открыть грибную дверь",
+            "reqResource": "Supplies",
+            "dc": 9,
+            "requiredSpecialItem": "Споровый ключ"
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_stage_2",
+            "label": "Сохранить ясность среди фейских чар",
+            "reqResource": "Alchemy",
+            "dc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_stage_3",
+            "label": "Договориться с хозяином таверны",
+            "reqResource": "Intelligence",
+            "dc": 13
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_mseuu5r1_copy_msev7s58",
+          "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "За грибной дверью оказалась фейская таверна, стоящая между несколькими дорогами и временами. Хозяин признал Споровый ключ законным приглашением и согласился пропускать посланников Ордена — при условии, что никто не станет спрашивать, чем здесь расплачиваются после полуночи.",
+        "failText": "Споровый ключ действительно открыл дорогу в фейскую таверну. Отряд увидел её зал и посетителей, но чары хозяина вынудили гостей уйти, не заключив соглашения.",
+        "pinned": true,
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 620,
+          "y": 680
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5",
+        "title": "Драка из-за Спорового ключа",
+        "desc": "Сразу в нескольких городах Манстера вспыхнули драки. Все участники уверяют, что защищали принадлежащий им «Споровый ключ», хотя никто не может описать, как тот выглядит. Одинаковое безумие в разных местах едва ли возникло случайно.",
+        "reqResource": "Intelligence",
+        "dc": 9,
+        "type": "OPERATION",
+        "lifespan": 2,
+        "maxLifespan": 2,
+        "x": 27.6,
+        "y": 73.1,
+        "region": "Манстер",
+        "startDay": 8,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_stage_1",
+            "label": "Восстановить путь ключа по рассказам участников",
+            "reqResource": "Intelligence",
+            "dc": 9
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_stage_2",
+            "label": "Забрать ключ у грибной процессии",
+            "reqResource": "Equipment",
+            "dc": 12
+          }
+        ],
+        "rewardSpecialItems": [
+          "Споровый ключ"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "След привёл к процессии ходячих грибов. Те без сопротивления отдали отряду тёплый костяной предмет, покрытый споровым узором, и назвали его Споровым ключом. На вопрос о драках грибы ответили, что «приглашение всегда само выбирает гостя».",
+        "failText": "Драки вызваны не массовым помешательством: свидетели видели процессию ходячих грибов, передававших участникам один и тот же предмет. Перехватить процессию не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 340,
+          "y": 750
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msevml56",
+        "title": "Пропавший груз",
+        "desc": "Портовые рабочие сообщают о краже четырёх ящиков спиртного. Они клянутся, что во время ливня видели на складе низкие силуэты с горящими глазами, хотя ни один замок не был взломан.",
+        "reqResource": "None",
+        "dc": 12,
+        "type": "DUMMY",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 30.1,
+        "y": 39.4,
+        "region": "Коннахт",
+        "startDay": 1,
+        "goldReward": 0,
+        "checks": [],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "successText": "Никаких таинственных похитителей не существовало. Ящики обнаружены в домах самих портовых рабочих — частично опустошёнными и очень плохо спрятанными.",
+        "scoutedByClanIds": [],
+        "chainIds": [],
+        "graphPosition": {
+          "x": 80,
+          "y": 1320
+        },
+        "quotaPriority": 0,
+        "pinned": false,
+        "failText": "Проверить рассказ портовых рабочих не удалось.",
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msevml56_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msevml56_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewjix5_2",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_drowned_bell",
+        "title": "Колокол под Чёрной Водой",
+        "desc": "После каждого сильного шторма рыбаки у западного берега слышат семь ударов из-под воды. На рассвете звон умолкает, но неизменно возвращается со следующей бурей. Нужно найти его источник прежде, чем море снова заметёт следы.",
+        "reqResource": "Intelligence",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": 2,
+        "maxLifespan": 2,
+        "x": 11,
+        "y": 50,
+        "region": "Глубокие воды",
+        "startDay": 2,
+        "checks": [
+          {
+            "id": "event_dragon_hour_drowned_bell_stage_1",
+            "label": "Найти источник подводного звона",
+            "reqResource": "Intelligence",
+            "dc": 10
+          },
+          {
+            "id": "event_dragon_hour_drowned_bell_stage_2",
+            "label": "Поднять язык затонувшего колокола",
+            "reqResource": "Equipment",
+            "dc": 13
+          }
+        ],
+        "rewardSpecialItems": [
+          "Язык утонувшего колокола"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_drowned_bell"
+        ],
+        "graphPosition": {
+          "x": 80,
+          "y": 910
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": true,
+          "cooldownDays": 1,
+          "maxOccurrences": 3,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED",
+            "EXPIRED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "На дне найден корабельный колокол, вросший в чёрный риф. Отряд поднял его бронзовый язык, однако уже на берегу тот беззвучно качнулся семь раз. На металле проступили координаты более глубокого места.",
+        "failText": "Звон исходит от затонувшего судна у чёрного рифа. Течение меняется всякий раз после седьмого удара, и добраться до самого колокола пока не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_drowned_bell_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.05,
+            "resourceMode": "FIXED",
+            "resource": "Intelligence",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12,
+            "gmDescription": "Ложный звон уводит судно от места погружения."
+          },
+          {
+            "id": "event_dragon_hour_drowned_bell_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.04,
+            "resourceMode": "FIXED",
+            "resource": "Equipment",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12,
+            "gmDescription": "Трос цепляется за движущиеся обломки."
+          },
+          {
+            "id": "event_dragon_hour_drowned_bell_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_seventh_strike",
+        "title": "Седьмой удар",
+        "desc": "Язык утонувшего колокола продолжает двигаться без звука и всякий раз указывает в одну точку Глубоких вод. Если вернуть его туда до седьмого качания, можно выяснить, что именно пытался предупредить погибший экипаж.",
+        "reqResource": "Supplies",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 5,
+        "y": 56,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_dragon_hour_seventh_strike_stage_1",
+            "label": "Доставить язык колокола к отмеченной точке",
+            "reqResource": "Supplies",
+            "dc": 10,
+            "requiredSpecialItem": "Язык утонувшего колокола"
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_stage_2",
+            "label": "Выдержать седьмой удар",
+            "reqResource": "None",
+            "dc": 15
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_stage_3",
+            "label": "Запечатать разлом под водой",
+            "reqResource": "Alchemy",
+            "dc": 14
+          }
+        ],
+        "rewardSpecialItems": [
+          "Осколок беззвучной бронзы"
+        ],
+        "prerequisiteMissionIds": [
+          "event_dragon_hour_drowned_bell"
+        ],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_drowned_bell"
+        ],
+        "graphPosition": {
+          "x": 360,
+          "y": 910
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Седьмой удар раскрыл под водой узкую щель в Изнанку. Отряд вернул язык колоколу и запечатал разлом, отделив от него Осколок беззвучной бронзы. После этого море впервые за много лет осталось тихим даже во время бури.",
+        "failText": "Координаты ведут к подводному разлому. На седьмом ударе он раскрывается шире и начинает втягивать воду вместе с кораблями; закрыть его отряд не сумел.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.06,
+            "resourceMode": "FIXED",
+            "resource": "None",
+            "dcMode": "FIXED",
+            "dc": 15,
+            "baseDc": 12,
+            "gmDescription": "Седьмой удар меняет направление воды; автоуспех невозможен."
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.04,
+            "resourceMode": "FIXED",
+            "resource": "Alchemy",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12,
+            "gmDescription": "Разлом отвечает на попытку запечатать его."
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_ownerless_tracks",
+        "title": "Следы без хозяев",
+        "desc": "Каждое утро на дорогах Коннахта появляются мокрые следы босых ног. Они начинаются посреди сухого поля и обрываются у заброшенного колодца. Ни один дозор не видел того, кто их оставляет.",
+        "reqResource": "Intelligence",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 37.7,
+        "y": 41.1,
+        "region": "Коннахт",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_dragon_hour_ownerless_tracks_stage_1",
+            "label": "Проследить появление мокрых следов",
+            "reqResource": "Intelligence",
+            "dc": 10
+          },
+          {
+            "id": "event_dragon_hour_ownerless_tracks_stage_2",
+            "label": "Спуститься в заброшенный колодец",
+            "reqResource": "Supplies",
+            "dc": 11
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_false_lighthouse"
+        ],
+        "graphPosition": {
+          "x": 80,
+          "y": 1080
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Колодец оказался сухим только сверху. Внизу отряд нашёл морскую воду и лестницу, уходящую в отражение ночного неба. На камнях вырезана половина координат и знак перевёрнутого маяка.",
+        "failText": "Следы действительно ведут к заброшенному колодцу, из которого во время отлива доносится шум моря. Исследовать затопленный проход не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_ownerless_tracks_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ownerless_tracks_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ownerless_tracks_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewjix5_2",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_ash_on_tide",
+        "title": "Пепел на приливе",
+        "desc": "У берегов Ольстера чёрный пепел движется против течения и собирается в узоры на мокром песке. Волны стирают их за минуты, но каждую ночь рисунок становится немного полнее.",
+        "reqResource": "Alchemy",
+        "dc": 11,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 64.8,
+        "y": 22.2,
+        "region": "Ольстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_dragon_hour_ash_on_tide_stage_1",
+            "label": "Сохранить узор приливного пепла",
+            "reqResource": "Alchemy",
+            "dc": 11
+          },
+          {
+            "id": "event_dragon_hour_ash_on_tide_stage_2",
+            "label": "Найти источник пепла",
+            "reqResource": "Equipment",
+            "dc": 12
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_false_lighthouse"
+        ],
+        "graphPosition": {
+          "x": 80,
+          "y": 1200
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Пепел принесён не течением, а отражением старого пожара, видимого только в воде. Собранный узор дал вторую половину координат и тот же знак перевёрнутого маяка.",
+        "failText": "Пепел имеет следы магического горения и складывается в часть навигационной схемы. Полный рисунок смыло прежде, чем его удалось закрепить.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_ash_on_tide_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ash_on_tide_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ash_on_tide_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewpfo7_4",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_false_lighthouse",
+        "title": "Маяк, которого нет",
+        "desc": "Следы из Коннахта и приливный пепел складываются в одни координаты. Там нет острова и никогда не строили маяков, однако в безлунные ночи над водой появляется огонь, подающий сигналы судам, погибшим много лет назад.",
+        "reqResource": "Intelligence",
+        "dc": 12,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 18,
+        "y": 20,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_dragon_hour_false_lighthouse_stage_1",
+            "label": "Найти маяк между отражениями",
+            "reqResource": "Intelligence",
+            "dc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_stage_2",
+            "label": "Подняться по меняющейся башне",
+            "reqResource": "Equipment",
+            "dc": 14
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_stage_3",
+            "label": "Погасить ложный огонь",
+            "reqResource": "Alchemy",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Линза несуществующего маяка"
+        ],
+        "prerequisiteMissionIds": [
+          "event_dragon_hour_ownerless_tracks",
+          "event_dragon_hour_ash_on_tide"
+        ],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_false_lighthouse"
+        ],
+        "graphPosition": {
+          "x": 430,
+          "y": 1140
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Маяк существовал только в отражениях воды. Отряд погасил огонь, заманивавший корабли на дороги мертвецов, и вынес Линзу несуществующего маяка. Сквозь неё видны берега, отсутствующие на обычных картах.",
+        "failText": "Маяк действительно появляется между отражениями и подаёт сигналы погибшим кораблям. Отряд достиг основания башни, но ложный огонь заставил лестницы сменить направление.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_weeping_stones",
+        "title": "Плачущие камни",
+        "desc": "Каменотёсы Манстера отказываются работать в новом карьере: после заката из свежих разломов слышен детский плач. Староста уверяет, что звук начался в ту же ночь, когда рабочие задели древнюю кладку.",
+        "reqResource": "None",
+        "dc": 12,
+        "type": "DUMMY",
+        "lifespan": 2,
+        "maxLifespan": 2,
+        "x": 37.4,
+        "y": 70.2,
+        "region": "Манстер",
+        "startDay": 2,
+        "goldReward": 0,
+        "checks": [],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [],
+        "graphPosition": {
+          "x": 300,
+          "y": 1320
+        },
+        "quotaPriority": 0,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Плач создавал ветер, проходивший через трещины в полой кладке. Рабочие сами усилили звук, закрыв часть отверстий досками, а староста превратил обычное эхо в удобный повод остановить работы.",
+        "failText": "Источник звука установить не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_weeping_stones_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_weeping_stones_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      }
+    ],
+    "chains": [
+      {
+        "id": "chain_ocean_depths",
+        "name": "Путь в Глубины Океана",
+        "color": "#0ea5e9",
+        "description": "От разбитого гарпиями корабля — к костям Левиафана и тайнам океанского дна."
+      },
+      {
+        "id": "chain_broken_shield",
+        "name": "Расколотый Щит",
+        "color": "#f59e0b",
+        "description": "След предателей Седьмого дома и четыре пути к утраченным осколкам щита."
+      },
+      {
+        "id": "chain_faerie_tavern",
+        "name": "Тропа к Фейской таверне",
+        "color": "#a855f7",
+        "description": "Исчезновения жителей Манстера, говорящие грибы и дверь, которую открывает Споровый ключ."
+      },
+      {
+        "id": "chain_drowned_bell",
+        "name": "Звон из-под Чёрной Воды",
+        "color": "#2563eb",
+        "description": "Возобновляемое расследование утонувшего колокола и тайна его седьмого удара."
+      },
+      {
+        "id": "chain_false_lighthouse",
+        "name": "Маяк на изнанке",
+        "color": "#f97316",
+        "description": "Два независимых следа сходятся у маяка, которого нет ни на одной карте."
+      }
+    ],
+    "events": [
+      {
+        "id": "event_mseszuqn",
+        "title": "Затонувший корабль",
+        "desc": "На побережье Ленстера, ведомый песней гарпий, разбился галеон «Морской Ворон». Судно перевозило груз, за которым уже охотятся люди нескольких домов. Прилив скоро растащит обломки, а чужие наёмники уже идут к рифам. Нужно первыми добраться до корабля и вынести то, что скрыто в капитанском ларце.",
+        "reqResource": "Supplies",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 82,
+        "y": 37,
+        "region": "Прибрежные воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_mseszuqn_stage_1",
+            "label": "Отыскать обломки «Морского Ворона»",
+            "reqResource": "Supplies",
+            "dc": 12
+          },
+          {
+            "id": "event_mseszuqn_stage_2",
+            "label": "Добраться до капитанского ларца, минуя гарпий",
+            "reqResource": "Alchemy",
+            "dc": 14
+          },
+          {
+            "id": "event_mseszuqn_stage_3",
+            "label": "Удержать находку до прибытия соперников",
+            "reqResource": "Equipment",
+            "dc": 13
+          }
+        ],
+        "rewardSpecialItems": [
+          "Армиллярная сфера Гаранхира"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "В капитанском ларце обнаружена Армиллярная сфера Гаранхира — сложный прибор из потемневших бронзовых колец с бирюзовым кристаллом в центре. Когда сферу вынесли из воды, кольца сами повернулись к югу, словно указывая путь в открытое море.",
+        "failText": "Отряд подтвердил, что корабль погубили гарпии, а в капитанском ларце находился необычный бронзовый прибор. Забрать находку раньше соперников не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_ocean_depths"
+        ],
+        "graphPosition": {
+          "x": 12.589383975533707,
+          "y": 819.1984760663616
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseszuqn_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseszuqn_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseszuqn_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseszuqn_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_coastal_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msetc8xe",
+        "title": "Левиафан-Скелет",
+        "desc": "Под лунным светом Армиллярная сфера Гаранхира сложилась в карту далёких вод. В отмеченной точке из моря выступают кораллы, похожие на рёбра исполинского зверя. Нужно проверить координаты и выяснить, куда ведёт этот путь.",
+        "reqResource": "Supplies",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 69.5,
+        "y": 89.3,
+        "region": "Глубокие воды",
+        "startDay": 2,
+        "checks": [
+          {
+            "id": "event_msetc8xe_stage_1",
+            "label": "Достичь координат сферы",
+            "reqResource": "Supplies",
+            "dc": 12
+          },
+          {
+            "id": "event_msetc8xe_stage_2",
+            "label": "Исследовать останки Левиафана",
+            "reqResource": "Equipment",
+            "dc": 14
+          },
+          {
+            "id": "event_msetc8xe_stage_3",
+            "label": "Спуститься по костям ниже поверхности",
+            "reqResource": "Alchemy",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_mseszuqn"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "Коралловые рёбра оказались частью скелета древнего Левиафана. Его позвоночник уходит по подводному склону далеко вниз, туда, где давление воды ослабевает вопреки природе. На дне разведчики увидели Коралловый трон, висящий над ещё более глубокой бездной.",
+        "failText": "Координаты верны: под кораллами действительно лежит скелет существа невероятных размеров. Спуститься вдоль него достаточно глубоко и установить, что находится внизу, отряд не смог.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_ocean_depths"
+        ],
+        "graphPosition": {
+          "x": 290.7009118655248,
+          "y": 816.5170509176916
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msetc8xe_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msetc8xe_copy_mseto4xn",
+        "title": "Коралловый трон",
+        "desc": "Позвоночник Левиафана тянется в бесконечный океан и может стать лестницей к морскому дну. Над следующей бездной покоится Коралловый трон. Задача отряда — найти способ безопасно пройти по костям гиганта и достичь сооружения.",
+        "reqResource": "Supplies",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 74.5,
+        "y": 89,
+        "region": "Глубокие воды",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_stage_1",
+            "label": "Подготовить спуск по позвоночнику Левиафана",
+            "reqResource": "Supplies",
+            "dc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_stage_2",
+            "label": "Закрепить путь к океанскому дну",
+            "reqResource": "Equipment",
+            "dc": 15
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_stage_3",
+            "label": "Достичь Кораллового трона",
+            "reqResource": "None",
+            "dc": 16
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_msetc8xe"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "Отряд превратил позвоночник Левиафана в надёжный путь и достиг океанского дна. У Кораллового трона обнаружены Хранители Савана — община, говорящая на древневаллийском. Они указали на скрытую в глубине Библиотеку Савана, но не объяснили, что охраняют под троном.",
+        "failText": "Скелет действительно ведёт к океанскому дну, однако часть костей не выдерживает веса живых. Отряд наметил безопасный маршрут, но до Кораллового трона не добрался.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_ocean_depths"
+        ],
+        "graphPosition": {
+          "x": 537.3185416630706,
+          "y": 815.7219029632962
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msetc8xe_copy_mseto4xn_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msett0ra",
+        "title": "Замерзший корабль",
+        "desc": "Неподалёку от Ирландии время от времени возникает густой ледяной туман. Он стоит неподвижно даже при сильном ветре, а корабли, вошедшие в него, не возвращаются. Нужно найти источник аномалии и выяснить, что скрыто во льдах.",
+        "reqResource": "Intelligence",
+        "dc": 11,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 98.6,
+        "y": 52,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_msett0ra_stage_1",
+            "label": "Отыскать ледяной туман",
+            "reqResource": "Intelligence",
+            "dc": 11
+          },
+          {
+            "id": "event_msett0ra_stage_2",
+            "label": "Проложить путь через движущийся лёд",
+            "reqResource": "Equipment",
+            "dc": 13
+          },
+          {
+            "id": "event_msett0ra_stage_3",
+            "label": "Исследовать древний корабль",
+            "reqResource": "None",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Бортовой журнал на древневаллийском"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "pinned": true,
+        "successText": "В сердце тумана найдено кладбище судов, вмёрзших в «дышащий» ледник. На древнейшем корабле сохранился бортовой журнал: часть представителей Седьмого дома предала Гвейлод, бежала из него и унесла осколки великого щита. Несколько записей утверждают, что часть осколков исчезла ещё до бегства.",
+        "failText": "Отряд подтвердил существование движущегося ледника и заметил среди обломков древний корабль со знаками Гвейлода. Добраться до его внутренних помещений не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 14.885669547491531,
+          "y": 471.7457831130879
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msett0ra_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msett0ra_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msett0ra_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msett0ra_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix",
+        "title": "Древний портал",
+        "desc": "Повреждённый журнал указывает в сердце Ирландии. Его авторы преследовали предателей Седьмого дома, укрывших осколки щита за проходами через Изнанку. В отмеченном месте должно находиться древнее устройство, способное открыть эти пути.",
+        "reqResource": "Intelligence",
+        "dc": 13,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.9,
+        "y": 44.9,
+        "region": "Ленстер",
+        "startDay": 2,
+        "checks": [
+          {
+            "id": "event_mseu92ix_stage_1",
+            "label": "Найти устройство по записям журнала",
+            "reqResource": "Intelligence",
+            "dc": 13
+          },
+          {
+            "id": "event_mseu92ix_stage_2",
+            "label": "Запустить механизм Изнанки",
+            "reqResource": "Alchemy",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_msett0ra"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "Под озером обнаружено древнее устройство, открывающее путь через Изнанку. После запуска вокруг него возникли четверо врат — белые, зелёные, жёлтые и красные. Каждый проход ведёт туда, где беглые фоморы могли спрятать один из осколков Расколотого Щита.",
+        "failText": "Устройство найдено и опознано как узел переходов через Изнанку, однако его повреждённые кольца не удалось привести в правильное положение.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 278.5843897315913,
+          "y": 463.75486213153226
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm",
+        "title": "Эльфийский портал",
+        "desc": "Белые врата отражают зал, которого нет по эту сторону Изнанки: тонкие эльфийские арки, холодный свет и механизм, продолжающий работать без хозяев. Нужно пройти через портал и найти след осколка щита.",
+        "reqResource": "Alchemy",
+        "dc": 10,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 54.1,
+        "y": 44.9,
+        "region": "Коннахт",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_stage_1",
+            "label": "Стабилизировать белые врата",
+            "reqResource": "Alchemy",
+            "dc": 10
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_stage_2",
+            "label": "Пройти эльфийский комплекс",
+            "reqResource": "Intelligence",
+            "dc": 14
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_stage_3",
+            "label": "Извлечь осколок из механизма",
+            "reqResource": "Equipment",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Белый осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "За белыми вратами найден заброшенный эльфийский комплекс. Его центральный механизм удерживал Белый осколок Расколотого Щита и использовал заключённую в нём силу для поддержания портала.",
+        "failText": "Отряд прошёл через белые врата и подтвердил, что портал ведёт в эльфийский комплекс. Внутренний механизм питается силой, похожей на магию щита, но добраться до её источника не удалось.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 544.0065567204684,
+          "y": 719.4804416015437
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewjix5_2",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y",
+        "title": "Кладбище со статуей валькирии",
+        "desc": "За зелёными вратами виднеется старое кладбище. Над могилами возвышается статуя валькирии, а её каменные глаза поворачиваются вслед каждому, кто приближается к центру некрополя.",
+        "reqResource": "Supplies",
+        "dc": 10,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.9,
+        "y": 46.1,
+        "region": "Ленстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_stage_1",
+            "label": "Пересечь зелёные врата",
+            "reqResource": "Supplies",
+            "dc": 10
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_stage_2",
+            "label": "Разгадать клятву валькирии",
+            "reqResource": "Intelligence",
+            "dc": 14
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_stage_3",
+            "label": "Открыть запечатанную гробницу",
+            "reqResource": "Equipment",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Зелёный осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "Статуя оказалась хранительницей погребальной клятвы. Когда отряд назвал имена предателей, валькирия открыла гробницу и позволила забрать Зелёный осколок Расколотого Щита.",
+        "failText": "За зелёными вратами действительно находится кладбище фоморов. Осколок скрыт под статуей валькирии, но открыть гробницу без исполнения старой клятвы не удалось.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 540,
+          "y": 530
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv",
+        "title": "Логово дракона тьмы",
+        "desc": "Красные врата открываются в обугленную пещеру, где свет гаснет раньше, чем касается стен. В глубине слышно дыхание существа, обвившего сокровище телом и тенью.",
+        "reqResource": "Alchemy",
+        "dc": 12,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 57.6,
+        "y": 44.9,
+        "region": "Ленстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_stage_1",
+            "label": "Защититься от живой тьмы",
+            "reqResource": "Alchemy",
+            "dc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_stage_2",
+            "label": "Добраться до сокровищницы дракона",
+            "reqResource": "None",
+            "dc": 16
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_stage_3",
+            "label": "Вырвать осколок из драконьей брони",
+            "reqResource": "Equipment",
+            "dc": 16
+          }
+        ],
+        "rewardSpecialItems": [
+          "Красный осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "Красный осколок был вросшим в нагрудную чешую дракона тьмы. Отряд отделил его от чудовища и вернулся до того, как логово окончательно обрушилось в Изнанку.",
+        "failText": "Красные врата ведут в логово живого дракона тьмы. Искомый осколок виден в его нагрудной броне, но приблизиться к чудовищу отряд не смог.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 539.987937713326,
+          "y": 626.8315891357284
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k",
+        "title": "Гробница под песками",
+        "desc": "За жёлтыми вратами лежит погребённая пустыней гробница. Песок течёт вверх по ступеням, стирает следы и снова запечатывает каждый открытый проход.",
+        "reqResource": "Supplies",
+        "dc": 10,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.9,
+        "y": 43.6,
+        "region": "Ленстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_stage_1",
+            "label": "Подготовиться к переходу через пустыню",
+            "reqResource": "Supplies",
+            "dc": 10
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_stage_2",
+            "label": "Прочитать знаки погребального пути",
+            "reqResource": "Intelligence",
+            "dc": 14
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_stage_3",
+            "label": "Удержать гробницу открытой",
+            "reqResource": "Equipment",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Жёлтый осколок Расколотого Щита"
+        ],
+        "prerequisiteMissionIds": [
+          "event_mseu92ix"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "pinned": true,
+        "successText": "В погребальной камере найден Жёлтый осколок Расколотого Щита. Его сила удерживала гробницу между мгновениями, не позволяя пескам окончательно поглотить её.",
+        "failText": "Отряд добрался до погребальной камеры и увидел жёлтое сияние под саркофагом. Песчаные печати сомкнулись раньше, чем находку удалось извлечь.",
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_broken_shield"
+        ],
+        "graphPosition": {
+          "x": 540,
+          "y": 436
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseu92ix_copy_mseuohnm_copy_mseuse3y_copy_mseusevv_copy_mseusf7k_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msesdn7d_1",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1",
+        "title": "Ты не представляешь…",
+        "desc": "Жители Манстера иногда пропадают на несколько дней, а возвращаются навеселе, в чужих одеждах и с одинаковой фразой: «Ты не представляешь, где я был и что я там видел… Только жене не говори». Их рассказы противоречат друг другу, но в каждом мелькает запах мокрых грибов и шум отлива.",
+        "reqResource": "Intelligence",
+        "dc": 8,
+        "type": "OPERATION",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 55.5,
+        "y": 67.4,
+        "region": "Манстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_stage_1",
+            "label": "Найти общее в рассказах пропавших",
+            "reqResource": "Intelligence",
+            "dc": 8
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Все следы сошлись у подводной пещеры, открывающейся только во время особенно низкого отлива. Из глубины тянет сладковатым запахом спор, однако вход слишком быстро снова скрылся под водой.",
+        "failText": "Рассказы действительно связаны: несколько пропавших независимо упомянули пещеру, доступную во время отлива. Установить её местоположение пока не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 541.2659825132912,
+          "y": 50.18775841201158
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1_copy_msev7s58",
+        "title": "Где я был…",
+        "desc": "Время следующего низкого отлива известно. Нужно войти в найденную пещеру, пока море не закрыло проход, и выяснить, куда исчезали жители Манстера.",
+        "reqResource": "Equipment",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 43,
+        "y": 61.3,
+        "region": "Манстер",
+        "startDay": 4,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_stage_1",
+            "label": "Исследовать пещеру во время отлива",
+            "reqResource": "Equipment",
+            "dc": 10
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_mseuu5r1"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "В глубине пещеры найдена колония грибов, складывающихся в подобие дверного проёма. Грибы разговаривали голосами пропавших и отказались открыть путь без «Спорового ключа». Отряд вернулся до прилива, хотя никто не смог объяснить появившиеся на доспехах следы недавней драки.",
+        "failText": "В пещере обнаружены говорящие грибы и следы множества посетителей. Прилив вынудил отряд отступить прежде, чем удалось понять, как открыть скрытый проход.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 783.5938660613201,
+          "y": 51.03152553151649
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 13,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku",
+        "title": "И что я там видел…",
+        "desc": "Грибная дверь существует, а Споровый ключ найден. За ней должно скрываться место, куда исчезают жители Манстера. Нужно открыть проход и разобраться, почему вернувшиеся помнят веселье, но не помнят дороги обратно.",
+        "reqResource": "Supplies",
+        "dc": 9,
+        "type": "STORY",
+        "lifespan": null,
+        "maxLifespan": null,
+        "x": 44.7,
+        "y": 61.4,
+        "region": "Манстер",
+        "startDay": 9,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_stage_1",
+            "label": "Открыть грибную дверь",
+            "reqResource": "Supplies",
+            "dc": 9,
+            "requiredSpecialItem": "Споровый ключ"
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_stage_2",
+            "label": "Сохранить ясность среди фейских чар",
+            "reqResource": "Alchemy",
+            "dc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_stage_3",
+            "label": "Договориться с хозяином таверны",
+            "reqResource": "Intelligence",
+            "dc": 13
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [
+          "event_mseuu5r1_copy_msev7s58",
+          "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5"
+        ],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "За грибной дверью оказалась фейская таверна, стоящая между несколькими дорогами и временами. Хозяин признал Споровый ключ законным приглашением и согласился пропускать посланников Ордена — при условии, что никто не станет спрашивать, чем здесь расплачиваются после полуночи.",
+        "failText": "Споровый ключ действительно открыл дорогу в фейскую таверну. Отряд увидел её зал и посетителей, но чары хозяина вынудили гостей уйти, не заключив соглашения.",
+        "pinned": true,
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 2001.8057354656794,
+          "y": 47.99606972977351
+        },
+        "quotaPriority": 100,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5",
+        "title": "Драка из-за Спорового ключа",
+        "desc": "Сразу в нескольких городах Манстера вспыхнули драки. Все участники уверяют, что защищали принадлежащий им «Споровый ключ», хотя никто не может описать, как тот выглядит. Одинаковое безумие в разных местах едва ли возникло случайно.",
+        "reqResource": "Intelligence",
+        "dc": 9,
+        "type": "OPERATION",
+        "lifespan": 2,
+        "maxLifespan": 2,
+        "x": 27.6,
+        "y": 73.1,
+        "region": "Манстер",
+        "startDay": 8,
+        "checks": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_stage_1",
+            "label": "Восстановить путь ключа по рассказам участников",
+            "reqResource": "Intelligence",
+            "dc": 9
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_stage_2",
+            "label": "Забрать ключ у грибной процессии",
+            "reqResource": "Equipment",
+            "dc": 12
+          }
+        ],
+        "rewardSpecialItems": [
+          "Споровый ключ"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "След привёл к процессии ходячих грибов. Те без сопротивления отдали отряду тёплый костяной предмет, покрытый споровым узором, и назвали его Споровым ключом. На вопрос о драках грибы ответили, что «приглашение всегда само выбирает гостя».",
+        "failText": "Драки вызваны не массовым помешательством: свидетели видели процессию ходячих грибов, передававших участникам один и тот же предмет. Перехватить процессию не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "chainIds": [
+          "chain_faerie_tavern"
+        ],
+        "graphPosition": {
+          "x": 1776.889164394413,
+          "y": 166.93720337145265
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_mseuu5r1_copy_msev7s58_copy_msevgqku_copy_msevh3j5_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_msevml56",
+        "title": "Пропавший груз",
+        "desc": "Портовые рабочие сообщают о краже четырёх ящиков спиртного. Они клянутся, что во время ливня видели на складе низкие силуэты с горящими глазами, хотя ни один замок не был взломан.",
+        "reqResource": "None",
+        "dc": 12,
+        "type": "DUMMY",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 30.1,
+        "y": 39.4,
+        "region": "Коннахт",
+        "startDay": 1,
+        "goldReward": 0,
+        "checks": [],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "unlocksMissionIds": [],
+        "successText": "Никаких таинственных похитителей не существовало. Ящики обнаружены в домах самих портовых рабочих — частично опустошёнными и очень плохо спрятанными.",
+        "scoutedByClanIds": [],
+        "chainIds": [],
+        "graphPosition": {
+          "x": 21.171859287352504,
+          "y": 1028.0122500928135
+        },
+        "quotaPriority": 0,
+        "pinned": false,
+        "failText": "Проверить рассказ портовых рабочих не удалось.",
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complicationSlots": [
+          {
+            "id": "event_msevml56_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          },
+          {
+            "id": "event_msevml56_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewjix5_2",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_drowned_bell",
+        "title": "Колокол под Чёрной Водой",
+        "desc": "После каждого сильного шторма рыбаки у западного берега слышат семь ударов из-под воды. На рассвете звон умолкает, но неизменно возвращается со следующей бурей. Нужно найти его источник прежде, чем море снова заметёт следы.",
+        "reqResource": "Intelligence",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": 2,
+        "maxLifespan": 2,
+        "x": 11,
+        "y": 50,
+        "region": "Глубокие воды",
+        "startDay": 2,
+        "checks": [
+          {
+            "id": "event_dragon_hour_drowned_bell_stage_1",
+            "label": "Найти источник подводного звона",
+            "reqResource": "Intelligence",
+            "dc": 10
+          },
+          {
+            "id": "event_dragon_hour_drowned_bell_stage_2",
+            "label": "Поднять язык затонувшего колокола",
+            "reqResource": "Equipment",
+            "dc": 13
+          }
+        ],
+        "rewardSpecialItems": [
+          "Язык утонувшего колокола"
+        ],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_drowned_bell"
+        ],
+        "graphPosition": {
+          "x": 38.03177718879434,
+          "y": 340.3540314773129
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": true,
+          "cooldownDays": 1,
+          "maxOccurrences": 3,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED",
+            "EXPIRED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "На дне найден корабельный колокол, вросший в чёрный риф. Отряд поднял его бронзовый язык, однако уже на берегу тот беззвучно качнулся семь раз. На металле проступили координаты более глубокого места.",
+        "failText": "Звон исходит от затонувшего судна у чёрного рифа. Течение меняется всякий раз после седьмого удара, и добраться до самого колокола пока не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_drowned_bell_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.05,
+            "resourceMode": "FIXED",
+            "resource": "Intelligence",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12,
+            "gmDescription": "Ложный звон уводит судно от места погружения."
+          },
+          {
+            "id": "event_dragon_hour_drowned_bell_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.04,
+            "resourceMode": "FIXED",
+            "resource": "Equipment",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12,
+            "gmDescription": "Трос цепляется за движущиеся обломки."
+          },
+          {
+            "id": "event_dragon_hour_drowned_bell_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_seventh_strike",
+        "title": "Седьмой удар",
+        "desc": "Язык утонувшего колокола продолжает двигаться без звука и всякий раз указывает в одну точку Глубоких вод. Если вернуть его туда до седьмого качания, можно выяснить, что именно пытался предупредить погибший экипаж.",
+        "reqResource": "Supplies",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 5,
+        "y": 56,
+        "region": "Глубокие воды",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_dragon_hour_seventh_strike_stage_1",
+            "label": "Доставить язык колокола к отмеченной точке",
+            "reqResource": "Supplies",
+            "dc": 10,
+            "requiredSpecialItem": "Язык утонувшего колокола"
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_stage_2",
+            "label": "Выдержать седьмой удар",
+            "reqResource": "None",
+            "dc": 15
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_stage_3",
+            "label": "Запечатать разлом под водой",
+            "reqResource": "Alchemy",
+            "dc": 14
+          }
+        ],
+        "rewardSpecialItems": [
+          "Осколок беззвучной бронзы"
+        ],
+        "prerequisiteMissionIds": [
+          "event_dragon_hour_drowned_bell"
+        ],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_drowned_bell"
+        ],
+        "graphPosition": {
+          "x": 540,
+          "y": 342
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Седьмой удар раскрыл под водой узкую щель в Изнанку. Отряд вернул язык колоколу и запечатал разлом, отделив от него Осколок беззвучной бронзы. После этого море впервые за много лет осталось тихим даже во время бури.",
+        "failText": "Координаты ведут к подводному разлому. На седьмом ударе он раскрывается шире и начинает втягивать воду вместе с кораблями; закрыть его отряд не сумел.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.06,
+            "resourceMode": "FIXED",
+            "resource": "None",
+            "dcMode": "FIXED",
+            "dc": 15,
+            "baseDc": 12,
+            "gmDescription": "Седьмой удар меняет направление воды; автоуспех невозможен."
+          },
+          {
+            "id": "event_dragon_hour_seventh_strike_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.04,
+            "resourceMode": "FIXED",
+            "resource": "Alchemy",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12,
+            "gmDescription": "Разлом отвечает на попытку запечатать его."
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_ownerless_tracks",
+        "title": "Следы без хозяев",
+        "desc": "Каждое утро на дорогах Коннахта появляются мокрые следы босых ног. Они начинаются посреди сухого поля и обрываются у заброшенного колодца. Ни один дозор не видел того, кто их оставляет.",
+        "reqResource": "Intelligence",
+        "dc": 10,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 37.7,
+        "y": 41.1,
+        "region": "Коннахт",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_dragon_hour_ownerless_tracks_stage_1",
+            "label": "Проследить появление мокрых следов",
+            "reqResource": "Intelligence",
+            "dc": 10
+          },
+          {
+            "id": "event_dragon_hour_ownerless_tracks_stage_2",
+            "label": "Спуститься в заброшенный колодец",
+            "reqResource": "Supplies",
+            "dc": 11
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_false_lighthouse"
+        ],
+        "graphPosition": {
+          "x": 538.590669891822,
+          "y": 254.0626758664196
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Колодец оказался сухим только сверху. Внизу отряд нашёл морскую воду и лестницу, уходящую в отражение ночного неба. На камнях вырезана половина координат и знак перевёрнутого маяка.",
+        "failText": "Следы действительно ведут к заброшенному колодцу, из которого во время отлива доносится шум моря. Исследовать затопленный проход не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_ownerless_tracks_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ownerless_tracks_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ownerless_tracks_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewjix5_2",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_ash_on_tide",
+        "title": "Пепел на приливе",
+        "desc": "У берегов Ольстера чёрный пепел движется против течения и собирается в узоры на мокром песке. Волны стирают их за минуты, но каждую ночь рисунок становится немного полнее.",
+        "reqResource": "Alchemy",
+        "dc": 11,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 64.8,
+        "y": 22.2,
+        "region": "Ольстер",
+        "startDay": 3,
+        "checks": [
+          {
+            "id": "event_dragon_hour_ash_on_tide_stage_1",
+            "label": "Сохранить узор приливного пепла",
+            "reqResource": "Alchemy",
+            "dc": 11
+          },
+          {
+            "id": "event_dragon_hour_ash_on_tide_stage_2",
+            "label": "Найти источник пепла",
+            "reqResource": "Equipment",
+            "dc": 12
+          }
+        ],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_false_lighthouse"
+        ],
+        "graphPosition": {
+          "x": 540.0000033982692,
+          "y": 148.78798328831314
+        },
+        "quotaPriority": 80,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Пепел принесён не течением, а отражением старого пожара, видимого только в воде. Собранный узор дал вторую половину координат и тот же знак перевёрнутого маяка.",
+        "failText": "Пепел имеет следы магического горения и складывается в часть навигационной схемы. Полный рисунок смыло прежде, чем его удалось закрепить.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_ash_on_tide_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ash_on_tide_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_ash_on_tide_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 14,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewpfo7_4",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_false_lighthouse",
+        "title": "Маяк, которого нет",
+        "desc": "Следы из Коннахта и приливный пепел складываются в одни координаты. Там нет острова и никогда не строили маяков, однако в безлунные ночи над водой появляется огонь, подающий сигналы судам, погибшим много лет назад.",
+        "reqResource": "Intelligence",
+        "dc": 12,
+        "type": "OPERATION",
+        "lifespan": 3,
+        "maxLifespan": 3,
+        "x": 18,
+        "y": 20,
+        "region": "Глубокие воды",
+        "startDay": 1,
+        "checks": [
+          {
+            "id": "event_dragon_hour_false_lighthouse_stage_1",
+            "label": "Найти маяк между отражениями",
+            "reqResource": "Intelligence",
+            "dc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_stage_2",
+            "label": "Подняться по меняющейся башне",
+            "reqResource": "Equipment",
+            "dc": 14
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_stage_3",
+            "label": "Погасить ложный огонь",
+            "reqResource": "Alchemy",
+            "dc": 15
+          }
+        ],
+        "rewardSpecialItems": [
+          "Линза несуществующего маяка"
+        ],
+        "prerequisiteMissionIds": [
+          "event_dragon_hour_ownerless_tracks",
+          "event_dragon_hour_ash_on_tide"
+        ],
+        "prerequisiteMode": "ALL",
+        "chainIds": [
+          "chain_false_lighthouse"
+        ],
+        "graphPosition": {
+          "x": 42.9959096417283,
+          "y": 46.147215366598104
+        },
+        "quotaPriority": 90,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Маяк существовал только в отражениях воды. Отряд погасил огонь, заманивавший корабли на дороги мертвецов, и вынес Линзу несуществующего маяка. Сквозь неё видны берега, отсутствующие на обычных картах.",
+        "failText": "Маяк действительно появляется между отражениями и подаёт сигналы погибшим кораблям. Отряд достиг основания башни, но ложный огонь заставил лестницы сменить направление.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_2",
+            "position": 2,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_false_lighthouse_complication_3",
+            "position": 3,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 15,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_deep_waters",
+        "regionMode": "AUTO"
+      },
+      {
+        "id": "event_dragon_hour_weeping_stones",
+        "title": "Плачущие камни",
+        "desc": "Каменотёсы Манстера отказываются работать в новом карьере: после заката из свежих разломов слышен детский плач. Староста уверяет, что звук начался в ту же ночь, когда рабочие задели древнюю кладку.",
+        "reqResource": "None",
+        "dc": 12,
+        "type": "DUMMY",
+        "lifespan": 2,
+        "maxLifespan": 2,
+        "x": 37.4,
+        "y": 70.2,
+        "region": "Манстер",
+        "startDay": 2,
+        "goldReward": 0,
+        "checks": [],
+        "rewardSpecialItems": [],
+        "prerequisiteMissionIds": [],
+        "prerequisiteMode": "ALL",
+        "chainIds": [],
+        "graphPosition": {
+          "x": 306.87284814043466,
+          "y": 1013.4233268031644
+        },
+        "quotaPriority": 0,
+        "pinned": false,
+        "repeat": {
+          "enabled": false,
+          "cooldownDays": 2,
+          "maxOccurrences": null,
+          "repeatAfter": [
+            "OBJECTIVE_FAILED"
+          ]
+        },
+        "complications": {
+          "enabled": true,
+          "chancePerSlot": 0.03,
+          "baseDc": 12,
+          "allowMultiple": true
+        },
+        "successText": "Плач создавал ветер, проходивший через трещины в полой кладке. Рабочие сами усилили звук, закрыв часть отверстий досками, а староста превратил обычное эхо в удобный повод остановить работы.",
+        "failText": "Источник звука установить не удалось.",
+        "unlocksMissionIds": [],
+        "scoutedByClanIds": [],
+        "complicationSlots": [
+          {
+            "id": "event_dragon_hour_weeping_stones_complication_0",
+            "position": 0,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          },
+          {
+            "id": "event_dragon_hour_weeping_stones_complication_1",
+            "position": 1,
+            "enabled": true,
+            "chance": 0.03,
+            "resourceMode": "RANDOM",
+            "resource": "None",
+            "dcMode": "AUTO",
+            "dc": 12,
+            "baseDc": 12
+          }
+        ],
+        "regionId": "region_msewo7ta_3",
+        "regionMode": "AUTO"
+      }
+    ]
+  }
+}

@@ -121,6 +121,11 @@ function compareCandidates(left: PairCandidate, right: PairCandidate): number {
   if (left.contract.paymentAmount !== right.contract.paymentAmount) {
     return right.contract.paymentAmount - left.contract.paymentAmount;
   }
+  // If offers are equally attractive, the contractor keeps the stronger
+  // eligible candidate and uses the paid level budget more efficiently.
+  if (left.adventurer.level !== right.adventurer.level) {
+    return right.adventurer.level - left.adventurer.level;
+  }
 
   const leftSize = left.contract.partyAdvIds.length;
   const rightSize = right.contract.partyAdvIds.length;

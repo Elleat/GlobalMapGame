@@ -126,6 +126,19 @@ test('при равной оплате герой выбирает клан с �
   assert.deepEqual(result.contracts[1].partyAdvIds, [hero.id]);
 });
 
+test('при равной привлекательности ограниченное место получает более сильный кандидат', () => {
+  const novice = adventurer({ id: 'adv-level-1', level: 1 });
+  const veteran = adventurer({ id: 'adv-level-2', level: 2 });
+  const result = distributePlayerContracts({
+    adventurers: [novice, veteran],
+    contracts: [contract({ contractLevel: 2, paymentAmount: 20, maxPartySize: 1 })],
+    hCost: 10,
+    random: () => 0.5
+  });
+  assert.deepEqual(result.contracts[0].partyAdvIds, [veteran.id]);
+  assert.equal(result.report.unassignedAdventurers, 1);
+});
+
 test('герой не принимает контракт выше допустимого ранга или ниже минимальной оплаты', () => {
   const hero = adventurer({ level: 3 });
   const result = distributePlayerContracts({

@@ -15,7 +15,7 @@ import {
 import { clampRelation } from './economy';
 import { cleanMissionTitle } from './missionPresentation';
 import { normalizeMapRegion } from './mapRegions';
-import { clampActiveClanCount, orderClansGuildFirst } from './clans';
+import { applyLegacyActiveClanCount, clampActiveClanCount, getActivePlayerClans, orderClansGuildFirst } from './clans';
 
 export const GAME_STORAGE_KEY = 'adventurer_guild_state';
 
@@ -35,7 +35,7 @@ function normalizeAdventurer(adventurer: Adventurer): Adventurer {
 }
 
 export function normalizeMission(mission: Mission): Mission {
-  let checks = mission.checks?.map(check => ({ ...check }));
+  let checks = mission.type === 'DUMMY' ? [] : mission.checks?.map(check => ({ ...check }));
   if (mission.requiredSpecialItem?.trim() && mission.type !== 'DUMMY') {
     if (!checks?.length) {
       checks = [{
@@ -56,13 +56,22 @@ export function normalizeMission(mission: Mission): Mission {
     maxLifespan: mission.maxLifespan ?? null,
     scoutedByClanIds: mission.scoutedByClanIds ?? [],
     prerequisiteMissionIds: mission.prerequisiteMissionIds ?? [],
-    prerequisiteMode: mission.prerequisiteMode ?? 'ALL'
+    prerequisiteMode: mission.prerequisiteMode ?? 'ALL',
+    chainIds: mission.chainIds ?? [],
+    regionMode: mission.regionMode ?? (mission.regionId ? 'AUTO' : 'MANUAL'),
+    repeat: mission.repeat ? {
+      enabled: Boolean(mission.repeat.enabled),
+      cooldownDays: Math.max(1, mission.repeat.cooldownDays || 1),
+      maxOccurrences: mission.repeat.maxOccurrences === null ? null : Math.max(1, mission.repeat.maxOccurrences || 1),
+      repeatAfter: mission.repeat.repeatAfter?.length ? [...mission.repeat.repeatAfter] : ['OBJECTIVE_FAILED']
+    } : undefined
   };
 }
 
 function normalizeReport(report: SimulationReport): SimulationReport {
   return {
     ...report,
+    outcome: report.outcome ?? (report.isSuccess ? 'SUCCESS' : (report.returnedAdventurerIds?.length === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED')),
     missionTitle: cleanMissionTitle(report.missionTitle),
     context: report.context
       ? { ...report.context, mission: normalizeMission(report.context.mission) }
@@ -82,8 +91,9 @@ export function createInitialGameState(options?: {
   isDmMode?: boolean;
   clansCount?: number;
 }): GameState {
-  const clans = cloneClans();
+  let clans = cloneClans();
   const clansCount = clampActiveClanCount(clans, options?.clansCount ?? 6);
+  clans = applyLegacyActiveClanCount(clans, clansCount);
   const guild = clans.find(clan => clan.id === 'clan_guild');
   if (guild) guild.name = DEFAULT_GUILD_NAME;
 
@@ -91,6 +101,7 @@ export function createInitialGameState(options?: {
     schemaVersion: GAME_STATE_VERSION,
     day: 1,
     nClans: clansCount,
+    pendingClanActivity: {},
     hCost: 10,
     guildName: DEFAULT_GUILD_NAME,
     guildShortName: DEFAULT_GUILD_SHORT_NAME,
@@ -111,6 +122,8 @@ export function createInitialGameState(options?: {
     clans,
     adventurers: generateAdventurersForClans(clansCount).map(normalizeAdventurer),
     missions: generateMissionsForDay(clansCount, 1, DEFAULT_SPAWN_POLYGON).map(normalizeMission),
+    scenarioChains: [],
+    missionRecurrences: [],
     contracts: [],
     history: [],
     completedMissionIds: [],
@@ -150,10 +163,13 @@ export function parseStoredGameState(serialized: string): GameState | null {
 
     const state = parsed as GameState;
     const guildName = state.guildName || DEFAULT_GUILD_NAME;
-    const clans = orderClansGuildFirst(state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan));
+    let clans = orderClansGuildFirst(state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan));
+    if (!clans.some(clan => clan.id !== 'clan_guild' && clan.isActive !== undefined)) clans = applyLegacyActiveClanCount(clans, state.nClans);
+    const activeCount = getActivePlayerClans(clans, state.nClans).length;
     return {
       ...state,
-      nClans: clampActiveClanCount(clans, state.nClans),
+      nClans: activeCount,
+      pendingClanActivity: state.pendingClanActivity ?? {},
       guildName,
       guildShortName: state.guildShortName || DEFAULT_GUILD_SHORT_NAME,
       themeId: state.themeId || DEFAULT_THEME_ID,
@@ -172,6 +188,8 @@ export function parseStoredGameState(serialized: string): GameState | null {
       adventurers: state.adventurers.map(normalizeAdventurer),
       missions: state.missions.map(normalizeMission),
       allMissions: state.allMissions?.map(normalizeMission),
+      scenarioChains: state.scenarioChains ?? [],
+      missionRecurrences: state.missionRecurrences ?? [],
       contracts: state.contracts.map(normalizeContract),
       history: state.history.map(entry => ({
         ...entry,

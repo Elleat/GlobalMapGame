@@ -5,13 +5,14 @@ import type {
   GameState,
   MapRegion,
   Mission,
+  ScenarioChain,
   MissionResourceKey,
   MissionType
 } from '../types';
 import { DEFAULT_MAP_URL } from './constants';
 import { createInitialGameState, normalizeMission } from './state';
-import { normalizeMapRegion } from './mapRegions';
-import { clampActiveClanCount, orderClansGuildFirst } from './clans';
+import { findMapRegionAtPoint, normalizeMapRegion } from './mapRegions';
+import { applyLegacyActiveClanCount, clampActiveClanCount, getActivePlayerClans, MAX_PLAYER_CLANS, orderClansGuildFirst } from './clans';
 
 export const DATA_FILE_VERSION = 1;
 export const ADVENTURER_FILE_TYPE = 'global-map-adventurers';
@@ -30,6 +31,7 @@ export interface EventDataFile {
   version: typeof DATA_FILE_VERSION;
   name: string;
   events: Mission[];
+  chains?: ScenarioChain[];
 }
 
 export interface ScenarioFileData {
@@ -50,6 +52,7 @@ export interface ScenarioFileData {
   clans: Clan[];
   adventurers: Adventurer[];
   events: Mission[];
+  chains?: ScenarioChain[];
 }
 
 export interface ScenarioDataFile {
@@ -176,10 +179,23 @@ function validateEventList(value: unknown, path: string, issues: string[]): valu
     if (item.pinned !== undefined && typeof item.pinned !== 'boolean') issues.push(`${itemPath}.pinned: требуется true или false.`);
     if (item.intelRevealed !== undefined && typeof item.intelRevealed !== 'boolean') issues.push(`${itemPath}.intelRevealed: требуется true или false.`);
     if (item.scoutedByClanIds !== undefined && (!Array.isArray(item.scoutedByClanIds) || item.scoutedByClanIds.some(clanId => typeof clanId !== 'string'))) issues.push(`${itemPath}.scoutedByClanIds: требуется массив ID кланов.`);
+    if (item.regionMode !== undefined && item.regionMode !== 'AUTO' && item.regionMode !== 'MANUAL') issues.push(`${itemPath}.regionMode: требуется AUTO или MANUAL.`);
+    if (item.regionId !== undefined && typeof item.regionId !== 'string') issues.push(`${itemPath}.regionId: требуется строка.`);
+    if (item.chainIds !== undefined && (!Array.isArray(item.chainIds) || item.chainIds.some(id => typeof id !== 'string'))) issues.push(`${itemPath}.chainIds: требуется массив ID цепочек.`);
+    if (item.quotaPriority !== undefined) addFiniteIssue(item.quotaPriority, `${itemPath}.quotaPriority`, issues);
+    if (item.graphPosition !== undefined) {
+      if (!isRecord(item.graphPosition)) issues.push(`${itemPath}.graphPosition: требуется точка.`);
+      else {
+        addFiniteIssue(item.graphPosition.x, `${itemPath}.graphPosition.x`, issues);
+        addFiniteIssue(item.graphPosition.y, `${itemPath}.graphPosition.y`, issues);
+      }
+    }
     if (item.rewardSpecialItems !== undefined && (!Array.isArray(item.rewardSpecialItems) || item.rewardSpecialItems.some(reward => typeof reward !== 'string'))) issues.push(`${itemPath}.rewardSpecialItems: требуется массив строк.`);
     if (!Array.isArray(item.checks)) {
       issues.push(`${itemPath}.checks: требуется массив этапов, в том числе пустой для пустышки.`);
     } else {
+      if (item.type === 'DUMMY' && item.checks.length > 0) issues.push(`${itemPath}.checks: у пустышки не может быть основных этапов.`);
+      if (item.type !== 'DUMMY' && item.checks.length === 0) issues.push(`${itemPath}.checks: операция или сюжетная миссия должна иметь хотя бы один этап.`);
       item.checks.forEach((check, checkIndex) => {
         const checkPath = `${itemPath}.checks[${checkIndex}]`;
         if (!isRecord(check)) {
@@ -199,6 +215,45 @@ function validateEventList(value: unknown, path: string, issues: string[]): valu
         if (item.complications.chancePerSlot !== undefined) addFiniteIssue(item.complications.chancePerSlot, `${itemPath}.complications.chancePerSlot`, issues, 0, 1);
         if (item.complications.baseDc !== undefined) addFiniteIssue(item.complications.baseDc, `${itemPath}.complications.baseDc`, issues, 1);
         if (item.complications.allowMultiple !== undefined && typeof item.complications.allowMultiple !== 'boolean') issues.push(`${itemPath}.complications.allowMultiple: требуется true или false.`);
+      }
+    }
+    if (item.complicationSlots !== undefined) {
+      if (!Array.isArray(item.complicationSlots)) {
+        issues.push(`${itemPath}.complicationSlots: требуется массив.`);
+      } else {
+        const positions = new Set<number>();
+        item.complicationSlots.forEach((slot, slotIndex) => {
+          const slotPath = `${itemPath}.complicationSlots[${slotIndex}]`;
+          if (!isRecord(slot)) {
+            issues.push(`${slotPath}: требуется объект.`);
+            return;
+          }
+          addStringIssue(slot.id, `${slotPath}.id`, issues);
+          addIntegerIssue(slot.position, `${slotPath}.position`, issues, 0);
+          if (typeof slot.position === 'number') {
+            if (positions.has(slot.position)) issues.push(`${slotPath}.position: позиция осложнения повторяется.`);
+            positions.add(slot.position);
+          }
+          if (typeof slot.enabled !== 'boolean') issues.push(`${slotPath}.enabled: требуется true или false.`);
+          addFiniteIssue(slot.chance, `${slotPath}.chance`, issues, 0, 1);
+          if (slot.resourceMode !== 'RANDOM' && slot.resourceMode !== 'FIXED') issues.push(`${slotPath}.resourceMode: требуется RANDOM или FIXED.`);
+          if (!missionResources.includes(slot.resource as MissionResourceKey)) issues.push(`${slotPath}.resource: неизвестный ресурс.`);
+          if (slot.dcMode !== 'AUTO' && slot.dcMode !== 'FIXED') issues.push(`${slotPath}.dcMode: требуется AUTO или FIXED.`);
+          addFiniteIssue(slot.dc, `${slotPath}.dc`, issues, 1);
+          addFiniteIssue(slot.baseDc, `${slotPath}.baseDc`, issues, 1);
+          if (slot.gmDescription !== undefined && typeof slot.gmDescription !== 'string') issues.push(`${slotPath}.gmDescription: требуется строка.`);
+        });
+      }
+    }
+    if (item.repeat !== undefined) {
+      if (!isRecord(item.repeat)) {
+        issues.push(`${itemPath}.repeat: требуется объект.`);
+      } else {
+        if (typeof item.repeat.enabled !== 'boolean') issues.push(`${itemPath}.repeat.enabled: требуется true или false.`);
+        addIntegerIssue(item.repeat.cooldownDays, `${itemPath}.repeat.cooldownDays`, issues, 1);
+        if (item.repeat.maxOccurrences !== null) addIntegerIssue(item.repeat.maxOccurrences, `${itemPath}.repeat.maxOccurrences`, issues, 1);
+        const triggers = ['SUCCESS', 'OBJECTIVE_FAILED', 'PARTY_LOST', 'EXPIRED'];
+        if (!Array.isArray(item.repeat.repeatAfter) || item.repeat.repeatAfter.some(trigger => !triggers.includes(String(trigger)))) issues.push(`${itemPath}.repeat.repeatAfter: требуется массив допустимых исходов.`);
       }
     }
     if (item.prerequisiteMissionIds !== undefined && !Array.isArray(item.prerequisiteMissionIds)) issues.push(`${itemPath}.prerequisiteMissionIds: требуется массив ID.`);
@@ -246,6 +301,42 @@ function validateEventList(value: unknown, path: string, issues: string[]): valu
   return true;
 }
 
+function validateChainList(value: unknown, path: string, issues: string[]): value is ScenarioChain[] {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) {
+    issues.push(`${path}: требуется массив цепочек.`);
+    return false;
+  }
+  const ids = new Set<string>();
+  value.forEach((chain, index) => {
+    const chainPath = `${path}[${index}]`;
+    if (!isRecord(chain)) {
+      issues.push(`${chainPath}: требуется объект.`);
+      return;
+    }
+    addStringIssue(chain.id, `${chainPath}.id`, issues);
+    if (typeof chain.id === 'string') {
+      if (ids.has(chain.id)) issues.push(`${chainPath}.id: повторяющийся ID «${chain.id}».`);
+      ids.add(chain.id);
+    }
+    addStringIssue(chain.name, `${chainPath}.name`, issues);
+    if (typeof chain.color !== 'string' || !/^#[0-9a-f]{6}$/iu.test(chain.color)) issues.push(`${chainPath}.color: требуется цвет вида #RRGGBB.`);
+    if (chain.description !== undefined && typeof chain.description !== 'string') issues.push(`${chainPath}.description: требуется строка.`);
+  });
+  return true;
+}
+
+function validateMissionChainReferences(events: unknown, chains: unknown, path: string, issues: string[]) {
+  if (!Array.isArray(events) || !Array.isArray(chains)) return;
+  const chainIds = new Set(chains.filter(isRecord).map(chain => chain.id).filter((id): id is string => typeof id === 'string'));
+  events.forEach((event, index) => {
+    if (!isRecord(event) || !Array.isArray(event.chainIds)) return;
+    event.chainIds.forEach(chainId => {
+      if (typeof chainId === 'string' && !chainIds.has(chainId)) issues.push(`${path}[${index}].chainIds: цепочка «${chainId}» отсутствует в файле.`);
+    });
+  });
+}
+
 function validateClanList(value: unknown, path: string, issues: string[]): value is Clan[] {
   if (!Array.isArray(value)) {
     issues.push(`${path}: требуется массив.`);
@@ -266,6 +357,7 @@ function validateClanList(value: unknown, path: string, issues: string[]): value
     addStringIssue(item.name, `${itemPath}.name`, issues);
     addFiniteIssue(item.trustLevel, `${itemPath}.trustLevel`, issues, 1, 5);
     addFiniteIssue(item.gold, `${itemPath}.gold`, issues, 0);
+    if (item.isActive !== undefined && typeof item.isActive !== 'boolean') issues.push(`${itemPath}.isActive: требуется true или false.`);
     if (!isRecord(item.resources)) {
       issues.push(`${itemPath}.resources: требуется объект ресурсов.`);
     } else {
@@ -352,10 +444,12 @@ export function parseEventDataFile(value: unknown): EventDataFile {
   if (validateHeader(value, EVENT_FILE_TYPE, issues)) {
     addStringIssue(value.name, 'name', issues);
     validateEventList(value.events, 'events', issues);
+    validateChainList(value.chains, 'chains', issues);
+    validateMissionChainReferences(value.events, value.chains ?? [], 'events', issues);
   }
   throwIfIssues(issues);
   const parsed = structuredClone(value as unknown as EventDataFile);
-  return { ...parsed, events: parsed.events.map(normalizeMission) };
+  return { ...parsed, events: parsed.events.map(normalizeMission), chains: parsed.chains ?? [] };
 }
 
 export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
@@ -371,7 +465,7 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
       addStringIssue(scenario.guildName, 'scenario.guildName', issues);
       addStringIssue(scenario.guildShortName, 'scenario.guildShortName', issues);
       addFiniteIssue(scenario.hCost, 'scenario.hCost', issues, 1);
-      addIntegerIssue(scenario.nClans, 'scenario.nClans', issues, 1);
+      addIntegerIssue(scenario.nClans, 'scenario.nClans', issues, 0, MAX_PLAYER_CLANS);
       addStringIssue(scenario.themeId, 'scenario.themeId', issues);
       addFiniteIssue(scenario.mapWidth, 'scenario.mapWidth', issues, 1);
       addFiniteIssue(scenario.mapHeight, 'scenario.mapHeight', issues, 1);
@@ -398,10 +492,13 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
       validateClanList(scenario.clans, 'scenario.clans', issues);
       if (Array.isArray(scenario.clans) && typeof scenario.nClans === 'number') {
         const playerClanCount = scenario.clans.filter(clan => isRecord(clan) && clan.id !== 'clan_guild').length;
+        if (playerClanCount > MAX_PLAYER_CLANS) issues.push(`scenario.clans: поддерживается не более ${MAX_PLAYER_CLANS} игровых кланов.`);
         if (scenario.nClans > playerClanCount) issues.push(`scenario.nClans: указано ${scenario.nClans}, но доступно только ${playerClanCount} игровых кланов.`);
       }
       validateAdventurerList(scenario.adventurers, 'scenario.adventurers', issues);
       validateEventList(scenario.events, 'scenario.events', issues);
+      validateChainList(scenario.chains, 'scenario.chains', issues);
+      validateMissionChainReferences(scenario.events, scenario.chains ?? [], 'scenario.events', issues);
     }
   }
   throwIfIssues(issues);
@@ -412,7 +509,8 @@ export function parseScenarioDataFile(value: unknown): ScenarioDataFile {
       ...parsed.scenario,
       mapRegions: (parsed.scenario.mapRegions ?? []).map(normalizeMapRegion),
       mapEffectsEnabled: parsed.scenario.mapEffectsEnabled ?? true,
-      events: parsed.scenario.events.map(normalizeMission)
+      events: parsed.scenario.events.map(normalizeMission),
+      chains: parsed.scenario.chains ?? []
     }
   };
 }
@@ -429,8 +527,8 @@ export function createAdventurerDataFile(name: string, adventurers: Adventurer[]
   return { type: ADVENTURER_FILE_TYPE, version: DATA_FILE_VERSION, name: name.trim() || 'Список авантюристов', adventurers: structuredClone(adventurers) };
 }
 
-export function createEventDataFile(name: string, events: Mission[]): EventDataFile {
-  return { type: EVENT_FILE_TYPE, version: DATA_FILE_VERSION, name: name.trim() || 'Список событий', events: structuredClone(events) };
+export function createEventDataFile(name: string, events: Mission[], chains: ScenarioChain[] = []): EventDataFile {
+  return { type: EVENT_FILE_TYPE, version: DATA_FILE_VERSION, name: name.trim() || 'Список событий', events: structuredClone(events), chains: structuredClone(chains) };
 }
 
 export function createScenarioDataFile(scenario: ScenarioFileData): ScenarioDataFile {
@@ -452,11 +550,18 @@ export function buildNewCampaign(options: {
   const initial = createInitialGameState({ isDmMode: options.isDmMode, clansCount: scenario?.nClans });
   const requestedGuildName = options.guildName?.trim();
   const guildName = requestedGuildName || scenario?.guildName || initial.guildName;
-  const clans = orderClansGuildFirst(structuredClone(scenario?.clans ?? initial.clans))
+  let clans = orderClansGuildFirst(structuredClone(scenario?.clans ?? initial.clans))
     .map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan);
-  const nClans = clampActiveClanCount(clans, scenario?.nClans ?? initial.nClans);
+  if (!clans.some(clan => clan.id !== 'clan_guild' && clan.isActive !== undefined)) clans = applyLegacyActiveClanCount(clans, scenario?.nClans ?? initial.nClans);
+  const nClans = getActivePlayerClans(clans, scenario?.nClans ?? initial.nClans).length;
   const adventurers = structuredClone(options.adventurerFile?.adventurers ?? scenario?.adventurers ?? initial.adventurers);
-  const events = structuredClone(options.eventFile?.events ?? scenario?.events ?? initial.allMissions ?? initial.missions).map(normalizeMission);
+  const mapRegions = structuredClone(scenario?.mapRegions ?? initial.mapRegions).map(normalizeMapRegion);
+  const events = structuredClone(options.eventFile?.events ?? scenario?.events ?? initial.allMissions ?? initial.missions).map(normalizeMission).map(mission => {
+    if (mission.regionMode !== 'AUTO') return mission;
+    const region = findMapRegionAtPoint(mapRegions, mission);
+    return { ...mission, regionId: region?.id, region: region?.name ?? 'ВНЕ РЕГИОНОВ' };
+  });
+  const chains = structuredClone(options.eventFile?.chains ?? scenario?.chains ?? []);
 
   return {
     ...initial,
@@ -471,12 +576,13 @@ export function buildNewCampaign(options: {
     mapWidth: scenario?.mapWidth ?? initial.mapWidth,
     mapHeight: scenario?.mapHeight ?? initial.mapHeight,
     spawnPolygon: structuredClone(scenario?.spawnPolygon ?? initial.spawnPolygon),
-    mapRegions: structuredClone(scenario?.mapRegions ?? initial.mapRegions).map(normalizeMapRegion),
+    mapRegions,
     mapEffectsEnabled: scenario?.mapEffectsEnabled ?? initial.mapEffectsEnabled,
     hqPos: scenario?.hqPos ? { ...scenario.hqPos } : initial.hqPos,
     clans,
     adventurers,
     allMissions: events,
+    scenarioChains: chains,
     missions: events.filter(activeAtDayOne).map(mission => structuredClone(mission)),
     contracts: [],
     history: [],

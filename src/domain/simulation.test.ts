@@ -4,6 +4,7 @@ import type { Adventurer, Clan, Contract, Mission } from '../types';
 import { simulateContract, simulateDayContracts } from './simulation';
 import { advanceMissionLifecycle } from './day';
 import { recalculateReportEffects } from './reportEffects';
+import { getMissionChecks, getMissionComplicationSlots } from './missions';
 
 function adventurer(overrides: Partial<Adventurer> = {}): Adventurer {
   return {
@@ -307,6 +308,80 @@ test('событие с режимом ALL открывается только �
     nextDay: 3
   });
   assert.deepEqual(unlocked.missions.map(item => item.id), ['mission-b']);
+});
+
+test('пустышка не имеет основных этапов, но сохраняет две дорожные точки осложнений', () => {
+  const dummy = mission({ type: 'DUMMY', checks: [{ reqResource: 'Equipment', dc: 30 }] });
+  assert.deepEqual(getMissionChecks(dummy), []);
+  assert.deepEqual(getMissionComplicationSlots(dummy).map(slot => slot.position), [0, 1]);
+});
+
+test('провал возобновляемой миссии ставит следующий экземпляр в очередь', () => {
+  const repeatable = mission({
+    checks: [{ reqResource: 'None', dc: 30 }],
+    repeat: { enabled: true, cooldownDays: 2, maxOccurrences: null, repeatAfter: ['OBJECTIVE_FAILED'] }
+  });
+  const failed = simulateContract({
+    contract: contract(),
+    mission: repeatable,
+    adventurers: [adventurer()],
+    clans: [clan()],
+    day: 1,
+    random: sequence([0, 0.99])
+  });
+  const afterFailure = advanceMissionLifecycle({
+    missions: [repeatable],
+    contracts: [failed.contract],
+    allMissions: [repeatable],
+    completedMissionIds: [],
+    nextDay: 2
+  });
+  assert.deepEqual(afterFailure.missionRecurrences, [{ definitionId: repeatable.id, occurrenceIndex: 2, nextDay: 3 }]);
+  const repeated = advanceMissionLifecycle({
+    missions: [],
+    contracts: [],
+    allMissions: [repeatable],
+    completedMissionIds: [],
+    closedMissionIds: [repeatable.id],
+    missionRecurrences: afterFailure.missionRecurrences,
+    activeClanCount: 1,
+    nextDay: 3
+  });
+  assert.equal(repeated.missions[0].definitionId, repeatable.id);
+  assert.equal(repeated.missions[0].occurrenceIndex, 2);
+  assert.equal(repeated.missionRecurrences.length, 0);
+});
+
+test('заблокированное условиями повторение не теряется из очереди', () => {
+  const repeatable = mission({ prerequisiteMissionIds: ['gate'] });
+  const lifecycle = advanceMissionLifecycle({
+    missions: [],
+    contracts: [],
+    allMissions: [repeatable],
+    completedMissionIds: [],
+    missionRecurrences: [{ definitionId: repeatable.id, occurrenceIndex: 2, nextDay: 2 }],
+    activeClanCount: 1,
+    nextDay: 2
+  });
+  assert.equal(lifecycle.missions.length, 0);
+  assert.equal(lifecycle.missionRecurrences.length, 1);
+});
+
+test('сокращение квоты не удаляет защищённую пустышку из цепочки', () => {
+  const protectedDummy = mission({ id: 'dummy-protected', type: 'DUMMY', checks: [], chainIds: ['chain-1'] });
+  const ordinaryDummy = mission({ id: 'dummy-ordinary', type: 'DUMMY', checks: [] });
+  const operations = Array.from({ length: 10 }, (_, index) => mission({ id: `operation-${index}` }));
+  const lifecycle = advanceMissionLifecycle({
+    missions: [],
+    contracts: [],
+    allMissions: [protectedDummy, ordinaryDummy, ...operations],
+    completedMissionIds: [],
+    activeClanCount: 1,
+    nextDay: 1
+  });
+  assert.equal(lifecycle.missions.length, 2);
+  assert.equal(lifecycle.missions.some(item => item.id === protectedDummy.id), true);
+  assert.equal(lifecycle.missions.some(item => item.id === ordinaryDummy.id), false);
 });
 
 test('редактор рапорта откатывает старые эффекты и полностью применяет новый результат', () => {

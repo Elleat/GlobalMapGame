@@ -13,6 +13,7 @@ import {
   getScoutingClanNames
 } from '../domain/missionPresentation';
 import { getResourceNameRu, getTypeRu } from '../utils';
+import { getMissionGoldReward } from '../domain/missions';
 import { getActivePlayerClans } from '../domain/clans';
 
 interface MissionModalProps {
@@ -120,7 +121,7 @@ export default function MissionModal({
                           ) : (
                             <span className="block text-neutral-500">Ресурса обхода нет</span>
                           )}
-                          {ch.requiredSpecialItem && <span className="block text-amber-400">💎 {ch.requiredSpecialItem}</span>}
+                          {state.isDmMode && ch.requiredSpecialItem && <span className="block text-amber-400">💎 {ch.requiredSpecialItem}</span>}
                         </span>
                       </div>
                     ))}
@@ -135,7 +136,7 @@ export default function MissionModal({
                 )}
                 
                 <div className="text-neutral-400 col-span-2 mt-2 pt-2 border-t border-emerald-500/10">
-                  Награда за успех: <span className="text-amber-500 font-bold">{m.type === 'DUMMY' ? '0г' : (m.goldReward !== undefined ? `${m.goldReward}г` : `${state.hCost * 2}г`)}</span>
+                  Награда за успех: <span className="text-amber-500 font-bold">{getMissionGoldReward(m, state.hCost)}г</span>
                   {m.rewardSpecialItems && m.rewardSpecialItems.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1 items-center">
                       <span className="text-neutral-400 text-[10px]">Особые предметы:</span>
@@ -146,7 +147,7 @@ export default function MissionModal({
                       ))}
                     </div>
                   )}
-                  {m.unlocksMissionIds && m.unlocksMissionIds.length > 0 && (
+                  {state.isDmMode && m.unlocksMissionIds && m.unlocksMissionIds.length > 0 && (
                     <div className="mt-1.5 text-[10px] text-blue-400 font-bold flex items-center gap-1">
                       <span>🔗 Открывает цепочку квестов после успешного выполнения!</span>
                     </div>

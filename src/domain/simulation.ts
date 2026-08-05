@@ -17,8 +17,9 @@ import type {
 import { BASIC_RESOURCE_KEYS } from '../types';
 import { calculateMaxHp, calculatePartyBonus, getResourceNameRu } from '../utils';
 import {
-  getComplicationDc,
-  getComplicationSlots,
+  getComplicationSlotDc,
+  getMissionComplicationSlots,
+  getMissionGoldReward,
   getMissionChecks,
   getMissionComplicationSettings,
   hasFullPreparation
@@ -88,16 +89,16 @@ function generatePendingStoryComplications(
   mission: Mission,
   random: () => number
 ): PendingStoryComplication[] {
-  const settings = getMissionComplicationSettings(mission);
-  if (!settings.enabled) return [];
   const complications: PendingStoryComplication[] = [];
-  for (let position = 0; position < getComplicationSlots(mission); position += 1) {
-    if (random() >= settings.chancePerSlot) continue;
+  const settings = getMissionComplicationSettings(mission);
+  if (!settings.enabled) return complications;
+  for (const slot of getMissionComplicationSlots(mission)) {
+    if (!slot.enabled || random() >= slot.chance) continue;
     complications.push({
-      id: `${mission.id}-story-complication-${position}-${complications.length}`,
-      position,
-      reqResource: getRandomComplicationResource(random),
-      dc: getComplicationDc(mission)
+      id: `${mission.id}-story-complication-${slot.position}-${complications.length}`,
+      position: slot.position,
+      reqResource: slot.resourceMode === 'RANDOM' ? getRandomComplicationResource(random) : slot.resource,
+      dc: getComplicationSlotDc(mission, slot)
     });
     if (!settings.allowMultiple) break;
   }
@@ -219,7 +220,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
   const partyBonus = calculatePartyBonus(party);
   const checks = mission.type === 'DUMMY' ? [] : getMissionChecks(mission);
   const complicationSettings = getMissionComplicationSettings(mission);
-  const complicationDc = getComplicationDc(mission);
+  const complicationSlots = getMissionComplicationSlots(mission);
   const resolutions: CheckResolution[] = [];
   const checkResults: string[] = [];
   const regularStageSuccesses: boolean[] = [];
@@ -280,7 +281,9 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     simulationStopped = true;
     logs.push(isSuccess
       ? `Отряд «${contract.title}» успешно отступил${usedSupplies ? ' благодаря оставшимся припасам' : ''}.`
-      : `Отступление «${contract.title}» провалено: каждый участник получил ещё 1 урон; выжившие смогли уйти.`
+      : returnedAdventurerIds.length > 0
+        ? `Отступление «${contract.title}» провалено: каждый участник получил ещё 1 урон; выжившие смогли уйти.`
+        : `Отступление «${contract.title}» провалено: каждый участник получил ещё 1 урон; никто не вернулся.`
     );
   };
 
@@ -325,23 +328,26 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     return isSuccess;
   };
 
-  const maybeRunComplication = (position: number) => {
-    if (simulationStopped || !complicationSettings.enabled) return;
-    if (complicationOccurred && !complicationSettings.allowMultiple) return;
-    if (random() >= complicationSettings.chancePerSlot) return;
-    complicationOccurred = true;
-    const required = getRandomComplicationResource(random);
-    const success = resolveCheck('COMPLICATION', position, required, complicationDc, `Осложнение в позиции ${position}`);
-    complicationSuccesses.push(success);
-    const returnPosition = mission.type === 'DUMMY' ? 1 : checks.length;
-    if (!success && position >= returnPosition && !retreat.wasTriggered) {
-      performRetreat('RETURN_COMPLICATION');
+  const maybeRunComplications = (position: number) => {
+    if (!complicationSettings.enabled) return;
+    for (const slot of complicationSlots.filter(item => item.position === position)) {
+      if (simulationStopped || !slot.enabled) return;
+      if (complicationOccurred && !complicationSettings.allowMultiple) return;
+      if (random() >= slot.chance) continue;
+      complicationOccurred = true;
+      const required = slot.resourceMode === 'RANDOM' ? getRandomComplicationResource(random) : slot.resource;
+      const success = resolveCheck('COMPLICATION', position, required, getComplicationSlotDc(mission, slot), `Осложнение в позиции ${position}`);
+      complicationSuccesses.push(success);
+      const returnPosition = mission.type === 'DUMMY' ? 1 : checks.length;
+      if (!success && position >= returnPosition && !retreat.wasTriggered) {
+        performRetreat('RETURN_COMPLICATION');
+      }
     }
   };
 
-  maybeRunComplication(0);
+  maybeRunComplications(0);
   if (mission.type === 'DUMMY') {
-    if (!simulationStopped) maybeRunComplication(1);
+    if (!simulationStopped) maybeRunComplications(1);
   } else {
     checks.forEach((check, index) => {
       if (simulationStopped) return;
@@ -353,7 +359,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
         check.label ?? `Этап ${index + 1}`
       );
       regularStageSuccesses.push(success);
-      if (!simulationStopped) maybeRunComplication(index + 1);
+      if (!simulationStopped) maybeRunComplications(index + 1);
     });
   }
 
@@ -368,6 +374,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     && allComplicationsPassed
     && returnedAdventurerIds.length === party.length
     && !simulationStopped;
+  const outcome = isSuccess ? 'SUCCESS' : returnedAdventurerIds.length === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED';
 
   const relationDelta = getMissionRelationDelta(mission, contract.attachedResources, isSuccess);
   const relationChanges: RelationChange[] = [];
@@ -411,9 +418,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
   else resourceLedger.returned = [...availableResources, ...notCarriedResources];
   clans = addReturnedResources(clans, contract.clanId, resourceLedger.returned);
 
-  const goldReward = mission.type === 'DUMMY'
-    ? 0
-    : Math.max(0, mission.goldReward ?? (2 * (input.hCost ?? 10)));
+  const goldReward = getMissionGoldReward(mission, input.hCost ?? 10);
   const awardedSpecialItems: string[] = [];
   const clanGoldDeltas: Record<string, number> = {};
   if (isSuccess && contract.clanId) {
@@ -470,7 +475,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     guildGoldDelta: contract.clanId === 'clan_guild' ? goldReward : 0,
     clanGoldDeltas,
     awardedSpecialItems,
-    unlockedMissionIds: baseObjectiveCompleted ? [...(mission.unlocksMissionIds ?? [])] : []
+    unlockedMissionIds: baseObjectiveCompleted && outcome !== 'PARTY_LOST' ? [...(mission.unlocksMissionIds ?? [])] : []
   };
   const rolledResolution = resolutions.find(resolution => resolution.roll !== null);
   const allChecksUsedResources = resolutions.length > 0 && resolutions.every(resolution => resolution.isSuccess && Boolean(resolution.usedResource));
@@ -478,14 +483,17 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
   const returnComplicationFailed = complicationSuccesses.length > 0
     && resolutions.some(resolution => resolution.kind === 'COMPLICATION' && resolution.position === returnPosition && !resolution.isSuccess)
     && baseObjectiveCompleted;
-  const narrativeText = isSuccess
+  const narrativeText = outcome === 'SUCCESS'
     ? (mission.successText || (mission.type === 'DUMMY' ? 'Донесение оказалось пустышкой; отряд вернулся.' : 'Задание успешно выполнено.'))
-    : returnComplicationFailed && returnedAdventurerIds.length < party.length
+    : outcome === 'PARTY_LOST'
+      ? 'Отряд не вернулся.'
+      : returnComplicationFailed && returnedAdventurerIds.length < party.length
       ? 'Основная задача выполнена, но отряд не смог вернуться из-за осложнения.'
       : (mission.failText || 'Экспедиция потерпела неудачу.');
 
   const report: SimulationReport = {
     isSuccess,
+    outcome,
     isResourceAutoSuccess: allChecksUsedResources || (mission.type === 'DUMMY' && resolutions.length === 0),
     autoSuccessReason: allChecksUsedResources
       ? 'Все возникшие проверки закрыты подготовленными ресурсами.'

@@ -12,7 +12,7 @@ import {
   parseScenarioDataFile
 } from './dataFiles';
 import { createMapRegion } from './mapRegions';
-import { chooseRandomStageResource } from '../utils';
+import { chooseRandomStageResource, generateMissionsForDay } from '../utils';
 import { getActivePlayerClans } from './clans';
 
 test('файл авантюристов требует тип, версию и уникальные ID', () => {
@@ -41,6 +41,15 @@ test('валидные отдельные файлы проходят прове
   const events = createEventDataFile('События', state.missions.slice(0, 2));
   assert.equal(parseAdventurerDataFile(adventurers).adventurers.length, 2);
   assert.equal(parseEventDataFile(events).events.length, 2);
+});
+
+test('отдельный файл событий сохраняет именованные цепочки', () => {
+  const state = createInitialGameState();
+  const chain = { id: 'chain_test', name: 'Тестовая ветка', color: '#10b981' };
+  const mission = { ...state.missions[0], chainIds: [chain.id] };
+  const parsed = parseEventDataFile(createEventDataFile('Цепочка', [mission], [chain]));
+  assert.deepEqual(parsed.chains, [chain]);
+  assert.deepEqual(parsed.events[0].chainIds, [chain.id]);
 });
 
 test('сценарий отклоняет регион с повреждённой границей', () => {
@@ -119,4 +128,15 @@ test('N считает только активные игровые кланы, 
 
   const oversized = createInitialGameState({ clansCount: 999 });
   assert.equal(oversized.nClans, oversized.clans.length - 1);
+
+  const inactive = createInitialGameState({ clansCount: 0 });
+  assert.equal(inactive.nClans, 0);
+  assert.equal(inactive.missions.length, 0);
+});
+
+test('случайная генерация создаёт ровно 2N событий и около 10% пустышек', () => {
+  const missions = generateMissionsForDay(15, 2);
+  assert.equal(missions.length, 30);
+  assert.equal(missions.filter(mission => mission.type === 'DUMMY').length, 3);
+  assert.equal(missions.every(mission => mission.regionMode === 'AUTO'), true);
 });
