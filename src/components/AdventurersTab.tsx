@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Search, UserPlus, Shield, Heart, Award, Eye, UserCheck } from 'lucide-react';
+import { Search, UserPlus, Shield, Heart, Award, Eye, UserCheck, Archive } from 'lucide-react';
 import { GameState, Adventurer, AdventurerStatus } from '../types';
 import { getAdvClassIcon, getStatusNameRu, calculateMaxHp } from '../utils';
 
@@ -59,7 +59,8 @@ export default function AdventurersTab({
   const deadAdvs = sortedAdvs.filter(a => a.status === 'DEAD');
 
   const players = livingAdvs.filter(a => a.isPlayer);
-  const npcs = livingAdvs.filter(a => !a.isPlayer);
+  const npcs = livingAdvs.filter(a => !a.isPlayer && !a.isRosterReserve);
+  const reserveNpcs = livingAdvs.filter(a => !a.isPlayer && a.isRosterReserve);
 
   const classesList = Array.from(new Set(adventurers.map(a => a.class)));
 
@@ -117,8 +118,8 @@ export default function AdventurersTab({
 
         {/* Status Badge */}
         <td className="py-3 px-4 text-center">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${adv.status === 'READY' ? 'bg-emerald-950/25 border border-emerald-500 text-emerald-400' : adv.status === 'WOUNDED' ? 'bg-rose-950/20 border border-rose-500 text-rose-400 animate-pulse' : adv.status === 'ON_MISSION' ? 'bg-amber-950/20 border border-amber-500 text-amber-500' : 'bg-neutral-900 border border-neutral-700 text-neutral-500'}`}>
-            {getStatusNameRu(adv.status)}
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${adv.isRosterReserve ? 'bg-sky-950/20 border border-sky-700 text-sky-400' : adv.status === 'READY' ? 'bg-emerald-950/25 border border-emerald-500 text-emerald-400' : adv.status === 'WOUNDED' ? 'bg-rose-950/20 border border-rose-500 text-rose-400 animate-pulse' : adv.status === 'ON_MISSION' ? 'bg-amber-950/20 border border-amber-500 text-amber-500' : 'bg-neutral-900 border border-neutral-700 text-neutral-500'}`}>
+            {adv.isRosterReserve ? 'Резерв' : getStatusNameRu(adv.status)}
           </span>
         </td>
 
@@ -271,6 +272,21 @@ export default function AdventurersTab({
             </table>
           </div>
         </div>
+
+        {state.isDmMode && reserveNpcs.length > 0 && <div className="bg-[#0d0d0d] border border-sky-500/15 rounded-lg overflow-hidden shadow-md">
+          <div className="px-5 py-3 border-b border-sky-500/10 bg-sky-500/5 flex items-center justify-between gap-3">
+            <h3 className="text-sky-400 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Archive className="w-4 h-4" /> Резерв кампании ({reserveNpcs.length})
+            </h3>
+            <span className="text-[10px] text-neutral-500 font-mono">Вернутся на рынок при увеличении числа активных кланов</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-left border-collapse">
+              <RosterTableHead accent="emerald" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+              <tbody>{reserveNpcs.map(renderAdventurerRow)}</tbody>
+            </table>
+          </div>
+        </div>}
 
         {/* Roster Part 3: Memorial of Fallen Heroes (Dead Adventurers) */}
         <div className="bg-[#0d0d0d] border border-rose-500/20 rounded-lg overflow-hidden shadow-md">

@@ -598,8 +598,8 @@ export default function ScenarioMapStudio({
                 <div key={`region-fill-${region.id}`} className="pointer-events-none absolute inset-0">
                   {layerVisibility.regions && region.showFill && <div className="absolute inset-0" style={{ clipPath: getRegionClipPath(region.points), backgroundColor: region.color, opacity: region.fillOpacity }} />}
                   {layerVisibility.effects && value.mapEffectsEnabled && region.fog.enabled && (
-                    <div className="region-fog-mask absolute inset-0 overflow-hidden" style={{ clipPath: getRegionClipPath(region.points), opacity: getFogOpacity(region.fog.density) }}>
-                      <video className="region-fog-video" src="/effects/AmbientFog001_001_Loop_White_1200x1200.webm" autoPlay muted loop playsInline />
+                    <div className="region-fog-mask absolute inset-0 overflow-hidden" style={{ clipPath: getRegionClipPath(region.points), opacity: region.fog.opacity ?? getFogOpacity(region.fog.density) }}>
+                      <video className="region-fog-video" src="/effects/AmbientFog001_001_Loop_White_1200x1200.webm" autoPlay muted loop playsInline preload="auto" onCanPlay={event => { void event.currentTarget.play().catch(() => undefined); }} />
                     </div>
                   )}
                 </div>
@@ -772,6 +772,11 @@ export default function ScenarioMapStudio({
               <Toggle checked={selectedRegion.showLabel} onChange={showLabel => patchRegion(selectedRegion.id, { showLabel })} label="Показывать название" />
               <Toggle checked={selectedRegion.showFill} onChange={showFill => patchRegion(selectedRegion.id, { showFill })} label="Показывать заливку" />
               <Toggle checked={selectedRegion.fog.enabled} onChange={enabled => patchRegion(selectedRegion.id, { fog: { ...selectedRegion.fog, enabled } })} label="Атмосферный туман" />
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Плотность"><select value={selectedRegion.fog.density} onChange={event => { const density = event.target.value as MapRegion['fog']['density']; patchRegion(selectedRegion.id, { fog: { ...selectedRegion.fog, density, opacity: getFogOpacity(density) } }); }} className="editor-input"><option value="LOW">Слабый</option><option value="MEDIUM">Средний</option><option value="DENSE">Плотный</option></select></Field>
+                <Field label="Скорость"><select value={selectedRegion.fog.speed} onChange={event => patchRegion(selectedRegion.id, { fog: { ...selectedRegion.fog, speed: event.target.value as MapRegion['fog']['speed'] } })} className="editor-input"><option value="SLOW">Медленно</option><option value="NORMAL">Обычно</option><option value="FAST">Быстро</option></select></Field>
+              </div>
+              <Field label={`Прозрачность · ${Math.round((selectedRegion.fog.opacity ?? getFogOpacity(selectedRegion.fog.density)) * 100)}%`}><input type="range" min={0} max={1} step={0.01} value={selectedRegion.fog.opacity ?? getFogOpacity(selectedRegion.fog.density)} onChange={event => patchRegion(selectedRegion.id, { fog: { ...selectedRegion.fog, opacity: Number(event.target.value) } })} className="w-full accent-emerald-500" /></Field>
             </div>
           )}
 

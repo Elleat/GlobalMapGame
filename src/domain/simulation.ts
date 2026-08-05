@@ -25,6 +25,7 @@ import {
   hasFullPreparation
 } from './missions';
 import { applyRelationDelta, getMissionRelationDelta } from './relations';
+import { addClanExperience, getClanExperienceReward } from './clanProgression';
 
 const RETREAT_DC = 10;
 const LEVEL_THRESHOLDS: Record<number, number> = { 1: 1, 2: 3, 3: 6, 4: 10 };
@@ -153,6 +154,7 @@ function createNoSquadReport(
     resourceLedger,
     guildGoldDelta: 0,
     clanGoldDeltas: {},
+    clanExperienceDeltas: {},
     awardedSpecialItems: [],
     unlockedMissionIds: []
   };
@@ -440,6 +442,13 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     clanGoldDeltas[contract.clanId] = goldReward;
   }
 
+  const clanExperienceDeltas: Record<string, number> = {};
+  const clanExperienceReward = getClanExperienceReward(mission, baseObjectiveCompleted, isSuccess);
+  if (contract.clanId && contract.clanId !== 'clan_guild' && clanExperienceReward > 0) {
+    clanExperienceDeltas[contract.clanId] = clanExperienceReward;
+    clans = clans.map(clan => clan.id === contract.clanId ? addClanExperience(clan, clanExperienceReward) : clan);
+  }
+
   const participantOutcomes: ParticipantOutcome[] = party.map(member => {
     const before = beforeById.get(member.id)!;
     const relationChange = relationChanges.find(change => change.adventurerId === member.id);
@@ -472,8 +481,9 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     participantOutcomes,
     relationChanges,
     resourceLedger,
-    guildGoldDelta: contract.clanId === 'clan_guild' ? goldReward : 0,
+    guildGoldDelta: isSuccess && contract.clanId === 'clan_guild' ? goldReward : 0,
     clanGoldDeltas,
+    clanExperienceDeltas,
     awardedSpecialItems,
     unlockedMissionIds: baseObjectiveCompleted && outcome !== 'PARTY_LOST' ? [...(mission.unlocksMissionIds ?? [])] : []
   };

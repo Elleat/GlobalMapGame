@@ -32,6 +32,10 @@ export interface Clan {
   id: string;
   name: string;
   trustLevel: number;
+  /** Campaign experience. Automatic progression applies only to player clans. */
+  experience?: number;
+  /** Level earned during the current day and activated at the next day boundary. */
+  pendingTrustLevel?: number;
   gold: number;
   resources: Resources;
   freeResourceBudget?: number;
@@ -57,6 +61,10 @@ export interface Adventurer {
   /** clanId -> relation score from 0 to 10 */
   relations: Record<string, number>;
   isPlayer?: boolean;
+  /** Five-NPC capacity group. Cohorts above the active clan count wait in reserve. */
+  rosterCohort?: number;
+  /** Derived campaign availability; reserve NPCs keep all progress but cannot be assigned. */
+  isRosterReserve?: boolean;
   woundedOnDay?: number;
 }
 
@@ -253,6 +261,8 @@ export interface SimulationEffectLedger {
   resourceLedger: ResourceLedger;
   guildGoldDelta: number;
   clanGoldDeltas: Record<string, number>;
+  /** Experience awarded to client clans; optional for reports from older saves. */
+  clanExperienceDeltas?: Record<string, number>;
   awardedSpecialItems: string[];
   unlockedMissionIds: string[];
 }
@@ -378,6 +388,8 @@ export interface MapRegionFog {
   enabled: boolean;
   density: RegionFogDensity;
   speed: RegionFogSpeed;
+  /** Explicit video opacity. Omitted legacy values use the selected density preset. */
+  opacity?: number;
 }
 
 export interface MapRegion {

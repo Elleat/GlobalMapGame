@@ -5,6 +5,9 @@ import { getScenarioMissions } from './scenarioEditor';
 import { createInitialGameState, normalizeMission } from './state';
 import { findMapRegionAtPoint, normalizeMapRegion } from './mapRegions';
 import { applyLegacyActiveClanCount, getActivePlayerClans, orderClansGuildFirst } from './clans';
+import { ensureAdventurerRosterForClans } from '../utils';
+import { selectInitialScenarioMissions } from './day';
+import { normalizeClanProgression } from './clanProgression';
 import {
   createScenarioDataFile,
   DATA_FILE_VERSION,
@@ -211,10 +214,6 @@ export async function readScenarioBundleFile(file: File): Promise<EditableScenar
   };
 }
 
-function prerequisitesSatisfiedAtStart(mission: Mission): boolean {
-  return (mission.prerequisiteMissionIds ?? []).length === 0;
-}
-
 export async function importScenarioBundle(file: File, isDmMode: boolean): Promise<GameState> {
   const editable = await readScenarioBundleFile(file);
   const scenario = editable.scenario;
@@ -226,9 +225,11 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     const region = findMapRegionAtPoint(mapRegions, mission);
     return { ...mission, regionId: region?.id, region: region?.name ?? 'ВНЕ РЕГИОНОВ' };
   });
-  let clans = orderClansGuildFirst(structuredClone(scenario.clans))
+  let clans = orderClansGuildFirst(structuredClone(scenario.clans).map(normalizeClanProgression))
     .map(clan => clan.id === 'clan_guild' ? { ...clan, name: scenario.guildName } : clan);
   if (!clans.some(clan => clan.id !== 'clan_guild' && clan.isActive !== undefined)) clans = applyLegacyActiveClanCount(clans, scenario.nClans);
+  const activeClanCount = getActivePlayerClans(clans, scenario.nClans).length;
+  const configuredAdventurers = scenario.adventurers.length ? scenario.adventurers : initial.adventurers;
 
   return {
     ...initial,
@@ -236,7 +237,7 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     guildName: scenario.guildName,
     guildShortName: scenario.guildShortName || scenario.guildName,
     hCost: Math.max(1, scenario.hCost || 10),
-    nClans: getActivePlayerClans(clans, scenario.nClans).length,
+    nClans: activeClanCount,
     themeId: scenario.themeId || initial.themeId,
     mapBgUrl: DEFAULT_MAP_URL,
     mapAssetId: mapAsset.id,
@@ -247,12 +248,10 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     mapEffectsEnabled: scenario.mapEffectsEnabled ?? true,
     hqPos: scenario.hqPos ? { ...scenario.hqPos } : initial.hqPos,
     clans,
-    adventurers: structuredClone(scenario.adventurers),
+    adventurers: ensureAdventurerRosterForClans(structuredClone(configuredAdventurers), activeClanCount),
     allMissions: missions,
     scenarioChains: structuredClone(scenario.chains ?? []),
-    missions: missions
-      .filter(mission => (mission.startDay ?? 1) <= 1 && prerequisitesSatisfiedAtStart(mission))
-      .map(mission => structuredClone(mission)),
+    missions: selectInitialScenarioMissions(missions, activeClanCount),
     contracts: [],
     history: [],
     completedMissionIds: [],

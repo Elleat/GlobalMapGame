@@ -126,6 +126,18 @@ test('при равной оплате герой выбирает клан с �
   assert.deepEqual(result.contracts[1].partyAdvIds, [hero.id]);
 });
 
+test('NPC из резервной когорты не участвует в рыночном распределении', () => {
+  const reserve = adventurer({ isRosterReserve: true, rosterCohort: 2 });
+  const result = distributePlayerContracts({
+    adventurers: [reserve],
+    contracts: [contract()],
+    hCost: 10,
+    random: () => 0.5
+  });
+  assert.deepEqual(result.contracts[0].partyAdvIds, []);
+  assert.equal(result.report.assignedAdventurers, 0);
+});
+
 test('при равной привлекательности ограниченное место получает более сильный кандидат', () => {
   const novice = adventurer({ id: 'adv-level-1', level: 1 });
   const veteran = adventurer({ id: 'adv-level-2', level: 2 });

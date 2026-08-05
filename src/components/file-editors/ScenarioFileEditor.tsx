@@ -9,6 +9,7 @@ import ScenarioMapStudio from './ScenarioMapStudio';
 import ScenarioGraphEditor from './ScenarioGraphEditor';
 import ScenarioAuditPanel from './ScenarioAuditPanel';
 import ScenarioRegionsEditor from './ScenarioRegionsEditor';
+import { getClanExperience, setClanExperience } from '../../domain/clanProgression';
 
 interface ScenarioFileEditorProps {
   value: ScenarioFileData;
@@ -30,6 +31,7 @@ function newClan(existing: readonly Clan[]): Clan {
     id,
     name: 'Новый клан',
     trustLevel: 1,
+    experience: 0,
     gold: 120,
     resources: { Supplies: 0, Equipment: 0, Intelligence: 0, Alchemy: 0, specialItems: [] },
     isActive: true
@@ -181,9 +183,12 @@ export default function ScenarioFileEditor({
         <div className="space-y-3">
           {value.clans.map(clan => (
             <div key={clan.id} className="rounded-xl border border-neutral-800 bg-black/30 p-4">
-              <div className="grid gap-3 md:grid-cols-[minmax(180px,1.4fr)_110px_130px_repeat(4,100px)_auto] md:items-end">
+              <div className="grid gap-3 md:grid-cols-[minmax(180px,1.4fr)_90px_100px_120px_repeat(4,100px)_auto] md:items-end">
                 <Field label={`Название · ${clan.id}`}><input value={clan.name} onChange={event => updateClan(clan.id, { name: event.target.value })} className="editor-input" /></Field>
-                <NumberField label="Доверие" value={clan.trustLevel} min={1} max={5} onChange={trustLevel => updateClan(clan.id, { trustLevel })} />
+                <NumberField label="Уровень" value={clan.trustLevel} min={1} max={5} onChange={trustLevel => updateClan(clan.id, setClanExperience({ ...clan, trustLevel }, getClanExperience(clan)))} />
+                {clan.id === 'clan_guild'
+                  ? <div />
+                  : <NumberField label="Опыт" value={getClanExperience(clan)} min={0} onChange={experience => updateClan(clan.id, setClanExperience(clan, experience))} />}
                 <NumberField label="Золото" value={clan.gold} min={0} onChange={gold => updateClan(clan.id, { gold })} />
                 {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as const).map(key => (
                   <NumberField key={key} label={key} value={clan.resources[key] ?? 0} min={0} onChange={amount => updateClanResource(clan.id, key, amount)} />

@@ -637,7 +637,7 @@ export default function MapTab({
                     style={{
                       zIndex: 4,
                       clipPath: getRegionClipPath(region.points),
-                      opacity: getFogOpacity(region.fog.density)
+                      opacity: region.fog.opacity ?? getFogOpacity(region.fog.density)
                     } as React.CSSProperties}
                     aria-hidden="true"
                   >
@@ -648,8 +648,9 @@ export default function MapTab({
                       autoPlay
                       loop
                       playsInline
-                      preload="metadata"
+                      preload="auto"
                       onLoadedMetadata={event => { event.currentTarget.playbackRate = playbackRate; }}
+                      onCanPlay={event => { void event.currentTarget.play().catch(() => undefined); }}
                     />
                   </div>
                 );

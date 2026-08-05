@@ -13,6 +13,10 @@ import { DEFAULT_MAP_URL } from './constants';
 import { createInitialGameState, normalizeMission } from './state';
 import { findMapRegionAtPoint, normalizeMapRegion } from './mapRegions';
 import { applyLegacyActiveClanCount, clampActiveClanCount, getActivePlayerClans, MAX_PLAYER_CLANS, orderClansGuildFirst } from './clans';
+import { ensureAdventurerRosterForClans } from '../utils';
+import { applyNpcRosterCapacity } from './adventurers';
+import { normalizeClanProgression } from './clanProgression';
+import { selectInitialScenarioMissions } from './day';
 
 export const DATA_FILE_VERSION = 1;
 export const ADVENTURER_FILE_TYPE = 'global-map-adventurers';
@@ -141,6 +145,8 @@ function validateAdventurerList(value: unknown, path: string, issues: string[]):
     }
     if (item.description !== undefined && typeof item.description !== 'string') issues.push(`${itemPath}.description: требуется строка.`);
     if (item.isPlayer !== undefined && typeof item.isPlayer !== 'boolean') issues.push(`${itemPath}.isPlayer: требуется true или false.`);
+    if (item.rosterCohort !== undefined) addIntegerIssue(item.rosterCohort, `${itemPath}.rosterCohort`, issues, 1, MAX_PLAYER_CLANS);
+    if (item.isRosterReserve !== undefined && typeof item.isRosterReserve !== 'boolean') issues.push(`${itemPath}.isRosterReserve: требуется true или false.`);
   });
   return true;
 }
@@ -356,6 +362,8 @@ function validateClanList(value: unknown, path: string, issues: string[]): value
     }
     addStringIssue(item.name, `${itemPath}.name`, issues);
     addFiniteIssue(item.trustLevel, `${itemPath}.trustLevel`, issues, 1, 5);
+    if (item.experience !== undefined) addIntegerIssue(item.experience, `${itemPath}.experience`, issues, 0);
+    if (item.pendingTrustLevel !== undefined) addIntegerIssue(item.pendingTrustLevel, `${itemPath}.pendingTrustLevel`, issues, 1, 5);
     addFiniteIssue(item.gold, `${itemPath}.gold`, issues, 0);
     if (item.isActive !== undefined && typeof item.isActive !== 'boolean') issues.push(`${itemPath}.isActive: требуется true или false.`);
     if (!isRecord(item.resources)) {
@@ -420,6 +428,7 @@ function validateMapRegions(value: unknown, path: string, issues: string[]): val
       if (typeof item.fog.enabled !== 'boolean') issues.push(`${itemPath}.fog.enabled: требуется true или false.`);
       if (!['LOW', 'MEDIUM', 'DENSE'].includes(String(item.fog.density))) issues.push(`${itemPath}.fog.density: требуется LOW, MEDIUM или DENSE.`);
       if (!['SLOW', 'NORMAL', 'FAST'].includes(String(item.fog.speed))) issues.push(`${itemPath}.fog.speed: требуется SLOW, NORMAL или FAST.`);
+      if (item.fog.opacity !== undefined) addFiniteIssue(item.fog.opacity, `${itemPath}.fog.opacity`, issues, 0, 1);
     }
   });
   return true;
@@ -535,10 +544,6 @@ export function createScenarioDataFile(scenario: ScenarioFileData): ScenarioData
   return { type: SCENARIO_FILE_TYPE, version: DATA_FILE_VERSION, scenario: structuredClone(scenario) };
 }
 
-function activeAtDayOne(mission: Mission): boolean {
-  return (mission.startDay ?? 1) <= 1 && (mission.prerequisiteMissionIds ?? []).length === 0;
-}
-
 export function buildNewCampaign(options: {
   isDmMode: boolean;
   guildName?: string;
@@ -550,11 +555,15 @@ export function buildNewCampaign(options: {
   const initial = createInitialGameState({ isDmMode: options.isDmMode, clansCount: scenario?.nClans });
   const requestedGuildName = options.guildName?.trim();
   const guildName = requestedGuildName || scenario?.guildName || initial.guildName;
-  let clans = orderClansGuildFirst(structuredClone(scenario?.clans ?? initial.clans))
+  let clans = orderClansGuildFirst(structuredClone(scenario?.clans ?? initial.clans).map(normalizeClanProgression))
     .map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan);
   if (!clans.some(clan => clan.id !== 'clan_guild' && clan.isActive !== undefined)) clans = applyLegacyActiveClanCount(clans, scenario?.nClans ?? initial.nClans);
   const nClans = getActivePlayerClans(clans, scenario?.nClans ?? initial.nClans).length;
-  const adventurers = structuredClone(options.adventurerFile?.adventurers ?? scenario?.adventurers ?? initial.adventurers);
+  const configuredAdventurers = options.adventurerFile?.adventurers
+    ?? (scenario?.adventurers?.length ? scenario.adventurers : initial.adventurers);
+  const adventurers = options.adventurerFile
+    ? applyNpcRosterCapacity(structuredClone(configuredAdventurers), nClans)
+    : ensureAdventurerRosterForClans(structuredClone(configuredAdventurers), nClans);
   const mapRegions = structuredClone(scenario?.mapRegions ?? initial.mapRegions).map(normalizeMapRegion);
   const events = structuredClone(options.eventFile?.events ?? scenario?.events ?? initial.allMissions ?? initial.missions).map(normalizeMission).map(mission => {
     if (mission.regionMode !== 'AUTO') return mission;
@@ -583,7 +592,7 @@ export function buildNewCampaign(options: {
     adventurers,
     allMissions: events,
     scenarioChains: chains,
-    missions: events.filter(activeAtDayOne).map(mission => structuredClone(mission)),
+    missions: selectInitialScenarioMissions(events, nClans),
     contracts: [],
     history: [],
     completedMissionIds: [],

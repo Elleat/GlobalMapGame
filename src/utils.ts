@@ -6,9 +6,10 @@
 import { Clan, Adventurer, Mission, MissionType, Contract, BasicResourceKey, MissionCheck, MissionResourceKey } from './types';
 import defaultClansJson from './data/default-clans.json';
 import defaultAdventurersJson from './data/default-adventurers.json';
+import { applyNpcRosterCapacity, getStartingMissionHistory, getStartingNpcLevel, NPCS_PER_ACTIVE_CLAN } from './domain/adventurers';
 
 const DEFAULT_CLAN_DATA = defaultClansJson as Clan[];
-const DEFAULT_ADVENTURER_DATA = defaultAdventurersJson as Adventurer[];
+const DEFAULT_ADVENTURER_DATA = (defaultAdventurersJson as { adventurers: Adventurer[] }).adventurers;
 
 export const DEFAULT_CLANS: Clan[] = structuredClone(DEFAULT_CLAN_DATA);
 export const GUILD_CLAN: Clan = structuredClone(
@@ -292,7 +293,7 @@ export function calculateMaxHp(level: number): number {
 export function calculatePartyBonus(partyAdventurers: Adventurer[]): number {
   if (!partyAdventurers || partyAdventurers.length === 0) return 0;
   const sumLevels = partyAdventurers.reduce((sum, a) => sum + a.level, 0);
-  return Math.ceil(sumLevels / 4);
+  return Math.floor(sumLevels / 4);
 }
 
 export function rollD20(): number {
@@ -330,19 +331,44 @@ export function getRandomPointInSpawnPolygon(polygon: { x: number; y: number }[]
 }
 
 export function generateAdventurersForClans(clansCount: number): Adventurer[] {
-  const count = clansCount * 5;
+  const count = Math.max(0, Math.floor(clansCount)) * NPCS_PER_ACTIVE_CLAN;
   if (count <= 0 || DEFAULT_ADVENTURER_DATA.length === 0) return [];
 
   return Array.from({ length: count }, (_, index) => {
     const template = structuredClone(DEFAULT_ADVENTURER_DATA[index % DEFAULT_ADVENTURER_DATA.length]);
     const isAdditionalCopy = index >= DEFAULT_ADVENTURER_DATA.length;
+    const level = getStartingNpcLevel(index);
+    const missionHistory = getStartingMissionHistory(level);
     return {
       ...template,
       id: isAdditionalCopy ? `adv_${index + 1}` : template.id,
       name: isAdditionalCopy ? `${template.name} ${Math.floor(index / DEFAULT_ADVENTURER_DATA.length) + 1}` : template.name,
-      relations: { ...template.relations }
+      level,
+      hp: calculateMaxHp(level),
+      maxHp: calculateMaxHp(level),
+      successfulMissions: missionHistory,
+      totalMissions: missionHistory,
+      relations: {},
+      rosterCohort: Math.floor(index / NPCS_PER_ACTIVE_CLAN) + 1,
+      isRosterReserve: false
     };
   });
+}
+
+export function ensureAdventurerRosterForClans(adventurers: Adventurer[], activeClanCount: number): Adventurer[] {
+  const managedNpcCount = adventurers.filter(adventurer => !adventurer.isPlayer && adventurer.rosterCohort !== undefined).length;
+  const requiredNpcCount = Math.max(0, Math.floor(activeClanCount)) * NPCS_PER_ACTIVE_CLAN;
+  if (managedNpcCount === 0 || managedNpcCount >= requiredNpcCount) {
+    return applyNpcRosterCapacity(adventurers, activeClanCount);
+  }
+
+  const existingIds = new Set(adventurers.map(adventurer => adventurer.id));
+  const missingCount = requiredNpcCount - managedNpcCount;
+  const additions = generateAdventurersForClans(activeClanCount)
+    .filter(adventurer => !existingIds.has(adventurer.id))
+    .slice(0, missingCount);
+
+  return applyNpcRosterCapacity([...adventurers, ...additions], activeClanCount);
 }
 
 /**

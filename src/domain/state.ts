@@ -3,6 +3,7 @@ import { GAME_STATE_VERSION } from '../types';
 import {
   DEFAULT_CLANS,
   DEFAULT_SPAWN_POLYGON,
+  ensureAdventurerRosterForClans,
   generateAdventurersForClans,
   generateMissionsForDay
 } from '../utils';
@@ -16,11 +17,13 @@ import { clampRelation } from './economy';
 import { cleanMissionTitle } from './missionPresentation';
 import { normalizeMapRegion } from './mapRegions';
 import { applyLegacyActiveClanCount, clampActiveClanCount, getActivePlayerClans, orderClansGuildFirst } from './clans';
+import { applyNpcRosterCapacity, DEFAULT_NPC_ROSTER_CLAN_CAPACITY } from './adventurers';
+import { normalizeClanProgression } from './clanProgression';
 
 export const GAME_STORAGE_KEY = 'adventurer_guild_state';
 
 function cloneClans(): Clan[] {
-  return orderClansGuildFirst(structuredClone(DEFAULT_CLANS));
+  return orderClansGuildFirst(structuredClone(DEFAULT_CLANS).map(normalizeClanProgression));
 }
 
 function normalizeAdventurer(adventurer: Adventurer): Adventurer {
@@ -30,6 +33,8 @@ function normalizeAdventurer(adventurer: Adventurer): Adventurer {
   return {
     ...adventurer,
     description: adventurer.description ?? '',
+    rosterCohort: adventurer.rosterCohort === undefined ? undefined : Math.max(1, Math.floor(adventurer.rosterCohort)),
+    isRosterReserve: Boolean(adventurer.isRosterReserve),
     relations
   };
 }
@@ -120,7 +125,10 @@ export function createInitialGameState(options?: {
     mapRegions: [],
     mapEffectsEnabled: true,
     clans,
-    adventurers: generateAdventurersForClans(clansCount).map(normalizeAdventurer),
+    adventurers: applyNpcRosterCapacity(
+      generateAdventurersForClans(Math.max(DEFAULT_NPC_ROSTER_CLAN_CAPACITY, clansCount)),
+      clansCount
+    ).map(normalizeAdventurer),
     missions: generateMissionsForDay(clansCount, 1, DEFAULT_SPAWN_POLYGON).map(normalizeMission),
     scenarioChains: [],
     missionRecurrences: [],
@@ -163,7 +171,9 @@ export function parseStoredGameState(serialized: string): GameState | null {
 
     const state = parsed as GameState;
     const guildName = state.guildName || DEFAULT_GUILD_NAME;
-    let clans = orderClansGuildFirst(state.clans.map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan));
+    let clans = orderClansGuildFirst(state.clans
+      .map(normalizeClanProgression)
+      .map(clan => clan.id === 'clan_guild' ? { ...clan, name: guildName } : clan));
     if (!clans.some(clan => clan.id !== 'clan_guild' && clan.isActive !== undefined)) clans = applyLegacyActiveClanCount(clans, state.nClans);
     const activeCount = getActivePlayerClans(clans, state.nClans).length;
     return {
@@ -185,7 +195,7 @@ export function parseStoredGameState(serialized: string): GameState | null {
       mapRegions: (state.mapRegions ?? []).map(normalizeMapRegion),
       mapEffectsEnabled: state.mapEffectsEnabled ?? true,
       clans,
-      adventurers: state.adventurers.map(normalizeAdventurer),
+      adventurers: ensureAdventurerRosterForClans(state.adventurers.map(normalizeAdventurer), activeCount),
       missions: state.missions.map(normalizeMission),
       allMissions: state.allMissions?.map(normalizeMission),
       scenarioChains: state.scenarioChains ?? [],

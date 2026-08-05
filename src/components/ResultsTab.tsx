@@ -86,6 +86,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
     };
     const outcome: MissionOutcome = editAutoSuccess ? 'SUCCESS' : editOutcome;
     const finalSuccess = outcome === 'SUCCESS';
+    const baseObjectiveCompleted = finalSuccess ? true : editBaseObjective;
     const returnedIds = outcome === 'PARTY_LOST'
       ? []
       : editReturnedIds.filter(id => editSquadIds.includes(id));
@@ -108,7 +109,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
       squadAdvIds: editSquadIds,
       returnedAdventurerIds: returnedIds,
       attachedResourcesUsed: editResources,
-      baseObjectiveCompleted: editBaseObjective
+      baseObjectiveCompleted
     };
     const recalculated = originalRep.invalidated
       ? { report: { ...editedReport, invalidated: true, effects: originalRep.effects }, adventurers: state.adventurers, clans: state.clans }
@@ -215,6 +216,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                 const isSelected = selectedDay === h.day;
                 const successes = h.reports.filter(r => r.isSuccess && !r.invalidated).length;
                 const fails = h.reports.filter(r => !r.isSuccess && !r.isExpired && !r.invalidated).length;
+                const expired = h.reports.filter(r => r.isExpired && !r.invalidated).length;
+                const pending = Math.max(0, h.contractsCount - h.reports.length);
 
                 return (
                   <div
@@ -230,6 +233,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                     <div className="text-right space-y-1 font-mono text-[10px]">
                       <span className="text-emerald-400 font-bold block">Успехов: {successes}</span>
                       <span className="text-rose-400 font-bold block">Провалов: {fails}</span>
+                      {expired > 0 && <span className="text-amber-400 font-bold block">Истекло: {expired}</span>}
+                      {pending > 0 && <span className="text-violet-300 font-bold block">Ожидают рапорта: {pending}</span>}
                     </div>
                   </div>
                 );
@@ -388,12 +393,12 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                       <span className="text-neutral-300 font-bold uppercase block">Финальный результат</span>
                                       <small className="text-neutral-600">Пересчитывает опыт, отношения, HP, награды и ресурсы.</small>
                                     </div>
-                                    <select value={editOutcome} onChange={event => { const next = event.target.value as MissionOutcome; setEditOutcome(next); setEditRewardGranted(false); if (next !== 'SUCCESS') setEditAutoSuccess(false); if (next === 'PARTY_LOST') setEditReturnedIds([]); }} className="editor-input max-w-[280px] font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
+                                    <select value={editOutcome} onChange={event => { const next = event.target.value as MissionOutcome; setEditOutcome(next); if (next === 'SUCCESS') setEditBaseObjective(true); setEditRewardGranted(false); if (next !== 'SUCCESS') setEditAutoSuccess(false); if (next === 'PARTY_LOST') setEditReturnedIds([]); }} className="editor-input max-w-[280px] font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
                                   </div>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <label className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">
-                                      <input type="checkbox" checked={editBaseObjective} onChange={event => setEditBaseObjective(event.target.checked)} />
+                                      <input type="checkbox" disabled={editOutcome === 'SUCCESS'} checked={editOutcome === 'SUCCESS' || editBaseObjective} onChange={event => setEditBaseObjective(event.target.checked)} />
                                       Основная задача выполнена
                                     </label>
                                     <label className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">

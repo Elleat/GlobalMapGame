@@ -12,8 +12,18 @@ import {
   parseScenarioDataFile
 } from './dataFiles';
 import { createMapRegion } from './mapRegions';
-import { chooseRandomStageResource, generateMissionsForDay } from '../utils';
+import { calculatePartyBonus, chooseRandomStageResource, ensureAdventurerRosterForClans, generateMissionsForDay } from '../utils';
 import { getActivePlayerClans } from './clans';
+import { applyNpcRosterCapacity } from './adventurers';
+import defaultAdventurers from '../data/default-adventurers.json';
+import defaultEvents from '../data/default-events.json';
+
+test('встроенные JSON-наборы открываются соответствующими файловыми редакторами', () => {
+  const adventurers = parseAdventurerDataFile(defaultAdventurers);
+  const events = parseEventDataFile(defaultEvents);
+  assert.equal(adventurers.adventurers.length, 75);
+  assert.equal(events.events.length > 0, true);
+});
 
 test('файл авантюристов требует тип, версию и уникальные ID', () => {
   const state = createInitialGameState();
@@ -132,6 +142,48 @@ test('N считает только активные игровые кланы, 
   const inactive = createInitialGameState({ clansCount: 0 });
   assert.equal(inactive.nClans, 0);
   assert.equal(inactive.missions.length, 0);
+});
+
+test('стартовый резерв содержит 5N NPC с распределением уровней 70/20/10', () => {
+  const state = createInitialGameState({ clansCount: 15 });
+  assert.equal(state.adventurers.length, 75);
+  assert.deepEqual(
+    state.adventurers.reduce<Record<number, number>>((counts, adventurer) => {
+      counts[adventurer.level] = (counts[adventurer.level] ?? 0) + 1;
+      return counts;
+    }, {}),
+    { 1: 53, 2: 15, 3: 7 }
+  );
+  assert.equal(state.adventurers.every(adventurer => Object.keys(adventurer.relations).length === 0), true);
+  assert.equal(new Set(state.adventurers.map(adventurer => adventurer.name)).size, 75);
+});
+
+test('стандартная кампания хранит резерв и расширяет его при росте N', () => {
+  const state = createInitialGameState({ clansCount: 6 });
+  assert.equal(state.adventurers.length, 75);
+  assert.equal(state.adventurers.filter(adventurer => !adventurer.isRosterReserve).length, 30);
+  assert.equal(state.adventurers.filter(adventurer => adventurer.isRosterReserve).length, 45);
+
+  const expanded = ensureAdventurerRosterForClans(state.adventurers, 20);
+  assert.equal(expanded.length, 100);
+  assert.equal(expanded.filter(adventurer => !adventurer.isRosterReserve).length, 100);
+});
+
+test('уменьшение N переводит лишние когорты в резерв без удаления прогресса', () => {
+  const roster = createInitialGameState({ clansCount: 15 }).adventurers;
+  const progressed = roster.map((adventurer, index) => index === 70 ? { ...adventurer, totalMissions: 8 } : adventurer);
+  const reduced = applyNpcRosterCapacity(progressed, 6);
+  assert.equal(reduced.filter(adventurer => !adventurer.isRosterReserve).length, 30);
+  assert.equal(reduced.filter(adventurer => adventurer.isRosterReserve).length, 45);
+  assert.equal(reduced[70].totalMissions, 8);
+  assert.equal(applyNpcRosterCapacity(reduced, 15)[70].isRosterReserve, false);
+});
+
+test('бонус партии округляет сумму уровней вниз', () => {
+  const roster = createInitialGameState({ clansCount: 1 }).adventurers;
+  assert.equal(calculatePartyBonus(roster.slice(0, 1)), 0);
+  assert.equal(calculatePartyBonus(roster.slice(0, 4)), 1);
+  assert.equal(calculatePartyBonus([{ ...roster[0], level: 3 }, { ...roster[1], level: 3 }]), 1);
 });
 
 test('случайная генерация создаёт ровно 2N событий и около 10% пустышек', () => {

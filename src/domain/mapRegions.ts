@@ -47,7 +47,8 @@ export function createMapRegion(
     fog: {
       enabled: false,
       density: 'MEDIUM',
-      speed: 'SLOW'
+      speed: 'SLOW',
+      opacity: getFogOpacity('MEDIUM')
     }
   };
 }
@@ -79,7 +80,8 @@ export function normalizeMapRegion(region: Partial<MapRegion>, index: number): M
     fog: {
       enabled: Boolean(region.fog?.enabled),
       density,
-      speed
+      speed,
+      opacity: clamp(Number(region.fog?.opacity ?? getFogOpacity(density)), 0, 1)
     }
   };
 }
@@ -146,9 +148,9 @@ export function hasSelfIntersection(points: readonly { x: number; y: number }[])
 }
 
 export function getFogOpacity(density: RegionFogDensity): number {
-  if (density === 'LOW') return 0.2;
-  if (density === 'DENSE') return 0.52;
-  return 0.34;
+  if (density === 'LOW') return 0.28;
+  if (density === 'DENSE') return 0.65;
+  return 0.46;
 }
 
 export function getFogDuration(speed: RegionFogSpeed): number {

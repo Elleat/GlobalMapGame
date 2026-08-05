@@ -8,6 +8,7 @@ import { Shield, Coins, Star, Package, HelpCircle, Eye, ShoppingCart } from 'luc
 import { GameState, Clan } from '../types';
 import { getResourceNameRu, getMaxContractLevelForClan } from '../utils';
 import { getActivePlayerClans } from '../domain/clans';
+import { getClanProgressLabel } from '../domain/clanProgression';
 
 interface ClansTabProps {
   state: GameState;
@@ -41,13 +42,18 @@ export default function ClansTab({
                 {clan.name}
               </h3>
               {!isGuild && (
-                <div className="flex gap-0.5 mt-1.5" title={`Уровень Доверия: ${clan.trustLevel}`}>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3.5 h-3.5 ${i < (clan.trustLevel || 1) ? 'text-amber-500 fill-amber-500' : 'text-neutral-700'}`}
-                    />
-                  ))}
+                <div className="mt-1.5" title={`Уровень клана: ${clan.trustLevel}`}>
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3.5 h-3.5 ${i < (clan.trustLevel || 1) ? 'text-amber-500 fill-amber-500' : 'text-neutral-700'}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-1 text-[9px] font-mono text-neutral-500">
+                    {getClanProgressLabel(clan)}{clan.pendingTrustLevel ? ` · уровень ${clan.pendingTrustLevel} завтра` : ''}
+                  </div>
                 </div>
               )}
             </div>
@@ -69,7 +75,7 @@ export default function ClansTab({
           <p className="text-[11px] font-mono text-neutral-400 leading-snug mb-4">
             {isGuild
               ? `${state.guildName}: независимый заказчик и посредник. Получает комиссию 15% с контрактов игроков.`
-              : `Клиентский клан уровня доверия ${clan.trustLevel}. Доступные уровни заказов: 1..${maxContractLvl}.`}
+              : `Клиентский клан ${clan.trustLevel} уровня. Доступные уровни заказов: 1..${maxContractLvl}.`}
           </p>
 
           {/* Core financial & stock specs */}

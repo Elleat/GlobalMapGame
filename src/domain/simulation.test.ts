@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { Adventurer, Clan, Contract, Mission } from '../types';
 import { simulateContract, simulateDayContracts } from './simulation';
-import { advanceMissionLifecycle } from './day';
+import { advanceMissionLifecycle, reconcileScenarioHistory, selectInitialScenarioMissions, upsertReportInHistory } from './day';
 import { recalculateReportEffects } from './reportEffects';
 import { getMissionChecks, getMissionComplicationSlots } from './missions';
 
@@ -71,6 +71,70 @@ function sequence(values: number[], fallback = 0.99): () => number {
   let index = 0;
   return () => values[index++] ?? fallback;
 }
+
+test('успешная основная цель начисляет заказчику опыт по числу этапов и готовит уровень на завтра', () => {
+  const result = simulateContract({
+    contract: contract(),
+    mission: mission({
+      checks: [
+        { reqResource: 'None', dc: 1 },
+        { reqResource: 'None', dc: 1 }
+      ]
+    }),
+    adventurers: [adventurer()],
+    clans: [clan({ trustLevel: 1, experience: 6 })],
+    day: 1,
+    random: sequence([0.99, 0.99])
+  });
+  assert.equal(result.report.isSuccess, true);
+  assert.equal(result.report.effects?.clanExperienceDeltas?.['clan-1'], 3);
+  assert.equal(result.clans[0].experience, 9);
+  assert.equal(result.clans[0].trustLevel, 1);
+  assert.equal(result.clans[0].pendingTrustLevel, 2);
+});
+
+test('успешно закрытая пустышка даёт клану один опыт, но не даёт опыт авантюристу', () => {
+  const result = simulateContract({
+    contract: contract(),
+    mission: mission({ type: 'DUMMY', checks: [], reqResource: 'None', dc: 13 }),
+    adventurers: [adventurer()],
+    clans: [clan({ trustLevel: 1, experience: 0 })],
+    day: 1,
+    random: sequence([])
+  });
+  assert.equal(result.report.isSuccess, true);
+  assert.equal(result.clans[0].experience, 1);
+  assert.equal(result.adventurers[0].totalMissions, 0);
+  assert.equal(result.adventurers[0].successfulMissions, 0);
+});
+
+test('исправление успешного рапорта на провал откатывает опыт клана', () => {
+  const original = simulateContract({
+    contract: contract(),
+    mission: mission({ checks: [{ reqResource: 'None', dc: 1 }] }),
+    adventurers: [adventurer()],
+    clans: [clan({ trustLevel: 1, experience: 7 })],
+    day: 1,
+    random: sequence([0.99])
+  });
+  const recalculated = recalculateReportEffects({
+    originalReport: original.report,
+    editedReport: {
+      ...original.report,
+      isSuccess: false,
+      outcome: 'OBJECTIVE_FAILED',
+      baseObjectiveCompleted: false,
+      returnedAdventurerIds: ['hero-1']
+    },
+    contract: contract(),
+    mission: mission({ checks: [{ reqResource: 'None', dc: 1 }] }),
+    adventurers: original.adventurers,
+    clans: original.clans,
+    day: 1
+  });
+  assert.equal(recalculated.clans[0].experience, 7);
+  assert.equal(recalculated.clans[0].pendingTrustLevel, undefined);
+});
 
 test('каждый проваленный этап наносит каждому участнику ровно 1 урон', () => {
   const hero = adventurer({ level: 4, hp: 3, maxHp: 3 });
@@ -384,6 +448,24 @@ test('сокращение квоты не удаляет защищённую �
   assert.equal(lifecycle.missions.some(item => item.id === ordinaryDummy.id), false);
 });
 
+test('дефицит квоты 2N заполняется безопасной одиночной миссией из будущего дня', () => {
+  const available = mission({ id: 'available', startDay: 1 });
+  const locked = mission({
+    id: 'locked',
+    startDay: 1,
+    prerequisiteMissionIds: ['prerequisite']
+  });
+  const futureFiller = mission({ id: 'future-filler', startDay: 2 });
+  const prerequisite = mission({ id: 'prerequisite', startDay: 3, chainIds: ['chain'] });
+
+  const selected = selectInitialScenarioMissions(
+    [available, locked, futureFiller, prerequisite],
+    1
+  );
+
+  assert.deepEqual(new Set(selected.map(item => item.id)), new Set(['available', 'future-filler']));
+});
+
 test('редактор рапорта откатывает старые эффекты и полностью применяет новый результат', () => {
   const operation = mission({ goldReward: 20 });
   const signedContract = contract({ attachedResources: ['Equipment', 'Alchemy'] });
@@ -464,4 +546,50 @@ test('редактирование старого рапорта сохраня�
   });
   assert.equal(edited.adventurers[0].totalMissions, 2);
   assert.equal(edited.adventurers[0].successfulMissions, 1);
+});
+
+test('отложенный сюжетный рапорт попадает в исходный день и окончательно закрывает миссию', () => {
+  const story = mission({
+    id: 'story-1',
+    title: 'Отложенная сюжетная миссия',
+    type: 'STORY',
+    storyStatus: 'AWAITING_REPORT',
+    storyAcceptedDay: 1
+  });
+  const dependent = mission({
+    id: 'story-2',
+    title: 'Продолжение',
+    startDay: 1,
+    prerequisiteMissionIds: ['story-1']
+  });
+  const resolved = simulateContract({
+    contract: contract({ missionId: story.id, title: story.title }),
+    mission: story,
+    adventurers: [adventurer()],
+    clans: [clan()],
+    day: 2,
+    random: sequence([0.99])
+  });
+  const history = upsertReportInHistory([{
+    day: 1,
+    contractsCount: 1,
+    reports: [],
+    logs: []
+  }], resolved.report, story.storyAcceptedDay!);
+  const progress = reconcileScenarioHistory({
+    allMissions: [story, dependent],
+    missions: [story],
+    contracts: [],
+    history,
+    currentDay: 2,
+    adventurers: resolved.adventurers,
+    clans: resolved.clans
+  });
+
+  assert.equal(progress.history[0].reports.length, 1);
+  assert.equal(progress.history[0].reports[0].missionId, story.id);
+  assert.equal(progress.missions.some(item => item.id === story.id), false);
+  assert.equal(progress.missions.some(item => item.id === dependent.id), true);
+  assert.equal(progress.closedMissionIds.includes(story.id), true);
+  assert.equal(progress.completedMissionIds.includes(story.id), true);
 });

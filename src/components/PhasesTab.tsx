@@ -12,7 +12,8 @@ import {
   getResourceNameRu,
   getStatusNameRu,
   getTypeRu,
-  generateMissionsForDay
+  generateMissionsForDay,
+  ensureAdventurerRosterForClans
 } from '../utils';
 import {
   clanHasSpecialItem,
@@ -35,8 +36,9 @@ import DistributionReportModal from './DistributionReportModal';
 import RetreatReportBlock from './RetreatReportBlock';
 import { performGuildActions } from '../domain/guild';
 import { simulateDayContracts } from '../domain/simulation';
-import { advanceMissionLifecycle } from '../domain/day';
+import { advanceMissionLifecycle, reconcileScenarioHistory, upsertReportInHistory } from '../domain/day';
 import { recalculateReportEffects } from '../domain/reportEffects';
+import { activatePendingClanLevel } from '../domain/clanProgression';
 import { findMapRegionAtPoint } from '../domain/mapRegions';
 import { getMissionPresentation, getScoutingClanNames } from '../domain/missionPresentation';
 import { getActivePlayerClans } from '../domain/clans';
@@ -491,6 +493,7 @@ export default function PhasesTab({
       ...previous,
       outcome,
       isSuccess: outcome === 'SUCCESS',
+      baseObjectiveCompleted: outcome === 'SUCCESS' ? true : previous.baseObjectiveCompleted,
       returnedAdventurerIds: outcome === 'PARTY_LOST' ? [] : previous.returnedAdventurerIds,
       narrativeText: outcome === 'PARTY_LOST' ? 'Отряд не вернулся.' : previous.narrativeText,
       rewardGranted: false,
@@ -526,7 +529,9 @@ export default function PhasesTab({
         returnedAdventurerIds: outcome === 'PARTY_LOST' ? [] : editingReportData.returnedAdventurerIds ?? sourceReport.returnedAdventurerIds,
         narrativeText: outcome === 'PARTY_LOST' ? 'Отряд не вернулся.' : editingReportData.narrativeText ?? sourceReport.narrativeText,
         totalRoll: (editingReportData.roll ?? sourceReport.roll) + (editingReportData.partyBonus ?? sourceReport.partyBonus),
-        baseObjectiveCompleted: editingReportData.baseObjectiveCompleted ?? sourceReport.baseObjectiveCompleted ?? editedSuccess,
+        baseObjectiveCompleted: editedSuccess
+          ? true
+          : (editingReportData.baseObjectiveCompleted ?? sourceReport.baseObjectiveCompleted ?? false),
         rewardGranted: Boolean(editingReportData.rewardGranted) && editedSuccess,
         rewardAwardedAmount: Boolean(editingReportData.rewardGranted) && editedSuccess
           ? (editingReportData.goldReward ?? sourceReport.goldReward)
@@ -551,29 +556,35 @@ export default function PhasesTab({
           }
         : contract
       );
-      let reportPlacedInHistory = false;
-      const updatedHistory = state.history.map(entry => {
-        const containsReport = entry.reports.some(report => report.missionId === missionId);
-        if (containsReport) reportPlacedInHistory = true;
-        if (!containsReport && !(state.isDaySimulated && entry.day === state.day && mission.type === 'STORY')) return entry;
-        if (!containsReport) reportPlacedInHistory = true;
-        return {
-          ...entry,
-          reports: containsReport
-            ? entry.reports.map(report => report.missionId === missionId ? recalculated.report : report)
-            : [...entry.reports, recalculated.report]
-        };
-      });
-      const updatedMissions = state.missions.map(item => item.id === missionId && item.type === 'STORY'
-        ? { ...item, storyStatus: 'RESOLVED' as const }
-        : item
-      );
-      updateState({
+      const targetReportDay = mission.type === 'STORY'
+        ? (mission.storyAcceptedDay ?? state.day)
+        : state.history.find(entry => entry.reports.some(report => report.missionId === missionId))?.day ?? state.day;
+      const updatedHistory = upsertReportInHistory(state.history, recalculated.report, targetReportDay);
+      const isDeferredStoryReport = mission.type === 'STORY' && originalRep === null && targetReportDay < state.day;
+      const contractsForProgress = isDeferredStoryReport
+        ? updatedContracts.filter(contract => contract.missionId !== missionId)
+        : updatedContracts;
+      const scenarioProgress = reconcileScenarioHistory({
+        allMissions: state.allMissions,
+        missions: state.missions,
+        contracts: contractsForProgress,
+        history: updatedHistory,
+        currentDay: state.day,
         adventurers: recalculated.adventurers,
         clans: recalculated.clans,
-        contracts: updatedContracts,
-        missions: updatedMissions,
-        history: reportPlacedInHistory ? updatedHistory : state.history
+        missionRecurrences: state.missionRecurrences
+      });
+      updateState({
+        adventurers: scenarioProgress.adventurers,
+        clans: scenarioProgress.clans,
+        contracts: contractsForProgress,
+        missions: scenarioProgress.missions,
+        history: scenarioProgress.history,
+        completedMissionIds: scenarioProgress.completedMissionIds,
+        closedMissionIds: scenarioProgress.closedMissionIds,
+        expiredMissionIds: scenarioProgress.expiredMissionIds,
+        missionRecurrences: scenarioProgress.missionRecurrences,
+        selectedMissionId: state.selectedMissionId === missionId ? null : state.selectedMissionId
       });
       setEditingMissionId(null);
       setEditingReportData(null);
@@ -731,11 +742,15 @@ export default function PhasesTab({
 
     {
       const nextDay = state.day + 1;
-      const nextActivityClans = state.clans.map(clan => clan.id === 'clan_guild'
-        ? clan
-        : state.pendingClanActivity?.[clan.id] === undefined
-          ? clan
-          : { ...clan, isActive: state.pendingClanActivity[clan.id] });
+      const levelledClanNames: string[] = [];
+      const nextActivityClans = state.clans.map(clan => {
+        const levelled = activatePendingClanLevel(clan);
+        if (levelled.trustLevel > clan.trustLevel) levelledClanNames.push(`${clan.name}: ${clan.trustLevel} → ${levelled.trustLevel}`);
+        if (clan.id === 'clan_guild') return levelled;
+        return state.pendingClanActivity?.[clan.id] === undefined
+          ? levelled
+          : { ...levelled, isActive: state.pendingClanActivity[clan.id] };
+      });
       const nextActiveClanCount = getActivePlayerClans(nextActivityClans, state.nClans).length;
       const lifecycle = advanceMissionLifecycle({
         missions: state.missions,
@@ -758,7 +773,7 @@ export default function PhasesTab({
         nextDayMissions.push(...generated.filter(mission => !existingIds.has(mission.id)));
       }
 
-      const nextDayAdventurers = state.adventurers.map(adventurer => {
+      const healedAdventurers = state.adventurers.map(adventurer => {
         if (adventurer.status === 'WOUNDED') {
           if (adventurer.woundedOnDay === state.day) return adventurer;
           return {
@@ -771,6 +786,7 @@ export default function PhasesTab({
         if (adventurer.status === 'ON_MISSION') return { ...adventurer, status: 'READY' as const };
         return adventurer;
       });
+      const nextDayAdventurers = ensureAdventurerRosterForClans(healedAdventurers, nextActiveClanCount);
 
       const activePlayerClanIds = new Set(getActivePlayerClans(nextActivityClans, nextActiveClanCount).map(clan => clan.id));
       const playableClansCount = activePlayerClanIds.size;
@@ -821,7 +837,7 @@ export default function PhasesTab({
         lastDistributionLogs: []
       });
       setIsDistributionReportOpen(false);
-      showToast(`Наступил день ${nextDay}. Проваленные события сохранены, ожидающие сюжетные миссии остаются за заказчиками.`);
+      showToast(`Наступил день ${nextDay}. Проваленные события сохранены, ожидающие сюжетные миссии остаются за заказчиками.${levelledClanNames.length ? ` Новый уровень: ${levelledClanNames.join('; ')}.` : ''}`);
       onRedirectToReports?.();
       return;
     }
@@ -882,7 +898,7 @@ export default function PhasesTab({
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <select value={editingReportData.outcome ?? (editingReportData.isSuccess ? 'SUCCESS' : 'OBJECTIVE_FAILED')} onChange={event => updateEditingOutcome(event.target.value as NonNullable<SimulationReport['outcome']>)} className="editor-input font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
-              <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" checked={editingReportData.baseObjectiveCompleted ?? false} onChange={event => updateEditingField('baseObjectiveCompleted', event.target.checked)} /> Основная задача выполнена</label>
+              <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" disabled={editingReportData.isSuccess} checked={editingReportData.isSuccess || (editingReportData.baseObjectiveCompleted ?? false)} onChange={event => updateEditingField('baseObjectiveCompleted', event.target.checked)} /> Основная задача выполнена</label>
               <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" disabled={!editingReportData.isSuccess} checked={editingReportData.rewardGranted ?? false} onChange={event => updateEditingField('rewardGranted', event.target.checked)} /> Награда выдана</label>
             </div>
             <textarea value={editingReportData.narrativeText ?? ''} onChange={event => updateEditingField('narrativeText', event.target.value)} className="editor-input min-h-24" placeholder="Описание результата" />
@@ -1426,7 +1442,7 @@ export default function PhasesTab({
               <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1">
                 {(() => {
                   const readyAdvs = state.adventurers
-                    .filter(a => a.status === 'READY')
+                    .filter(a => a.status === 'READY' && !a.isRosterReserve)
                     .sort((a, b) => a.level - b.level);
                   
                   const woundedAdvs = state.adventurers
@@ -1747,7 +1763,8 @@ export default function PhasesTab({
                             <label className="flex items-center gap-2 rounded border border-neutral-800 bg-black/30 p-2.5 text-[10px] text-neutral-300">
                               <input
                                 type="checkbox"
-                                checked={editingReportData.baseObjectiveCompleted ?? false}
+                                disabled={editingReportData.isSuccess}
+                                checked={editingReportData.isSuccess || (editingReportData.baseObjectiveCompleted ?? false)}
                                 onChange={event => updateEditingField('baseObjectiveCompleted', event.target.checked)}
                               />
                               Основная задача выполнена

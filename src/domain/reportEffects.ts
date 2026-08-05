@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { BASIC_RESOURCE_KEYS } from '../types';
 import { calculateMaxHp } from '../utils';
+import { addClanExperience, getClanExperienceReward } from './clanProgression';
 import { applyRelationDelta, getMissionRelationDelta } from './relations';
 
 const LEVEL_THRESHOLDS: Record<number, number> = { 1: 1, 2: 3, 3: 6, 4: 10 };
@@ -98,6 +99,7 @@ export function reverseSimulationReportEffects(
   const ownerClanId = originalReport?.rewardRecipientClanId ?? originalReport?.context?.clanId ?? null;
   const restoredClans = clans.map(clan => {
     const goldDelta = effects.clanGoldDeltas[clan.id] ?? 0;
+    const experienceDelta = effects.clanExperienceDeltas?.[clan.id] ?? 0;
     const resources = { ...clan.resources };
     if (clan.id === ownerClanId) {
       effects.resourceLedger.returned.forEach(resource => {
@@ -115,7 +117,7 @@ export function reverseSimulationReportEffects(
       });
       resources.specialItems = items;
     }
-    return { ...clan, gold: clan.gold - goldDelta, resources };
+    return addClanExperience({ ...clan, gold: clan.gold - goldDelta, resources }, -experienceDelta);
   });
 
   return { adventurers: restoredAdventurers, clans: restoredClans };
@@ -269,6 +271,8 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     : 0;
   const awardedSpecialItems: string[] = [];
   const clanGoldDeltas: Record<string, number> = {};
+  const clanExperienceDeltas: Record<string, number> = {};
+  const clanExperienceReward = getClanExperienceReward(input.mission, baseObjectiveCompleted, isSuccess);
   clans = clans.map(clan => {
     if (clan.id !== input.contract.clanId) return clan;
     const resources = { ...clan.resources };
@@ -286,7 +290,11 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
       resources.specialItems = specialItems;
     }
     clanGoldDeltas[clan.id] = rewardAwardedAmount;
-    return { ...clan, gold: clan.gold + rewardAwardedAmount, resources };
+    if (clan.id !== 'clan_guild' && clanExperienceReward > 0) clanExperienceDeltas[clan.id] = clanExperienceReward;
+    return addClanExperience(
+      { ...clan, gold: clan.gold + rewardAwardedAmount, resources },
+      clanExperienceDeltas[clan.id] ?? 0
+    );
   });
 
   const adventurersById = new Map(adventurers.map(adventurer => [adventurer.id, adventurer]));
@@ -328,6 +336,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     resourceLedger,
     guildGoldDelta: input.contract.clanId === 'clan_guild' ? rewardAwardedAmount : 0,
     clanGoldDeltas,
+    clanExperienceDeltas,
     awardedSpecialItems,
     unlockedMissionIds: outcome !== 'PARTY_LOST' && baseObjectiveCompleted
       ? [...(input.mission.unlocksMissionIds ?? [])]

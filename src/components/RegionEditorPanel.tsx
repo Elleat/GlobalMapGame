@@ -11,7 +11,7 @@ import {
   Trash2
 } from 'lucide-react';
 import type { MapRegion } from '../types';
-import { getRegionCenter, hasSelfIntersection } from '../domain/mapRegions';
+import { getFogOpacity, getRegionCenter, hasSelfIntersection } from '../domain/mapRegions';
 
 interface RegionEditorPanelProps {
   regions: MapRegion[];
@@ -154,7 +154,10 @@ export default function RegionEditorPanel({
           <div className="grid grid-cols-2 gap-3 rounded border border-neutral-800 bg-black/30 p-3">
             <label className="space-y-1">
               <span className="text-[9px] uppercase text-neutral-500">Плотность тумана</span>
-              <select value={selected.fog.density} onChange={event => onUpdate(selected.id, { fog: { ...selected.fog, density: event.target.value as MapRegion['fog']['density'] } })} className="w-full rounded border border-neutral-700 bg-black px-2 py-1.5 text-neutral-200">
+              <select value={selected.fog.density} onChange={event => {
+                const density = event.target.value as MapRegion['fog']['density'];
+                onUpdate(selected.id, { fog: { ...selected.fog, density, opacity: getFogOpacity(density) } });
+              }} className="w-full rounded border border-neutral-700 bg-black px-2 py-1.5 text-neutral-200">
                 <option value="LOW">Слабый</option>
                 <option value="MEDIUM">Средний</option>
                 <option value="DENSE">Плотный</option>
@@ -168,6 +171,10 @@ export default function RegionEditorPanel({
                 <option value="FAST">Быстро</option>
               </select>
             </label>
+          </div>
+
+          <div className="rounded border border-neutral-800 bg-black/30 p-3">
+            <RangeField label="Прозрачность тумана" value={selected.fog.opacity ?? getFogOpacity(selected.fog.density)} max={1} step={0.01} onChange={opacity => onUpdate(selected.id, { fog: { ...selected.fog, opacity } })} />
           </div>
 
           <div className="rounded border border-neutral-800 bg-black/30 p-3 space-y-2">

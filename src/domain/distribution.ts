@@ -11,6 +11,7 @@ import {
   getContractPerceivedValue,
   getRelationBonus
 } from './economy';
+import { isAvailableNpc } from './adventurers';
 
 export interface DistributionInput {
   adventurers: Adventurer[];
@@ -139,8 +140,7 @@ export function distributePlayerContracts(input: DistributionInput): Distributio
   const contracts = cloneContractsForPlayerDistribution(input.contracts, adventurersById);
   const initiallyAssignedIds = new Set(contracts.flatMap(contract => contract.partyAdvIds));
   const available = input.adventurers.filter(adventurer =>
-    adventurer.status === 'READY'
-    && !adventurer.isPlayer
+    isAvailableNpc(adventurer)
     && !initiallyAssignedIds.has(adventurer.id)
   );
 

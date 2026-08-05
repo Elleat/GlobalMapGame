@@ -700,7 +700,7 @@ export default function App() {
             onClick={() => setActiveTab('PHASES')}
             className={`px-4 py-2 rounded-md cursor-pointer transition-all ${activeTab === 'PHASES' ? 'bg-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.35)]' : 'bg-transparent text-neutral-400 hover:bg-[#111] hover:text-neutral-200'}`}
           >
-            📋 Контракты ({state.contracts.length})
+            📋 Контракты ({state.contracts.filter(contract => !contract.simulationReport).length})
           </button>
 
           <button

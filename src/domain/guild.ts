@@ -9,6 +9,7 @@ import {
   getRequiredSpecialItems
 } from './missions';
 import { markMissionScouted } from './missionPresentation';
+import { isAvailableNpc } from './adventurers';
 
 export interface GuildActionInput {
   clans: Clan[];
@@ -82,7 +83,7 @@ export function performGuildActions(input: GuildActionInput): GuildActionResult 
 
   const assignedIds = new Set(contracts.flatMap(contract => contract.partyAdvIds));
   let available = input.adventurers.filter(adventurer =>
-    adventurer.status === 'READY' && !adventurer.isPlayer && !assignedIds.has(adventurer.id)
+    isAvailableNpc(adventurer) && !assignedIds.has(adventurer.id)
   );
   const maximumContracts = Math.floor(available.length / 2);
   const contractedMissionIds = new Set(contracts.map(contract => contract.missionId));

@@ -26,6 +26,35 @@ export interface MissionLifecycleResult {
   missionRecurrences: MissionRecurrence[];
 }
 
+/** Places a report into the archive day where its contract was accepted. */
+export function upsertReportInHistory(
+  history: GameHistoryEntry[],
+  report: SimulationReport,
+  targetDay: number
+): GameHistoryEntry[] {
+  if (!history.some(entry => entry.day === targetDay)) {
+    return [...history, {
+      day: targetDay,
+      contractsCount: 1,
+      reports: [structuredClone(report)],
+      logs: []
+    }].sort((left, right) => left.day - right.day);
+  }
+
+  return history.map(entry => {
+    if (entry.day !== targetDay) return entry;
+    const reportIndex = entry.reports.findIndex(item => item.missionId === report.missionId);
+    const reports = reportIndex >= 0
+      ? entry.reports.map((item, index) => index === reportIndex ? structuredClone(report) : item)
+      : [...entry.reports, structuredClone(report)];
+    return {
+      ...entry,
+      contractsCount: Math.max(entry.contractsCount, reports.length),
+      reports
+    };
+  });
+}
+
 function missionDefinitionId(mission: Mission): string {
   return mission.definitionId ?? mission.id;
 }
@@ -49,22 +78,30 @@ function scheduleRecurrence(
   if (!queue.some(item => item.definitionId === definitionId && item.occurrenceIndex === scheduled.occurrenceIndex)) queue.push(scheduled);
 }
 
+function getQuotaReferencedIds(allMissions: Mission[]): Set<string> {
+  return new Set(allMissions.flatMap(mission => [
+    ...(mission.prerequisiteMissionIds ?? []),
+    ...(mission.unlocksMissionIds ?? [])
+  ]));
+}
+
+function isSafeQuotaFiller(mission: Mission, referencedIds: Set<string>): boolean {
+  if (mission.type !== 'OPERATION' && mission.type !== 'DUMMY') return false;
+  if (mission.definitionId || mission.repeat?.enabled) return false;
+  if ((mission.chainIds?.length ?? 0) > 0 || (mission.prerequisiteMissionIds?.length ?? 0) > 0) return false;
+  if (referencedIds.has(mission.id) || (mission.rewardSpecialItems?.length ?? 0) > 0) return false;
+  return true;
+}
+
 function selectDailyQuota(candidates: Mission[], allMissions: Mission[], activeClanCount?: number): { selected: Mission[]; skipped: Mission[] } {
   if (activeClanCount === undefined) return { selected: candidates, skipped: [] };
   const target = Math.max(0, activeClanCount * 2);
   const excess = Math.max(0, candidates.length - target);
   if (excess === 0) return { selected: candidates, skipped: [] };
-  const referencedIds = new Set(allMissions.flatMap(mission => [
-    ...(mission.prerequisiteMissionIds ?? []),
-    ...(mission.unlocksMissionIds ?? [])
-  ]));
-  const removable = candidates.filter(mission => {
-    if (mission.type !== 'OPERATION' && mission.type !== 'DUMMY') return false;
-    if (mission.definitionId || mission.repeat?.enabled) return false;
-    if ((mission.chainIds?.length ?? 0) > 0 || (mission.prerequisiteMissionIds?.length ?? 0) > 0) return false;
-    if (referencedIds.has(mission.id) || (mission.rewardSpecialItems?.length ?? 0) > 0) return false;
-    return true;
-  }).sort((left, right) => (left.quotaPriority ?? 0) - (right.quotaPriority ?? 0));
+  const referencedIds = getQuotaReferencedIds(allMissions);
+  const removable = candidates
+    .filter(mission => isSafeQuotaFiller(mission, referencedIds))
+    .sort((left, right) => (left.quotaPriority ?? 0) - (right.quotaPriority ?? 0));
   const dummies = removable.filter(mission => mission.type === 'DUMMY');
   const operations = removable.filter(mission => mission.type === 'OPERATION');
   const dummyGoal = Math.floor(excess / 10);
@@ -75,6 +112,40 @@ function selectDailyQuota(candidates: Mission[], allMissions: Mission[], activeC
   }
   const skippedIds = new Set(skipped.map(mission => mission.id));
   return { selected: candidates.filter(mission => !skippedIds.has(mission.id)), skipped };
+}
+
+function fillQuotaFromFuture(
+  candidates: Mission[],
+  allMissions: Mission[],
+  unavailableIds: Set<string>,
+  activeClanCount: number | undefined,
+  day: number
+): Mission[] {
+  if (activeClanCount === undefined) return candidates;
+  const deficit = Math.max(0, activeClanCount * 2) - candidates.length;
+  if (deficit <= 0) return candidates;
+  const candidateIds = new Set(candidates.map(mission => mission.id));
+  const referencedIds = getQuotaReferencedIds(allMissions);
+  const fillers = allMissions
+    .filter(mission => !unavailableIds.has(mission.id) && !candidateIds.has(mission.id))
+    .filter(mission => (mission.startDay ?? 1) > day)
+    .filter(mission => isSafeQuotaFiller(mission, referencedIds))
+    .sort((left, right) =>
+      (left.startDay ?? 1) - (right.startDay ?? 1)
+      || (right.quotaPriority ?? 0) - (left.quotaPriority ?? 0)
+      || left.title.localeCompare(right.title, 'ru')
+    )
+    .slice(0, deficit)
+    .map(mission => structuredClone(mission));
+  return [...candidates, ...fillers];
+}
+
+export function selectInitialScenarioMissions(allMissions: Mission[], activeClanCount: number): Mission[] {
+  const candidates = allMissions
+    .filter(mission => (mission.startDay ?? 1) <= 1 && (mission.prerequisiteMissionIds ?? []).length === 0)
+    .map(mission => structuredClone(mission));
+  const filled = fillQuotaFromFuture(candidates, allMissions, new Set(), activeClanCount, 1);
+  return selectDailyQuota(filled, allMissions, activeClanCount).selected;
 }
 
 function reportCompletesObjective(report: SimulationReport): boolean {
@@ -417,7 +488,14 @@ export function advanceMissionLifecycle(input: MissionLifecycleInput): MissionLi
     });
     recurrenceMissionKeys.set(occurrenceId, `${recurrence.definitionId}:${recurrence.occurrenceIndex}`);
   });
-  const quota = selectDailyQuota(candidates, allMissions, input.activeClanCount);
+  const unavailableIds = new Set([
+    ...activeIds,
+    ...completedMissionIds,
+    ...closedMissionIds,
+    ...expiredMissionIds
+  ]);
+  const filledCandidates = fillQuotaFromFuture(candidates, allMissions, unavailableIds, input.activeClanCount, input.nextDay);
+  const quota = selectDailyQuota(filledCandidates, allMissions, input.activeClanCount);
   quota.selected.forEach(mission => {
     missions.push(mission);
     activeIds.add(mission.id);
