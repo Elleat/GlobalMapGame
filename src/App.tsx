@@ -60,6 +60,7 @@ import RecruitModal from './components/RecruitModal';
 import AdventurerDetailModal from './components/AdventurerDetailModal';
 import ClanDossierModal from './components/ClanDossierModal';
 import ResourceStoreModal from './components/ResourceStoreModal';
+import HelpModal from './components/HelpModal';
 
 const AdventurerEditor = lazy(() => import('./components/AdventurerEditor'));
 const EventEditor = lazy(() => import('./components/EventEditor'));
@@ -86,6 +87,7 @@ export default function App() {
 
   // Modals view toggles
   const [isGmOpen, setIsGmOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isMissionOpen, setIsMissionOpen] = useState(false);
   const [isRecruitOpen, setIsRecruitOpen] = useState(false);
   const [selectedAdvId, setSelectedAdvId] = useState<string | null>(null);
@@ -260,6 +262,7 @@ export default function App() {
   // Payout of resources and budget override
   const handleHealAll = () => {
     const updatedAdvs = state.adventurers.map(a => {
+      if (a.isArchived) return a;
       if (a.status !== 'DEAD') {
         return {
           ...a,
@@ -413,6 +416,28 @@ export default function App() {
       return a;
     });
     updateState({ adventurers: updated });
+  };
+
+  const handleArchiveAdventurer = (advId: string) => {
+    const adventurer = state.adventurers.find(item => item.id === advId);
+    if (!adventurer || adventurer.isArchived) return;
+    updateState({
+      adventurers: state.adventurers.map(item => item.id === advId
+        ? { ...item, isArchived: true, archivedOnDay: state.day }
+        : item),
+      contracts: state.contracts.map(contract => ({
+        ...contract,
+        partyAdvIds: contract.partyAdvIds.filter(id => id !== advId),
+        suggestedSquadAdvIds: contract.suggestedSquadAdvIds?.filter(id => id !== advId),
+        actualSquadAdvIds: contract.actualSquadAdvIds?.filter(id => id !== advId)
+      })),
+      missions: state.missions.map(mission => ({
+        ...mission,
+        suggestedSquadAdvIds: mission.suggestedSquadAdvIds?.filter(id => id !== advId)
+      }))
+    });
+    setSelectedAdvId(null);
+    showToast(`Авантюрист «${adventurer.name}» удалён из активной игры и сохранён в архиве рапортов.`);
   };
 
   const handleUpdateClan = (updatedClan: Clan) => {
@@ -666,6 +691,7 @@ export default function App() {
             </div>
 
             {/* Overlord Settings gear button */}
+            <button type="button" onClick={() => setIsHelpOpen(true)} className="p-1.5 bg-[#121212] hover:bg-[#222] border border-emerald-500/20 text-emerald-400 rounded transition-all" title="Справка и управление"><HelpCircle className="w-4 h-4" /></button>
             {state.isDmMode && (
               <button
                 onClick={() => setIsGmOpen(true)}
@@ -680,6 +706,7 @@ export default function App() {
 
         </div>
       </header>}
+      {isHelpOpen && <HelpModal onClose={() => setIsHelpOpen(false)} />}
 
       {/* Game workspace tabs */}
       {mainSection === 'GAME' && <nav className="border-b border-emerald-500/10 bg-black/40 py-2.5 z-40">
@@ -696,7 +723,7 @@ export default function App() {
             onClick={() => setActiveTab('PHASES')}
             className={`px-4 py-2 rounded-md cursor-pointer transition-all ${activeTab === 'PHASES' ? 'bg-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.35)]' : 'bg-transparent text-neutral-400 hover:bg-[#111] hover:text-neutral-200'}`}
           >
-            📋 Контракты ({state.contracts.length})
+            📋 Контракты ({state.contracts.filter(contract => !contract.simulationReport).length})
           </button>
 
           <button
@@ -710,7 +737,7 @@ export default function App() {
             onClick={() => setActiveTab('ADVENTURERS')}
             className={`px-4 py-2 rounded-md cursor-pointer transition-all ${activeTab === 'ADVENTURERS' ? 'bg-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(0,255,102,0.35)]' : 'bg-transparent text-neutral-400 hover:bg-[#111] hover:text-neutral-200'}`}
           >
-            ⚔️ Приключенцы ({state.adventurers.length})
+            ⚔️ Приключенцы ({state.adventurers.filter(adventurer => !adventurer.isArchived).length})
           </button>
 
           <button
@@ -747,11 +774,12 @@ export default function App() {
             showToast={showToast}
             onOpenStore={(id) => setStoreClanId(id)}
             onRedirectToReports={() => setActiveTab('RESULTS')}
+            onSelectAdventurer={(id) => setSelectedAdvId(id)}
           />
         )}
 
         {mainSection === 'GAME' && activeTab === 'RESULTS' && (
-          <ResultsTab state={state} updateState={updateState} showToast={showToast} />
+          <ResultsTab state={state} updateState={updateState} showToast={showToast} onSelectAdventurer={(id) => setSelectedAdvId(id)} />
         )}
 
         {mainSection === 'GAME' && activeTab === 'ADVENTURERS' && (
@@ -848,6 +876,7 @@ export default function App() {
         onHeal={handleHealSingle}
         onAdjustReputation={handleAdjustReputation}
         onUpdateAdventurer={handleUpdateAdventurer}
+        onArchiveAdventurer={handleArchiveAdventurer}
       />
 
       {/* Clan Dossier and GM Resource Editor Modal */}

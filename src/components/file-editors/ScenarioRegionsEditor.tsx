@@ -1,6 +1,6 @@
 import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
 import type { MapRegion } from '../../types';
-import { createMapRegion, getRegionCenter, hasSelfIntersection } from '../../domain/mapRegions';
+import { createMapRegion, getFogOpacity, getRegionCenter, hasSelfIntersection } from '../../domain/mapRegions';
 
 interface ScenarioRegionsEditorProps {
   regions: MapRegion[];
@@ -34,13 +34,14 @@ export default function ScenarioRegionsEditor({ regions, onChange }: ScenarioReg
               <Toggle label="Туман" checked={region.fog.enabled} onChange={enabled => patchRegion(region.id, { fog: { ...region.fog, enabled } })} />
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <NumberField label="Заливка 0–0.8" value={region.fillOpacity} min={0} max={0.8} step={0.05} onChange={fillOpacity => patchRegion(region.id, { fillOpacity })} />
               <NumberField label="Граница 0–1" value={region.borderOpacity} min={0} max={1} step={0.05} onChange={borderOpacity => patchRegion(region.id, { borderOpacity })} />
               <NumberField label="Подпись X" value={region.labelPosition.x} min={0} max={100} onChange={x => patchRegion(region.id, { labelPosition: { ...region.labelPosition, x } })} />
               <NumberField label="Подпись Y" value={region.labelPosition.y} min={0} max={100} onChange={y => patchRegion(region.id, { labelPosition: { ...region.labelPosition, y } })} />
-              <Field label="Плотность тумана"><select value={region.fog.density} onChange={event => patchRegion(region.id, { fog: { ...region.fog, density: event.target.value as MapRegion['fog']['density'] } })} className="editor-input"><option value="LOW">Слабый</option><option value="MEDIUM">Средний</option><option value="DENSE">Плотный</option></select></Field>
+              <Field label="Плотность тумана"><select value={region.fog.density} onChange={event => { const density = event.target.value as MapRegion['fog']['density']; patchRegion(region.id, { fog: { ...region.fog, density, opacity: getFogOpacity(density) } }); }} className="editor-input"><option value="LOW">Слабый</option><option value="MEDIUM">Средний</option><option value="DENSE">Плотный</option></select></Field>
               <Field label="Скорость тумана"><select value={region.fog.speed} onChange={event => patchRegion(region.id, { fog: { ...region.fog, speed: event.target.value as MapRegion['fog']['speed'] } })} className="editor-input"><option value="SLOW">Медленно</option><option value="NORMAL">Обычно</option><option value="FAST">Быстро</option></select></Field>
+              <NumberField label="Прозрачность тумана" value={region.fog.opacity ?? getFogOpacity(region.fog.density)} min={0} max={1} step={0.01} onChange={opacity => patchRegion(region.id, { fog: { ...region.fog, opacity } })} />
             </div>
 
             <div>

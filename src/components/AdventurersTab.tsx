@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Search, UserPlus, Shield, Heart, Award, Eye, UserCheck } from 'lucide-react';
+import { Search, UserPlus, Shield, Heart, Award, Eye, UserCheck, Archive } from 'lucide-react';
 import { GameState, Adventurer, AdventurerStatus } from '../types';
 import { getAdvClassIcon, getStatusNameRu, calculateMaxHp } from '../utils';
 
@@ -15,6 +15,9 @@ interface AdventurersTabProps {
   showToast: (msg: string, isError?: boolean) => void;
 }
 
+type AdventurerSortKey = 'name' | 'level' | 'hp' | 'status' | 'missions';
+type SortDirection = 'asc' | 'desc';
+
 export default function AdventurersTab({
   state,
   onOpenRecruit,
@@ -24,8 +27,10 @@ export default function AdventurersTab({
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sortKey, setSortKey] = useState<AdventurerSortKey>('level');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const adventurers = state.adventurers || [];
+  const adventurers = (state.adventurers || []).filter(adventurer => !adventurer.isArchived);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -38,13 +43,35 @@ export default function AdventurersTab({
     return matchesSearch && matchesClass && matchesStatus;
   });
 
-  const livingAdvs = filteredAdvs.filter(a => a.status !== 'DEAD');
-  const deadAdvs = filteredAdvs.filter(a => a.status === 'DEAD');
+  const statusOrder: Record<AdventurerStatus, number> = { READY: 0, ON_MISSION: 1, WOUNDED: 2, DEAD: 3 };
+  const sortedAdvs = [...filteredAdvs].sort((left, right) => {
+    let comparison = 0;
+    if (sortKey === 'name') comparison = left.name.localeCompare(right.name, 'ru');
+    if (sortKey === 'level') comparison = left.level - right.level;
+    if (sortKey === 'hp') comparison = left.hp - right.hp || left.maxHp - right.maxHp;
+    if (sortKey === 'status') comparison = statusOrder[left.status] - statusOrder[right.status];
+    if (sortKey === 'missions') comparison = left.totalMissions - right.totalMissions || left.successfulMissions - right.successfulMissions;
+    if (comparison === 0 && sortKey !== 'name') return left.name.localeCompare(right.name, 'ru');
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const livingAdvs = sortedAdvs.filter(a => a.status !== 'DEAD');
+  const deadAdvs = sortedAdvs.filter(a => a.status === 'DEAD');
 
   const players = livingAdvs.filter(a => a.isPlayer);
-  const npcs = livingAdvs.filter(a => !a.isPlayer);
+  const npcs = livingAdvs.filter(a => !a.isPlayer && !a.isRosterReserve);
+  const reserveNpcs = livingAdvs.filter(a => !a.isPlayer && a.isRosterReserve);
 
   const classesList = Array.from(new Set(adventurers.map(a => a.class)));
+
+  const handleSort = (nextKey: AdventurerSortKey) => {
+    if (nextKey === sortKey) {
+      setSortDirection(direction => direction === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    setSortKey(nextKey);
+    setSortDirection(nextKey === 'name' || nextKey === 'status' ? 'asc' : 'desc');
+  };
 
   const renderAdventurerRow = (adv: Adventurer) => {
     const classIcon = getAdvClassIcon(adv.class);
@@ -91,8 +118,8 @@ export default function AdventurersTab({
 
         {/* Status Badge */}
         <td className="py-3 px-4 text-center">
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${adv.status === 'READY' ? 'bg-emerald-950/25 border border-emerald-500 text-emerald-400' : adv.status === 'WOUNDED' ? 'bg-rose-950/20 border border-rose-500 text-rose-400 animate-pulse' : adv.status === 'ON_MISSION' ? 'bg-amber-950/20 border border-amber-500 text-amber-500' : 'bg-neutral-900 border border-neutral-700 text-neutral-500'}`}>
-            {getStatusNameRu(adv.status)}
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${adv.isRosterReserve ? 'bg-sky-950/20 border border-sky-700 text-sky-400' : adv.status === 'READY' ? 'bg-emerald-950/25 border border-emerald-500 text-emerald-400' : adv.status === 'WOUNDED' ? 'bg-rose-950/20 border border-rose-500 text-rose-400 animate-pulse' : adv.status === 'ON_MISSION' ? 'bg-amber-950/20 border border-amber-500 text-amber-500' : 'bg-neutral-900 border border-neutral-700 text-neutral-500'}`}>
+            {adv.isRosterReserve ? 'Резерв' : getStatusNameRu(adv.status)}
           </span>
         </td>
 
@@ -204,16 +231,7 @@ export default function AdventurersTab({
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] text-left border-collapse">
-              <thead>
-                <tr className="border-b border-amber-500/10 font-mono text-[10px] text-neutral-400 uppercase tracking-wider bg-black/40">
-                  <th className="py-2.5 px-4 font-semibold">Имя & Класс</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Уровень</th>
-                  <th className="py-2.5 px-4 font-semibold">HP Здоровье</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Статус</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Экспедиции (Успехи/Всего)</th>
-                  <th className="py-2.5 px-4 text-right font-semibold">Действие</th>
-                </tr>
-              </thead>
+              <RosterTableHead accent="amber" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
               <tbody>
                 {players.length === 0 ? (
                   <tr>
@@ -239,16 +257,7 @@ export default function AdventurersTab({
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] text-left border-collapse">
-              <thead>
-                <tr className="border-b border-emerald-500/5 font-mono text-[10px] text-neutral-400 uppercase tracking-wider bg-black/40">
-                  <th className="py-2.5 px-4 font-semibold">Имя & Класс</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Уровень</th>
-                  <th className="py-2.5 px-4 font-semibold">HP Здоровье</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Статус</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Экспедиции (Успехи/Всего)</th>
-                  <th className="py-2.5 px-4 text-right font-semibold">Действие</th>
-                </tr>
-              </thead>
+              <RosterTableHead accent="emerald" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
               <tbody>
                 {npcs.length === 0 ? (
                   <tr>
@@ -264,6 +273,21 @@ export default function AdventurersTab({
           </div>
         </div>
 
+        {state.isDmMode && reserveNpcs.length > 0 && <div className="bg-[#0d0d0d] border border-sky-500/15 rounded-lg overflow-hidden shadow-md">
+          <div className="px-5 py-3 border-b border-sky-500/10 bg-sky-500/5 flex items-center justify-between gap-3">
+            <h3 className="text-sky-400 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Archive className="w-4 h-4" /> Резерв кампании ({reserveNpcs.length})
+            </h3>
+            <span className="text-[10px] text-neutral-500 font-mono">Вернутся на рынок при увеличении числа активных кланов</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] text-left border-collapse">
+              <RosterTableHead accent="emerald" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
+              <tbody>{reserveNpcs.map(renderAdventurerRow)}</tbody>
+            </table>
+          </div>
+        </div>}
+
         {/* Roster Part 3: Memorial of Fallen Heroes (Dead Adventurers) */}
         <div className="bg-[#0d0d0d] border border-rose-500/20 rounded-lg overflow-hidden shadow-md">
           <div className="px-5 py-3 border-b border-rose-500/20 bg-rose-950/20 flex justify-between items-center">
@@ -278,16 +302,7 @@ export default function AdventurersTab({
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[600px] text-left border-collapse">
-              <thead>
-                <tr className="border-b border-rose-500/10 font-mono text-[10px] text-neutral-500 uppercase tracking-wider bg-black/40">
-                  <th className="py-2.5 px-4 font-semibold">Имя & Класс</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Уровень</th>
-                  <th className="py-2.5 px-4 font-semibold">HP Здоровье</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Статус</th>
-                  <th className="py-2.5 px-4 text-center font-semibold">Экспедиции (Успехи/Всего)</th>
-                  <th className="py-2.5 px-4 text-right font-semibold">Действие</th>
-                </tr>
-              </thead>
+              <RosterTableHead accent="rose" sortKey={sortKey} sortDirection={sortDirection} onSort={handleSort} />
               <tbody>
                 {deadAdvs.length === 0 ? (
                   <tr>
@@ -306,5 +321,38 @@ export default function AdventurersTab({
       </div>
 
     </div>
+  );
+}
+
+function RosterTableHead({
+  accent,
+  sortKey,
+  sortDirection,
+  onSort
+}: {
+  accent: 'amber' | 'emerald' | 'rose';
+  sortKey: AdventurerSortKey;
+  sortDirection: SortDirection;
+  onSort: (key: AdventurerSortKey) => void;
+}) {
+  const borderClass = accent === 'amber' ? 'border-amber-500/10' : accent === 'rose' ? 'border-rose-500/10' : 'border-emerald-500/5';
+  const header = (key: AdventurerSortKey, label: string, alignment = 'text-left') => (
+    <th className={`px-4 py-2.5 font-semibold ${alignment}`}>
+      <button type="button" onClick={() => onSort(key)} className={`inline-flex items-center gap-1 transition hover:text-emerald-300 ${sortKey === key ? 'text-emerald-400' : ''}`} title={`Сортировать: ${label}`}>
+        {label}<span aria-hidden="true">{sortKey === key ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
+      </button>
+    </th>
+  );
+  return (
+    <thead>
+      <tr className={`border-b ${borderClass} bg-black/40 font-mono text-[10px] uppercase tracking-wider text-neutral-400`}>
+        {header('name', 'Имя & Класс')}
+        {header('level', 'Уровень', 'text-center')}
+        {header('hp', 'HP Здоровье')}
+        {header('status', 'Статус', 'text-center')}
+        {header('missions', 'Экспедиции (Успехи/Всего)', 'text-center')}
+        <th className="px-4 py-2.5 text-right font-semibold">Действие</th>
+      </tr>
+    </thead>
   );
 }

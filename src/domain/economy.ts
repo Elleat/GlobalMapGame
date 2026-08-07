@@ -5,8 +5,7 @@ import {
   MAX_RELATION,
   MIN_RELATION,
   RELATION_VALUE_PER_POINT_H,
-  RESOURCE_COST_MULTIPLIERS,
-  TRUST_PAYMENT_LIMIT_H
+  RESOURCE_COST_MULTIPLIERS
 } from './constants';
 
 export function clampRelation(value: number): number {
@@ -71,12 +70,6 @@ export function getContractPerceivedValue(
     + getRelationBonus(adventurer, contract.clanId, hCost);
 }
 
-export function getTrustPaymentLimit(clan: Clan, hCost: number): number {
-  const trust = Math.max(1, Math.min(3, clan.trustLevel || 1));
-  return TRUST_PAYMENT_LIMIT_H[trust] * hCost;
-}
-
 export function getGuildDailyFunding(clansCount: number, hCost: number): number {
   return Math.max(0, clansCount) * Math.max(0, hCost) * GUILD_DAILY_FUNDING_PER_CLAN_H;
 }
-

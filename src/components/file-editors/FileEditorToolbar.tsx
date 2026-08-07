@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, FileJson, FolderOpen, Plus } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Download, FileJson, FolderOpen, Plus } from 'lucide-react';
 import { useRef } from 'react';
 
 interface FileEditorToolbarProps {
@@ -12,6 +12,10 @@ interface FileEditorToolbarProps {
   onNew: () => void;
   onOpen: (file: File) => void;
   onDownload: () => void;
+  openLabel?: string;
+  downloadLabel?: string;
+  onDownloadBundle?: () => void | Promise<void>;
+  onHelp?: () => void;
 }
 
 export default function FileEditorToolbar({
@@ -24,7 +28,11 @@ export default function FileEditorToolbar({
   onBack,
   onNew,
   onOpen,
-  onDownload
+  onDownload,
+  openLabel = 'Открыть JSON',
+  downloadLabel = 'Скачать JSON',
+  onDownloadBundle,
+  onHelp
 }: FileEditorToolbarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -56,11 +64,13 @@ export default function FileEditorToolbar({
             <Plus className="h-3.5 w-3.5" /> Новый
           </button>
           <button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-1.5 rounded border border-neutral-800 px-3 py-2 font-mono text-[10px] uppercase text-neutral-400 transition hover:border-emerald-500/50 hover:text-emerald-300">
-            <FolderOpen className="h-3.5 w-3.5" /> Открыть JSON
+            <FolderOpen className="h-3.5 w-3.5" /> {openLabel}
           </button>
           <button type="button" onClick={onDownload} className="flex items-center gap-1.5 rounded border border-emerald-500 bg-emerald-500 px-3 py-2 font-mono text-[10px] font-bold uppercase text-black transition hover:bg-emerald-400">
-            <Download className="h-3.5 w-3.5" /> Скачать JSON
+            <Download className="h-3.5 w-3.5" /> {downloadLabel}
           </button>
+          {onDownloadBundle && <button type="button" onClick={() => void onDownloadBundle()} className="flex items-center gap-1.5 rounded border border-amber-500/60 bg-amber-500/10 px-3 py-2 font-mono text-[10px] font-bold uppercase text-amber-300 transition hover:bg-amber-500/20"><Download className="h-3.5 w-3.5" /> Скачать .globalmap</button>}
+          {onHelp && <button type="button" onClick={onHelp} className="flex items-center gap-1.5 rounded border border-neutral-800 px-3 py-2 font-mono text-[10px] uppercase text-neutral-400 transition hover:border-emerald-500/50 hover:text-emerald-300" title="Управление и горячие клавиши"><CircleHelp className="h-3.5 w-3.5" /> Справка</button>}
           <input
             ref={inputRef}
             type="file"
@@ -82,4 +92,3 @@ export default function FileEditorToolbar({
     </div>
   );
 }
-

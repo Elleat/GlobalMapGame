@@ -6,9 +6,10 @@
 import { Clan, Adventurer, Mission, MissionType, Contract, BasicResourceKey, MissionCheck, MissionResourceKey } from './types';
 import defaultClansJson from './data/default-clans.json';
 import defaultAdventurersJson from './data/default-adventurers.json';
+import { applyNpcRosterCapacity, getStartingMissionHistory, getStartingNpcLevel, NPCS_PER_ACTIVE_CLAN } from './domain/adventurers';
 
 const DEFAULT_CLAN_DATA = defaultClansJson as Clan[];
-const DEFAULT_ADVENTURER_DATA = defaultAdventurersJson as Adventurer[];
+const DEFAULT_ADVENTURER_DATA = (defaultAdventurersJson as { adventurers: Adventurer[] }).adventurers;
 
 export const DEFAULT_CLANS: Clan[] = structuredClone(DEFAULT_CLAN_DATA);
 export const GUILD_CLAN: Clan = structuredClone(
@@ -136,12 +137,18 @@ export function chooseRandomStageResource(
 export function generateRandomMission(
   id: string,
   startDay: number,
-  polygon: { x: number; y: number }[] = DEFAULT_SPAWN_POLYGON
+  polygon: { x: number; y: number }[] = DEFAULT_SPAWN_POLYGON,
+  forcedType?: 'OPERATION' | 'DUMMY'
 ): Mission {
   const pt = getRandomPointInSpawnPolygon(polygon);
-  const template = DEFAULT_EVENT_TEMPLATES[Math.floor(Math.random() * DEFAULT_EVENT_TEMPLATES.length)];
+  const dummyTemplates = DEFAULT_EVENT_TEMPLATES.filter(item => item.type === 'DUMMY');
+  const operationTemplates = DEFAULT_EVENT_TEMPLATES.filter(item => item.type === 'OPERATION');
+  const generatedType = forcedType ?? (Math.random() < 0.1 ? 'DUMMY' : 'OPERATION');
+  const pool = generatedType === 'DUMMY' ? dummyTemplates : operationTemplates;
+  const template = pool[Math.floor(Math.random() * pool.length)];
 
   if (template.type === 'DUMMY') {
+    const lifespan = Math.floor(Math.random() * 3) + 2;
     return {
       id,
       title: template.title,
@@ -149,12 +156,13 @@ export function generateRandomMission(
       reqResource: 'None',
       dc: 0,
       type: 'DUMMY',
-      lifespan: Math.floor(Math.random() * 3) + 2,
-      maxLifespan: 4,
+      lifespan,
+      maxLifespan: lifespan,
       startDay,
       x: pt.x,
       y: pt.y,
-      region: template.region,
+      region: 'ВНЕ РЕГИОНОВ',
+      regionMode: 'AUTO',
       checks: [],
       successText: template.successText,
       failText: template.failText,
@@ -184,10 +192,12 @@ export function generateRandomMission(
     // Every ordinary stage independently has a 20% chance to have no key
     // resource. The other 80% are distributed between the four resources.
     const res = chooseRandomStageResource(shuffledRes[s % shuffledRes.length]);
-    const dc = 10 + Math.floor(Math.random() * 6); // DC 10..15
+    const difficultyRoll = Math.random();
+    const dc = difficultyRoll < 0.45 ? 8 : difficultyRoll < 0.85 ? 12 : difficultyRoll < 0.98 ? 16 : 20;
     checks.push({ reqResource: res, dc });
   }
 
+  const lifespan = Math.floor(Math.random() * 3) + 2;
   return {
     id,
     title: template.title,
@@ -195,13 +205,15 @@ export function generateRandomMission(
     reqResource: checks[0].reqResource,
     dc: checks[0].dc,
     type: 'OPERATION',
-    lifespan: Math.floor(Math.random() * 3) + 2,
-    maxLifespan: 4,
+    lifespan,
+    maxLifespan: lifespan,
     startDay,
     x: pt.x,
     y: pt.y,
-    region: template.region,
+    region: 'ВНЕ РЕГИОНОВ',
+    regionMode: 'AUTO',
     checks,
+    goldReward: undefined,
     successText: template.successText,
     failText: template.failText,
     intelRevealed: false
@@ -209,16 +221,18 @@ export function generateRandomMission(
 }
 
 export function generateMissionsForDay(
-  count: number,
+  clansCount: number,
   startDay: number,
   polygon: { x: number; y: number }[] = DEFAULT_SPAWN_POLYGON
 ): Mission[] {
   const missions: Mission[] = [];
+  const count = Math.max(0, clansCount) * 2;
+  const dummyCount = Math.round(count * 0.1);
   for (let i = 0; i < count; i++) {
     const id = `mission_day${startDay}_${Math.random().toString(36).substr(2, 6)}`;
-    missions.push(generateRandomMission(id, startDay, polygon));
+    missions.push(generateRandomMission(id, startDay, polygon, i < dummyCount ? 'DUMMY' : 'OPERATION'));
   }
-  return missions;
+  return missions.sort(() => Math.random() - 0.5);
 }
 
 export function getResourceNameRu(key: string): string {
@@ -279,7 +293,7 @@ export function calculateMaxHp(level: number): number {
 export function calculatePartyBonus(partyAdventurers: Adventurer[]): number {
   if (!partyAdventurers || partyAdventurers.length === 0) return 0;
   const sumLevels = partyAdventurers.reduce((sum, a) => sum + a.level, 0);
-  return Math.ceil(sumLevels / 4);
+  return Math.floor(sumLevels / 4);
 }
 
 export function rollD20(): number {
@@ -317,19 +331,44 @@ export function getRandomPointInSpawnPolygon(polygon: { x: number; y: number }[]
 }
 
 export function generateAdventurersForClans(clansCount: number): Adventurer[] {
-  const count = clansCount * 5;
+  const count = Math.max(0, Math.floor(clansCount)) * NPCS_PER_ACTIVE_CLAN;
   if (count <= 0 || DEFAULT_ADVENTURER_DATA.length === 0) return [];
 
   return Array.from({ length: count }, (_, index) => {
     const template = structuredClone(DEFAULT_ADVENTURER_DATA[index % DEFAULT_ADVENTURER_DATA.length]);
     const isAdditionalCopy = index >= DEFAULT_ADVENTURER_DATA.length;
+    const level = getStartingNpcLevel(index);
+    const missionHistory = getStartingMissionHistory(level);
     return {
       ...template,
       id: isAdditionalCopy ? `adv_${index + 1}` : template.id,
       name: isAdditionalCopy ? `${template.name} ${Math.floor(index / DEFAULT_ADVENTURER_DATA.length) + 1}` : template.name,
-      relations: { ...template.relations }
+      level,
+      hp: calculateMaxHp(level),
+      maxHp: calculateMaxHp(level),
+      successfulMissions: missionHistory,
+      totalMissions: missionHistory,
+      relations: {},
+      rosterCohort: Math.floor(index / NPCS_PER_ACTIVE_CLAN) + 1,
+      isRosterReserve: false
     };
   });
+}
+
+export function ensureAdventurerRosterForClans(adventurers: Adventurer[], activeClanCount: number): Adventurer[] {
+  const managedNpcCount = adventurers.filter(adventurer => !adventurer.isPlayer && adventurer.rosterCohort !== undefined).length;
+  const requiredNpcCount = Math.max(0, Math.floor(activeClanCount)) * NPCS_PER_ACTIVE_CLAN;
+  if (managedNpcCount === 0 || managedNpcCount >= requiredNpcCount) {
+    return applyNpcRosterCapacity(adventurers, activeClanCount);
+  }
+
+  const existingIds = new Set(adventurers.map(adventurer => adventurer.id));
+  const missingCount = requiredNpcCount - managedNpcCount;
+  const additions = generateAdventurersForClans(activeClanCount)
+    .filter(adventurer => !existingIds.has(adventurer.id))
+    .slice(0, missingCount);
+
+  return applyNpcRosterCapacity([...adventurers, ...additions], activeClanCount);
 }
 
 /**

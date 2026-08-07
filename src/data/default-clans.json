@@ -47,5 +47,103 @@
     "trustLevel": 1,
     "gold": 100,
     "resources": { "Supplies": 2, "Equipment": 2, "Intelligence": 4, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_7",
+    "name": "Клан Белый Олень",
+    "trustLevel": 1,
+    "gold": 120,
+    "resources": { "Supplies": 3, "Equipment": 2, "Intelligence": 2, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_8",
+    "name": "Клан Багровая Башня",
+    "trustLevel": 2,
+    "gold": 180,
+    "resources": { "Supplies": 2, "Equipment": 4, "Intelligence": 1, "Alchemy": 2, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_9",
+    "name": "Клан Лунная Сова",
+    "trustLevel": 1,
+    "gold": 130,
+    "resources": { "Supplies": 2, "Equipment": 2, "Intelligence": 4, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_10",
+    "name": "Клан Медный Грифон",
+    "trustLevel": 2,
+    "gold": 210,
+    "resources": { "Supplies": 4, "Equipment": 4, "Intelligence": 2, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_11",
+    "name": "Клан Пепельный Лис",
+    "trustLevel": 1,
+    "gold": 110,
+    "resources": { "Supplies": 3, "Equipment": 2, "Intelligence": 3, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_12",
+    "name": "Клан Синий Феникс",
+    "trustLevel": 3,
+    "gold": 320,
+    "resources": { "Supplies": 5, "Equipment": 4, "Intelligence": 4, "Alchemy": 3, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_13",
+    "name": "Клан Каменный Медведь",
+    "trustLevel": 1,
+    "gold": 140,
+    "resources": { "Supplies": 4, "Equipment": 4, "Intelligence": 1, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_14",
+    "name": "Клан Янтарная Змея",
+    "trustLevel": 2,
+    "gold": 190,
+    "resources": { "Supplies": 2, "Equipment": 3, "Intelligence": 3, "Alchemy": 2, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_15",
+    "name": "Клан Грозовой Баран",
+    "trustLevel": 1,
+    "gold": 125,
+    "resources": { "Supplies": 3, "Equipment": 4, "Intelligence": 1, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_16",
+    "name": "Клан Чёрная Чайка",
+    "trustLevel": 2,
+    "gold": 175,
+    "resources": { "Supplies": 4, "Equipment": 2, "Intelligence": 3, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_17",
+    "name": "Клан Серый Тур",
+    "trustLevel": 1,
+    "gold": 115,
+    "resources": { "Supplies": 4, "Equipment": 3, "Intelligence": 1, "Alchemy": 0, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_18",
+    "name": "Клан Зелёный Василиск",
+    "trustLevel": 2,
+    "gold": 205,
+    "resources": { "Supplies": 3, "Equipment": 3, "Intelligence": 2, "Alchemy": 3, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_19",
+    "name": "Клан Алый Сокол",
+    "trustLevel": 1,
+    "gold": 135,
+    "resources": { "Supplies": 3, "Equipment": 3, "Intelligence": 3, "Alchemy": 1, "AncientText": "", "specialItems": [] }
+  },
+  {
+    "id": "clan_20",
+    "name": "Клан Полярная Звезда",
+    "trustLevel": 3,
+    "gold": 300,
+    "resources": { "Supplies": 5, "Equipment": 5, "Intelligence": 4, "Alchemy": 2, "AncientText": "", "specialItems": [] }
   }
 ]

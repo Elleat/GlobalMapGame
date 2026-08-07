@@ -3,6 +3,7 @@ import type {
   ComplicationSettings,
   Mission,
   Contract,
+  MissionComplicationSlot,
   MissionCheck,
   MissionResourceKey
 } from '../types';
@@ -31,6 +32,7 @@ export function getMissionUrgency(mission: Mission): number {
 }
 
 export function getMissionChecks(mission: Mission): MissionCheck[] {
+  if (mission.type === 'DUMMY') return [];
   if (mission.checks?.length) return mission.checks;
   return [{
     reqResource: mission.reqResource,
@@ -39,6 +41,12 @@ export function getMissionChecks(mission: Mission): MissionCheck[] {
     // properties of individual stages.
     requiredSpecialItem: mission.requiredSpecialItem
   }];
+}
+
+export function getMissionGoldReward(mission: Mission, hCost: number): number {
+  if (mission.type === 'DUMMY') return 0;
+  if (mission.goldReward !== undefined) return Math.max(0, mission.goldReward);
+  return getMissionChecks(mission).length * Math.max(0, hCost);
 }
 
 export function getMissionComplicationSettings(mission: Mission): ComplicationSettings {
@@ -53,6 +61,54 @@ export function getComplicationSlots(mission: Mission): number {
 
 export function getComplicationDc(mission: Mission): number {
   return getMissionComplicationSettings(mission).baseDc + getMissionChecks(mission).length;
+}
+
+export function createDefaultComplicationSlots(mission: Mission): MissionComplicationSlot[] {
+  const checksCount = getMissionChecks(mission).length;
+  const legacy = getMissionComplicationSettings(mission);
+  const positions = mission.type === 'DUMMY'
+    ? [0, 1]
+    : Array.from({ length: checksCount + 1 }, (_, position) => position);
+  return positions.map(position => ({
+    id: `${mission.id}_complication_${position}`,
+    position,
+    enabled: legacy.enabled,
+    chance: legacy.chancePerSlot,
+    resourceMode: 'RANDOM',
+    resource: 'None',
+    dcMode: 'AUTO',
+    dc: legacy.baseDc + checksCount,
+    baseDc: legacy.baseDc
+  }));
+}
+
+export function getMissionComplicationSlots(mission: Mission): MissionComplicationSlot[] {
+  const defaults = createDefaultComplicationSlots(mission);
+  const configuredByPosition = new Map(
+    (mission.complicationSlots ?? []).map(slot => [slot.position, slot])
+  );
+  // The timeline follows the current number of stages. Existing per-position
+  // settings survive stage edits; new slots receive defaults and stale ones go.
+  return defaults.map(defaultSlot => {
+    const configured = configuredByPosition.get(defaultSlot.position);
+    const slot = configured ? { ...defaultSlot, ...configured, position: defaultSlot.position } : defaultSlot;
+    return {
+      ...slot,
+      enabled: slot.enabled !== false,
+      chance: Math.max(0, Math.min(1, Number(slot.chance) || 0)),
+      resourceMode: slot.resourceMode ?? 'RANDOM',
+      resource: slot.resource ?? 'None',
+      dcMode: slot.dcMode ?? 'AUTO',
+      dc: Math.max(1, Number(slot.dc) || getComplicationDc(mission)),
+      baseDc: Math.max(1, Number(slot.baseDc) || getMissionComplicationSettings(mission).baseDc)
+    };
+  });
+}
+
+export function getComplicationSlotDc(mission: Mission, slot: MissionComplicationSlot): number {
+  return slot.dcMode === 'FIXED'
+    ? Math.max(1, slot.dc)
+    : Math.max(1, slot.baseDc) + getMissionChecks(mission).length;
 }
 
 export function getComplicationPositionLabel(mission: Mission, position: number): string {

@@ -32,11 +32,17 @@ export interface Clan {
   id: string;
   name: string;
   trustLevel: number;
+  /** Campaign experience. Automatic progression applies only to player clans. */
+  experience?: number;
+  /** Level earned during the current day and activated at the next day boundary. */
+  pendingTrustLevel?: number;
   gold: number;
   resources: Resources;
   freeResourceBudget?: number;
   freeSuppliesBudget?: number;
   description?: string;
+  /** Current campaign participation. Omitted in legacy files and derived from nClans. */
+  isActive?: boolean;
 }
 
 export type AdventurerStatus = 'READY' | 'WOUNDED' | 'ON_MISSION' | 'DEAD';
@@ -55,7 +61,14 @@ export interface Adventurer {
   /** clanId -> relation score from 0 to 10 */
   relations: Record<string, number>;
   isPlayer?: boolean;
+  /** Five-NPC capacity group. Cohorts above the active clan count wait in reserve. */
+  rosterCohort?: number;
+  /** Derived campaign availability; reserve NPCs keep all progress but cannot be assigned. */
+  isRosterReserve?: boolean;
   woundedOnDay?: number;
+  /** Hidden from active play, but retained so historical reports stay reproducible. */
+  isArchived?: boolean;
+  archivedOnDay?: number;
 }
 
 export type MissionType = 'STORY' | 'OPERATION' | 'DUMMY';
@@ -79,6 +92,48 @@ export interface ComplicationSettings {
   allowMultiple: boolean;
 }
 
+export type ComplicationResourceMode = 'RANDOM' | 'FIXED';
+export type ComplicationDcMode = 'AUTO' | 'FIXED';
+
+/** One independently configured complication opportunity in the mission timeline. */
+export interface MissionComplicationSlot {
+  id: string;
+  /** 0 = outward journey, 1..checks.length = after that check / return journey. */
+  position: number;
+  enabled: boolean;
+  chance: number;
+  resourceMode: ComplicationResourceMode;
+  resource: MissionResourceKey;
+  dcMode: ComplicationDcMode;
+  dc: number;
+  baseDc: number;
+  gmDescription?: string;
+}
+
+export type MissionOutcome = 'SUCCESS' | 'OBJECTIVE_FAILED' | 'PARTY_LOST';
+export type MissionRepeatTrigger = MissionOutcome | 'EXPIRED';
+
+export interface MissionRepeatSettings {
+  enabled: boolean;
+  cooldownDays: number;
+  /** null means unlimited total appearances. */
+  maxOccurrences: number | null;
+  repeatAfter: MissionRepeatTrigger[];
+}
+
+export interface ScenarioChain {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+}
+
+export interface MissionRecurrence {
+  definitionId: string;
+  nextDay: number;
+  occurrenceIndex: number;
+}
+
 export interface Mission {
   id: string;
   title: string;
@@ -92,6 +147,8 @@ export interface Mission {
   x: number;
   y: number;
   region: string;
+  regionId?: string;
+  regionMode?: 'AUTO' | 'MANUAL';
   pinned?: boolean;
   intelRevealed?: boolean;
   /** Clan IDs that spent Intelligence to reveal this report. */
@@ -108,6 +165,14 @@ export interface Mission {
   prerequisiteMissionIds?: string[];
   prerequisiteMode?: PrerequisiteMode;
   complications?: Partial<ComplicationSettings>;
+  complicationSlots?: MissionComplicationSlot[];
+  repeat?: MissionRepeatSettings;
+  /** Base scenario mission for generated repeat occurrences. */
+  definitionId?: string;
+  occurrenceIndex?: number;
+  chainIds?: string[];
+  graphPosition?: { x: number; y: number };
+  quotaPriority?: number;
   storyStatus?: StoryMissionStatus;
   storyAcceptedDay?: number;
   storyClanId?: string | null;
@@ -199,6 +264,8 @@ export interface SimulationEffectLedger {
   resourceLedger: ResourceLedger;
   guildGoldDelta: number;
   clanGoldDeltas: Record<string, number>;
+  /** Experience awarded to client clans; optional for reports from older saves. */
+  clanExperienceDeltas?: Record<string, number>;
   awardedSpecialItems: string[];
   unlockedMissionIds: string[];
 }
@@ -208,11 +275,14 @@ export interface SimulationReportContext {
   attachedResources: BasicResourceKey[];
   contractLevel: number;
   maxPartySize: number;
+  /** Market/Guild proposal shown to the GM while choosing actual participants. */
+  suggestedSquadAdvIds?: string[];
   mission: Mission;
 }
 
 export interface SimulationReport {
   isSuccess: boolean;
+  outcome?: MissionOutcome;
   isResourceAutoSuccess: boolean;
   autoSuccessReason: string | null;
   roll: number;
@@ -226,6 +296,8 @@ export interface SimulationReport {
   rewardGranted?: boolean;
   /** Actual amount transferred; kept separate from the displayed reward. */
   rewardAwardedAmount?: number;
+  /** Special-item rewards are granted independently from the gold reward. */
+  rewardSpecialItemsGranted?: boolean;
   rewardRecipientClanId?: string | null;
   attachedResourcesUsed: string[];
   squadNames: string[];
@@ -323,6 +395,8 @@ export interface MapRegionFog {
   enabled: boolean;
   density: RegionFogDensity;
   speed: RegionFogSpeed;
+  /** Explicit video opacity. Omitted legacy values use the selected density preset. */
+  opacity?: number;
 }
 
 export interface MapRegion {
@@ -356,12 +430,15 @@ export interface ScenarioDefinition {
   clans: Clan[];
   adventurers: Adventurer[];
   missions: Mission[];
+  chains?: ScenarioChain[];
 }
 
 export interface GameState {
   schemaVersion: number;
   day: number;
   nClans: number;
+  /** Clan activity changes selected by the GM and applied on the next day. */
+  pendingClanActivity?: Record<string, boolean>;
   hCost: number;
   guildName: string;
   guildShortName: string;
@@ -383,6 +460,8 @@ export interface GameState {
   adventurers: Adventurer[];
   missions: Mission[];
   allMissions?: Mission[];
+  scenarioChains?: ScenarioChain[];
+  missionRecurrences?: MissionRecurrence[];
   contracts: Contract[];
   history: GameHistoryEntry[];
   completedMissionIds: string[];

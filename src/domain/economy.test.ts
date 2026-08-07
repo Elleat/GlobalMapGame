@@ -126,6 +126,51 @@ test('при равной оплате герой выбирает клан с �
   assert.deepEqual(result.contracts[1].partyAdvIds, [hero.id]);
 });
 
+test('NPC из резервной когорты не участвует в рыночном распределении', () => {
+  const reserve = adventurer({ isRosterReserve: true, rosterCohort: 2 });
+  const result = distributePlayerContracts({
+    adventurers: [reserve],
+    contracts: [contract()],
+    hCost: 10,
+    random: () => 0.5
+  });
+  assert.deepEqual(result.contracts[0].partyAdvIds, []);
+  assert.equal(result.report.assignedAdventurers, 0);
+});
+
+test('повторное распределение сохраняет уже назначенных NPC и заполняет только свободные места', () => {
+  const retained = adventurer({ id: 'adv-retained' });
+  const newcomer = adventurer({ id: 'adv-new' });
+  const result = distributePlayerContracts({
+    adventurers: [retained, newcomer],
+    contracts: [contract({ maxPartySize: 2, paymentAmount: 20, partyAdvIds: [retained.id] })],
+    hCost: 10,
+    random: () => 0.5
+  });
+  assert.deepEqual(result.contracts[0].partyAdvIds, [retained.id, newcomer.id]);
+  assert.equal(result.report.assignedAdventurers, 1);
+});
+
+test('архивный NPC не участвует в распределении', () => {
+  const archived = adventurer({ id: 'adv-archived', isArchived: true });
+  const result = distributePlayerContracts({ adventurers: [archived], contracts: [contract()], hCost: 10 });
+  assert.deepEqual(result.contracts[0].partyAdvIds, []);
+  assert.equal(result.report.availableAdventurers, 0);
+});
+
+test('при равной привлекательности ограниченное место получает более сильный кандидат', () => {
+  const novice = adventurer({ id: 'adv-level-1', level: 1 });
+  const veteran = adventurer({ id: 'adv-level-2', level: 2 });
+  const result = distributePlayerContracts({
+    adventurers: [novice, veteran],
+    contracts: [contract({ contractLevel: 2, paymentAmount: 20, maxPartySize: 1 })],
+    hCost: 10,
+    random: () => 0.5
+  });
+  assert.deepEqual(result.contracts[0].partyAdvIds, [veteran.id]);
+  assert.equal(result.report.unassignedAdventurers, 1);
+});
+
 test('герой не принимает контракт выше допустимого ранга или ниже минимальной оплаты', () => {
   const hero = adventurer({ level: 3 });
   const result = distributePlayerContracts({

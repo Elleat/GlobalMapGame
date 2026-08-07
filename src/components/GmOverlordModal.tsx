@@ -7,7 +7,7 @@ import React, { useRef, useState } from 'react';
 import { Shield, X, Heart, Plus, Copy, Upload, Save, RotateCw, FilePlus, Compass, Trash2, ImagePlus, FileArchive } from 'lucide-react';
 import { GameState, Mission, MissionCheck, MissionResourceKey, MissionType } from '../types';
 import { DEFAULT_GUILD_NAME, DEFAULT_MAP_URL } from '../domain/constants';
-import { clampActiveClanCount, getPlayerClans } from '../domain/clans';
+import { getPlayerClans } from '../domain/clans';
 import { parseStoredGameState } from '../domain/state';
 import { formatDataFileError, parseAdventurerDataFile, parseEventDataFile, readJsonFile } from '../domain/dataFiles';
 
@@ -163,8 +163,6 @@ export default function GmOverlordModal({
     const width = parseInt((document.getElementById('dm-input-mapwidth') as HTMLInputElement)?.value) || state.mapWidth;
     const height = parseInt((document.getElementById('dm-input-mapheight') as HTMLInputElement)?.value) || state.mapHeight;
     const day = parseInt((document.getElementById('dm-input-day') as HTMLInputElement)?.value) || state.day;
-    const requestedClanCount = parseInt((document.getElementById('dm-input-nclans') as HTMLInputElement)?.value) || state.nClans;
-    const nClans = clampActiveClanCount(state.clans, requestedClanCount);
     const hCost = parseInt((document.getElementById('dm-input-hcost') as HTMLInputElement)?.value) || state.hCost;
     const guildName = (document.getElementById('dm-input-guild-name') as HTMLInputElement)?.value.trim() || DEFAULT_GUILD_NAME;
     const mapUrlChanged = mapUrl !== state.mapBgUrl;
@@ -179,7 +177,6 @@ export default function GmOverlordModal({
       mapWidth: width,
       mapHeight: height,
       day,
-      nClans,
       hCost,
       guildName,
       guildShortName: guildName,
@@ -453,10 +450,10 @@ export default function GmOverlordModal({
                   type="number"
                   id="dm-input-nclans"
                   className="w-full bg-black border border-emerald-500/20 text-neutral-200 px-3 py-2 rounded font-mono text-sm focus:border-emerald-500 outline-none"
-                  defaultValue={state.nClans}
-                  min="1"
-                  max={Math.max(1, getPlayerClans(state.clans).length)}
+                  value={state.nClans}
+                  readOnly
                 />
+                <span className="text-[9px] text-neutral-600">Меняется на следующем дне по списку ниже.</span>
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-mono uppercase text-neutral-400">Базовый h (Золото):</label>
@@ -467,6 +464,16 @@ export default function GmOverlordModal({
                   defaultValue={state.hCost}
                   min="1"
                 />
+              </div>
+            </div>
+            <div className="mt-4 rounded border border-emerald-500/15 bg-black/30 p-3">
+              <div className="mb-2 text-[10px] font-mono uppercase text-neutral-400">Активность кланов со следующего дня</div>
+              <div className="grid max-h-44 gap-1 overflow-y-auto sm:grid-cols-2">
+                {getPlayerClans(state.clans).map(clan => {
+                  const current = clan.isActive ?? getPlayerClans(state.clans).indexOf(clan) < state.nClans;
+                  const planned = state.pendingClanActivity?.[clan.id] ?? current;
+                  return <label key={clan.id} className="flex items-center gap-2 rounded border border-neutral-800 px-2 py-1.5 text-xs text-neutral-300"><input type="checkbox" checked={planned} onChange={event => updateState({ pendingClanActivity: { ...(state.pendingClanActivity ?? {}), [clan.id]: event.target.checked } })} className="accent-emerald-500" />{clan.name}{planned !== current && <span className="text-[9px] text-amber-400">со след. дня</span>}</label>;
+                })}
               </div>
             </div>
           </div>

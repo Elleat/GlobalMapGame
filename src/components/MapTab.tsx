@@ -17,6 +17,7 @@ import { getResourceNameRu } from '../utils';
 import RegionEditorPanel from './RegionEditorPanel';
 import {
   createMapRegion,
+  findMapRegionAtPoint,
   getFogOpacity,
   getRegionClipPath
 } from '../domain/mapRegions';
@@ -63,6 +64,7 @@ export default function MapTab({
   const [isAddingRegionPoint, setIsAddingRegionPoint] = useState(false);
   const [isPlayerRegionPreview, setIsPlayerRegionPreview] = useState(false);
   const [draggingRegionVertex, setDraggingRegionVertex] = useState<{ regionId: string; index: number } | null>(null);
+  const [selectedRegionVertex, setSelectedRegionVertex] = useState<{ regionId: string; index: number } | null>(null);
   const [draggingRegionLabelId, setDraggingRegionLabelId] = useState<string | null>(null);
 
   const updateRegion = (regionId: string, change: Partial<MapRegion>) => {
@@ -185,8 +187,8 @@ export default function MapTab({
 
   // Pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only drag with Left (button 0) or Right (button 2) mouse click
-    if (e.button !== 0 && e.button !== 2) return;
+    // The left button is reserved for tools and selection; pan with right or middle.
+    if (e.button !== 1 && e.button !== 2) return;
 
     const target = e.target as HTMLElement;
     if (target.closest('.no-pan') || activeVertexIndex !== null) {
@@ -225,8 +227,14 @@ export default function MapTab({
     } else if (draggingMissionId !== null && mapContainerRef.current) {
       setDraggedDistance(d => d + 1);
       const coords = getMapCoordsFromEvent(e);
-      const updatedMissions = state.missions.map(mi => mi.id === draggingMissionId ? { ...mi, x: coords.x, y: coords.y } : mi);
-      const updatedAllMissions = (state.allMissions || []).map(mi => mi.id === draggingMissionId ? { ...mi, x: coords.x, y: coords.y } : mi);
+      const updatePosition = (mission: Mission) => {
+        if (mission.id !== draggingMissionId) return mission;
+        if (mission.regionMode === 'MANUAL') return { ...mission, ...coords };
+        const region = findMapRegionAtPoint(state.mapRegions, coords);
+        return { ...mission, ...coords, regionMode: 'AUTO' as const, regionId: region?.id, region: region?.name ?? 'ВНЕ РЕГИОНОВ' };
+      };
+      const updatedMissions = state.missions.map(updatePosition);
+      const updatedAllMissions = (state.allMissions || []).map(updatePosition);
       updateState({ missions: updatedMissions, allMissions: updatedAllMissions });
     } else if (isDraggingHq && mapContainerRef.current) {
       setDraggedDistance(d => d + 1);
@@ -379,11 +387,43 @@ export default function MapTab({
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsAddingRegionPoint(false);
+      const target = event.target as HTMLElement | null;
+      if (target?.matches('input, textarea, select, [contenteditable="true"]')) return;
+      if (event.key === 'Escape') {
+        setIsAddingRegionPoint(false);
+        setSelectedRegionVertex(null);
+      }
+      if (event.key === 'Home') {
+        event.preventDefault();
+        centerOnHq();
+      }
+      if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        setZoom(current => Math.min(500, current + 15));
+      }
+      if (event.key === '-' || event.key === '_') {
+        event.preventDefault();
+        setZoom(current => Math.max(60, current - 15));
+      }
+      if (event.ctrlKey && event.key.toLocaleLowerCase() === 'z' && isAddingRegionPoint && selectedRegionId) {
+        const region = state.mapRegions.find(item => item.id === selectedRegionId);
+        if (region && region.points.length > 3) {
+          event.preventDefault();
+          updateRegion(region.id, { points: region.points.slice(0, -1) });
+        }
+      }
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedRegionVertex) {
+        const region = state.mapRegions.find(item => item.id === selectedRegionVertex.regionId);
+        if (region && region.points.length > 3) {
+          event.preventDefault();
+          updateRegion(region.id, { points: region.points.filter((_, index) => index !== selectedRegionVertex.index) });
+          setSelectedRegionVertex(null);
+        }
+      }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, []);
+  }, [isAddingRegionPoint, selectedRegionId, selectedRegionVertex, state.mapRegions]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -552,7 +592,7 @@ export default function MapTab({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onContextMenu={(e) => e.preventDefault()}
-            className={`w-full h-full cursor-grab ${panning ? 'cursor-grabbing' : ''}`}
+            className={`w-full h-full ${panning ? 'cursor-grabbing' : 'cursor-default'}`}
             style={{ position: 'relative' }}
           >
             
@@ -597,7 +637,7 @@ export default function MapTab({
                     style={{
                       zIndex: 4,
                       clipPath: getRegionClipPath(region.points),
-                      opacity: getFogOpacity(region.fog.density)
+                      opacity: region.fog.opacity ?? getFogOpacity(region.fog.density)
                     } as React.CSSProperties}
                     aria-hidden="true"
                   >
@@ -608,8 +648,9 @@ export default function MapTab({
                       autoPlay
                       loop
                       playsInline
-                      preload="metadata"
+                      preload="auto"
                       onLoadedMetadata={event => { event.currentTarget.playbackRate = playbackRate; }}
+                      onCanPlay={event => { void event.currentTarget.play().catch(() => undefined); }}
                     />
                   </div>
                 );
@@ -827,6 +868,7 @@ export default function MapTab({
                     }}
                     onMouseDown={event => {
                       event.stopPropagation();
+                      setSelectedRegionVertex({ regionId: selectedRegion.id, index });
                       setDraggingRegionVertex({ regionId: selectedRegion.id, index });
                       setDraggedDistance(0);
                     }}
@@ -842,6 +884,7 @@ export default function MapTab({
                 const isUrgent = willMissionExpireAfterDay(m);
                 const presentation = getMissionPresentation(m, state.day, state.isDmMode);
                 const isStory = presentation.showStoryIdentity;
+                const isDummy = presentation.visibleType === 'DUMMY' && (state.isDmMode || m.intelRevealed);
                 const isDelayedStory = presentation.isDelayedStory;
                 const scoutingClanNames = getScoutingClanNames(m, state.clans);
                 const scoutingSuffix = m.intelRevealed
@@ -876,10 +919,10 @@ export default function MapTab({
                       style={{ animationDuration: isUrgent ? '0.8s' : '2s' }}
                     >
                       {/* Pulsing halo */}
-                      <div className={`absolute inset-0 rounded-full animate-ping opacity-35 ${isDelayedStory ? 'bg-amber-400' : isUrgent ? 'bg-rose-500' : isStory ? 'bg-violet-400' : 'bg-emerald-400'}`} />
+                      <div className={`absolute inset-0 rounded-full animate-ping opacity-35 ${isDelayedStory ? 'bg-amber-400' : isDummy ? 'bg-neutral-400' : isUrgent ? 'bg-rose-500' : isStory ? 'bg-violet-400' : 'bg-emerald-400'}`} />
                       
                       {/* Floating pinpoint flag */}
-                      <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-125 ${isDelayedStory ? 'bg-amber-950 border-amber-400 text-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.7)]' : isUrgent ? 'bg-rose-950 border-rose-500 text-rose-400' : isStory ? 'bg-violet-950 border-violet-400 text-violet-300' : 'bg-black/90 border-emerald-500 text-emerald-400'}`}>
+                      <div className={`relative w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all group-hover:scale-125 ${isDelayedStory ? 'bg-amber-950 border-amber-400 text-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.7)]' : isDummy ? 'bg-neutral-900 border-neutral-400 text-neutral-300' : isUrgent ? 'bg-rose-950 border-rose-500 text-rose-400' : isStory ? 'bg-violet-950 border-violet-400 text-violet-300' : 'bg-black/90 border-emerald-500 text-emerald-400'}`}>
                         {isStory ? <span className="text-base leading-none">◆</span> : <MapPin className="w-4 h-4" />}
                         
                         {/* Floating tooltip badge */}

@@ -47,7 +47,8 @@ export function createMapRegion(
     fog: {
       enabled: false,
       density: 'MEDIUM',
-      speed: 'SLOW'
+      speed: 'SLOW',
+      opacity: getFogOpacity('MEDIUM')
     }
   };
 }
@@ -79,9 +80,27 @@ export function normalizeMapRegion(region: Partial<MapRegion>, index: number): M
     fog: {
       enabled: Boolean(region.fog?.enabled),
       density,
-      speed
+      speed,
+      opacity: clamp(Number(region.fog?.opacity ?? getFogOpacity(density)), 0, 1)
     }
   };
+}
+
+export function pointInMapRegion(point: { x: number; y: number }, region: Pick<MapRegion, 'points'>): boolean {
+  let inside = false;
+  const polygon = region.points;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+    const current = polygon[index];
+    const prior = polygon[previous];
+    const crosses = (current.y > point.y) !== (prior.y > point.y)
+      && point.x < ((prior.x - current.x) * (point.y - current.y)) / ((prior.y - current.y) || Number.EPSILON) + current.x;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+export function findMapRegionAtPoint(regions: readonly MapRegion[], point: { x: number; y: number }): MapRegion | undefined {
+  return [...regions].reverse().find(region => pointInMapRegion(point, region));
 }
 
 function orientation(a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }): number {
@@ -129,9 +148,9 @@ export function hasSelfIntersection(points: readonly { x: number; y: number }[])
 }
 
 export function getFogOpacity(density: RegionFogDensity): number {
-  if (density === 'LOW') return 0.2;
-  if (density === 'DENSE') return 0.52;
-  return 0.34;
+  if (density === 'LOW') return 0.28;
+  if (density === 'DENSE') return 0.65;
+  return 0.46;
 }
 
 export function getFogDuration(speed: RegionFogSpeed): number {

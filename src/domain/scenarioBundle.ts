@@ -1,11 +1,20 @@
-import type { Adventurer, Clan, GameState, MapRegion, Mission } from '../types';
+import type { Adventurer, Clan, GameState, MapRegion, Mission, ScenarioChain } from '../types';
 import { DEFAULT_MAP_URL } from './constants';
 import { loadMapAssetBlob, saveMapBlob } from './mapAssets';
 import { getScenarioMissions } from './scenarioEditor';
 import { createInitialGameState, normalizeMission } from './state';
-import { normalizeMapRegion } from './mapRegions';
-import { clampActiveClanCount, orderClansGuildFirst } from './clans';
-import { DATA_FILE_VERSION, parseScenarioDataFile, SCENARIO_FILE_TYPE } from './dataFiles';
+import { findMapRegionAtPoint, normalizeMapRegion } from './mapRegions';
+import { applyLegacyActiveClanCount, getActivePlayerClans, orderClansGuildFirst } from './clans';
+import { ensureAdventurerRosterForClans } from '../utils';
+import { selectInitialScenarioMissions } from './day';
+import { normalizeClanProgression } from './clanProgression';
+import {
+  createScenarioDataFile,
+  DATA_FILE_VERSION,
+  parseScenarioDataFile,
+  SCENARIO_FILE_TYPE,
+  type ScenarioFileData
+} from './dataFiles';
 
 const BUNDLE_FORMAT = 'global-map-scenario';
 const BUNDLE_VERSION = 1;
@@ -28,6 +37,7 @@ interface ScenarioBundleData {
   clans: Clan[];
   adventurers: Adventurer[];
   missions: Mission[];
+  chains?: ScenarioChain[];
 }
 
 interface ScenarioBundleFile {
@@ -40,6 +50,12 @@ interface ScenarioBundleFile {
     mimeType: string;
     base64: string;
   };
+}
+
+export interface EditableScenarioBundle {
+  scenario: ScenarioFileData;
+  mapBlob: Blob;
+  mapFileName: string;
 }
 
 function sanitizeFileName(value: string): string {
@@ -88,63 +104,94 @@ async function getCurrentMapBlob(state: GameState): Promise<Blob> {
   return blob;
 }
 
-export async function createScenarioBundle(state: GameState): Promise<{ blob: Blob; fileName: string }> {
-  const mapBlob = await getCurrentMapBlob(state);
-  const mapUrl = state.mapBgUrl || DEFAULT_MAP_URL;
-  const scenarioId = state.activeScenarioId || `scenario_${Date.now().toString(36)}`;
+function isBundle(value: unknown): value is ScenarioBundleFile {
+  if (!value || typeof value !== 'object') return false;
+  const bundle = value as Partial<ScenarioBundleFile>;
+  const encodedMap = bundle.map?.base64;
+  return bundle.format === BUNDLE_FORMAT
+    && bundle.version === BUNDLE_VERSION
+    && typeof bundle.exportedAt === 'string'
+    && Number.isFinite(Date.parse(bundle.exportedAt))
+    && Boolean(bundle.scenario)
+    && Array.isArray(bundle.scenario?.clans)
+    && Array.isArray(bundle.scenario?.adventurers)
+    && Array.isArray(bundle.scenario?.missions)
+    && typeof bundle.map?.fileName === 'string'
+    && typeof bundle.map?.mimeType === 'string'
+    && bundle.map.mimeType.startsWith('image/')
+    && typeof encodedMap === 'string'
+    && encodedMap.length > 0
+    && encodedMap.length % 4 === 0
+    && /^[a-z0-9+/]+={0,2}$/iu.test(encodedMap);
+}
+
+function validateBundleScenario(bundle: ScenarioBundleFile): ScenarioFileData {
+  return parseScenarioDataFile({
+    type: SCENARIO_FILE_TYPE,
+    version: DATA_FILE_VERSION,
+    scenario: {
+      ...bundle.scenario,
+      mapRegions: bundle.scenario.mapRegions ?? [],
+      mapEffectsEnabled: bundle.scenario.mapEffectsEnabled ?? true,
+      events: bundle.scenario.missions
+    }
+  }).scenario;
+}
+
+export async function createScenarioBundleFile(
+  scenarioInput: ScenarioFileData,
+  mapBlob: Blob,
+  mapFileName: string
+): Promise<{ blob: Blob; fileName: string }> {
+  if (!mapBlob.type.startsWith('image/')) throw new Error('Карта сценария должна быть изображением.');
+  const scenario = parseScenarioDataFile(createScenarioDataFile(scenarioInput)).scenario;
+  const { events, ...scenarioFields } = scenario;
   const bundle: ScenarioBundleFile = {
     format: BUNDLE_FORMAT,
     version: BUNDLE_VERSION,
     exportedAt: new Date().toISOString(),
     scenario: {
-      id: scenarioId,
-      name: state.guildName,
-      description: `Сценарий для «${state.guildName}»`,
-      guildName: state.guildName,
-      guildShortName: state.guildShortName,
-      hCost: state.hCost,
-      nClans: state.nClans,
-      themeId: state.themeId,
-      mapWidth: state.mapWidth,
-      mapHeight: state.mapHeight,
-      spawnPolygon: structuredClone(state.spawnPolygon),
-      mapRegions: structuredClone(state.mapRegions),
-      mapEffectsEnabled: state.mapEffectsEnabled,
-      hqPos: state.hqPos ? { ...state.hqPos } : undefined,
-      clans: structuredClone(state.clans),
-      adventurers: structuredClone(state.adventurers),
-      missions: structuredClone(getScenarioMissions(state))
+      ...scenarioFields,
+      missions: structuredClone(events)
     },
     map: {
-      fileName: inferMapFileName(mapUrl, mapBlob.type),
+      fileName: mapFileName || inferMapFileName(DEFAULT_MAP_URL, mapBlob.type),
       mimeType: mapBlob.type,
       base64: await blobToBase64(mapBlob)
     }
   };
   return {
     blob: new Blob([JSON.stringify(bundle)], { type: 'application/json' }),
-    fileName: `${sanitizeFileName(state.guildName)}.globalmap`
+    fileName: `${sanitizeFileName(scenario.name)}.globalmap`
   };
 }
 
-function isBundle(value: unknown): value is ScenarioBundleFile {
-  if (!value || typeof value !== 'object') return false;
-  const bundle = value as Partial<ScenarioBundleFile>;
-  return bundle.format === BUNDLE_FORMAT
-    && bundle.version === BUNDLE_VERSION
-    && Boolean(bundle.scenario)
-    && Array.isArray(bundle.scenario?.clans)
-    && Array.isArray(bundle.scenario?.adventurers)
-    && Array.isArray(bundle.scenario?.missions)
-    && Boolean(bundle.map?.base64)
-    && Boolean(bundle.map?.mimeType);
+export async function createScenarioBundle(state: GameState): Promise<{ blob: Blob; fileName: string }> {
+  const mapBlob = await getCurrentMapBlob(state);
+  const scenarioId = state.activeScenarioId || `scenario_${Date.now().toString(36)}`;
+  return createScenarioBundleFile({
+    id: scenarioId,
+    name: state.guildName,
+    description: `Сценарий для «${state.guildName}»`,
+    guildName: state.guildName,
+    guildShortName: state.guildShortName,
+    hCost: state.hCost,
+    nClans: state.nClans,
+    themeId: state.themeId,
+    mapWidth: state.mapWidth,
+    mapHeight: state.mapHeight,
+    spawnPolygon: structuredClone(state.spawnPolygon),
+    mapRegions: structuredClone(state.mapRegions),
+    mapEffectsEnabled: state.mapEffectsEnabled,
+    hqPos: state.hqPos ? { ...state.hqPos } : undefined,
+    clans: structuredClone(state.clans),
+    adventurers: structuredClone(state.adventurers),
+    events: structuredClone(getScenarioMissions(state)),
+    chains: structuredClone(state.scenarioChains ?? [])
+  }, mapBlob, inferMapFileName(state.mapBgUrl || DEFAULT_MAP_URL, mapBlob.type));
 }
 
-function prerequisitesSatisfiedAtStart(mission: Mission): boolean {
-  return (mission.prerequisiteMissionIds ?? []).length === 0;
-}
-
-export async function importScenarioBundle(file: File, isDmMode: boolean): Promise<GameState> {
+export async function readScenarioBundleFile(file: File): Promise<EditableScenarioBundle> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(await file.text());
@@ -152,25 +199,37 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     throw new Error('Файл сценария повреждён или не является JSON.');
   }
   if (!isBundle(parsed)) throw new Error('Это не поддерживаемый файл сценария .globalmap.');
-
   if (!parsed.map.mimeType.startsWith('image/')) throw new Error('Вложение .globalmap не является изображением карты.');
-  const validated = parseScenarioDataFile({
-    type: SCENARIO_FILE_TYPE,
-    version: DATA_FILE_VERSION,
-    scenario: {
-      ...parsed.scenario,
-      mapRegions: parsed.scenario.mapRegions ?? [],
-      mapEffectsEnabled: parsed.scenario.mapEffectsEnabled ?? true,
-      events: parsed.scenario.missions
-    }
-  });
-  const scenario = { ...parsed.scenario, ...validated.scenario, missions: validated.scenario.events };
-  const mapBlob = base64ToBlob(parsed.map.base64, parsed.map.mimeType);
-  const mapAsset = await saveMapBlob(mapBlob);
+  let mapBlob: Blob;
+  try {
+    mapBlob = base64ToBlob(parsed.map.base64, parsed.map.mimeType);
+  } catch {
+    throw new Error('Вложенное изображение .globalmap повреждено.');
+  }
+  if (mapBlob.size === 0) throw new Error('Вложенная карта .globalmap пуста.');
+  return {
+    scenario: validateBundleScenario(parsed),
+    mapBlob,
+    mapFileName: parsed.map.fileName || 'map.img'
+  };
+}
+
+export async function importScenarioBundle(file: File, isDmMode: boolean): Promise<GameState> {
+  const editable = await readScenarioBundleFile(file);
+  const scenario = editable.scenario;
+  const mapAsset = await saveMapBlob(editable.mapBlob);
   const initial = createInitialGameState({ isDmMode, clansCount: scenario.nClans });
-  const missions = structuredClone(scenario.missions).map(normalizeMission);
-  const clans = orderClansGuildFirst(structuredClone(scenario.clans))
+  const mapRegions = structuredClone(scenario.mapRegions ?? []).map(normalizeMapRegion);
+  const missions = structuredClone(scenario.events).map(normalizeMission).map(mission => {
+    if (mission.regionMode !== 'AUTO') return mission;
+    const region = findMapRegionAtPoint(mapRegions, mission);
+    return { ...mission, regionId: region?.id, region: region?.name ?? 'ВНЕ РЕГИОНОВ' };
+  });
+  let clans = orderClansGuildFirst(structuredClone(scenario.clans).map(normalizeClanProgression))
     .map(clan => clan.id === 'clan_guild' ? { ...clan, name: scenario.guildName } : clan);
+  if (!clans.some(clan => clan.id !== 'clan_guild' && clan.isActive !== undefined)) clans = applyLegacyActiveClanCount(clans, scenario.nClans);
+  const activeClanCount = getActivePlayerClans(clans, scenario.nClans).length;
+  const configuredAdventurers = scenario.adventurers.length ? scenario.adventurers : initial.adventurers;
 
   return {
     ...initial,
@@ -178,22 +237,21 @@ export async function importScenarioBundle(file: File, isDmMode: boolean): Promi
     guildName: scenario.guildName,
     guildShortName: scenario.guildShortName || scenario.guildName,
     hCost: Math.max(1, scenario.hCost || 10),
-    nClans: clampActiveClanCount(clans, scenario.nClans),
+    nClans: activeClanCount,
     themeId: scenario.themeId || initial.themeId,
     mapBgUrl: DEFAULT_MAP_URL,
     mapAssetId: mapAsset.id,
     mapWidth: scenario.mapWidth || mapAsset.width,
     mapHeight: scenario.mapHeight || mapAsset.height,
     spawnPolygon: structuredClone(scenario.spawnPolygon),
-    mapRegions: structuredClone(scenario.mapRegions ?? []).map(normalizeMapRegion),
+    mapRegions,
     mapEffectsEnabled: scenario.mapEffectsEnabled ?? true,
     hqPos: scenario.hqPos ? { ...scenario.hqPos } : initial.hqPos,
     clans,
-    adventurers: structuredClone(scenario.adventurers),
+    adventurers: ensureAdventurerRosterForClans(structuredClone(configuredAdventurers), activeClanCount),
     allMissions: missions,
-    missions: missions
-      .filter(mission => (mission.startDay ?? 1) <= 1 && prerequisitesSatisfiedAtStart(mission))
-      .map(mission => structuredClone(mission)),
+    scenarioChains: structuredClone(scenario.chains ?? []),
+    missions: selectInitialScenarioMissions(missions, activeClanCount),
     contracts: [],
     history: [],
     completedMissionIds: [],

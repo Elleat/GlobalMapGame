@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { X, Shield, Coins, Package, Plus, Trash2 } from 'lucide-react';
 import { Clan, GameState } from '../types';
 import { getResourceNameRu, getMaxContractLevelForClan } from '../utils';
+import { getClanExperience, getClanProgressLabel, setClanExperience } from '../domain/clanProgression';
 
 interface ClanDossierModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export default function ClanDossierModal({
     if (!state.isDmMode) return;
 
     const trust = parseInt((document.getElementById('cd-edit-trust') as HTMLSelectElement)?.value) || 1;
+    const experience = parseInt((document.getElementById('cd-edit-experience') as HTMLInputElement)?.value) || 0;
     const gold = parseInt((document.getElementById('cd-edit-gold') as HTMLInputElement)?.value) || 0;
     const freeRes = parseInt((document.getElementById('cd-edit-freeRes') as HTMLInputElement)?.value) || 0;
 
@@ -50,7 +52,7 @@ export default function ClanDossierModal({
     const intel = parseInt((document.getElementById('cd-edit-Intelligence') as HTMLInputElement)?.value) || 0;
     const alchemy = parseInt((document.getElementById('cd-edit-Alchemy') as HTMLInputElement)?.value) || 0;
 
-    const updatedClan: Clan = {
+    const updatedClan: Clan = setClanExperience({
       ...clan,
       trustLevel: trust,
       gold,
@@ -65,7 +67,7 @@ export default function ClanDossierModal({
         specialItems,
         AncientText: specialItems.join(', ')
       }
-    };
+    }, experience);
 
     updateClan(updatedClan);
     showToast(`Параметры и ресурсы клана "${clan.name}" изменены ГМом!`);
@@ -130,7 +132,7 @@ export default function ClanDossierModal({
               Досье Клана: {clan.name}
             </h2>
             <div className="text-[10px] text-neutral-400 font-mono uppercase mt-0.5">
-              Уровень Доверия: {clan.trustLevel} | Казна: {clan.gold} Золота
+              Уровень клана: {clan.trustLevel}{clan.id !== 'clan_guild' ? ` | Опыт: ${getClanExperience(clan)}` : ''} | Казна: {clan.gold} Золота
             </div>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-[#161616] rounded text-rose-500 transition-colors">
@@ -148,7 +150,7 @@ export default function ClanDossierModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-mono uppercase text-neutral-400">Уровень Доверия:</label>
+                <label className="text-[10px] font-mono uppercase text-neutral-400">Текущий уровень:</label>
                 <select
                   id="cd-edit-trust"
                   className="w-full bg-black border border-emerald-500/20 text-neutral-200 px-3 py-1.5 rounded font-mono text-xs focus:border-emerald-500 outline-none"
@@ -157,6 +159,8 @@ export default function ClanDossierModal({
                   <option value="1">Уровень 1 (до 3 ур. контрактов)</option>
                   <option value="2">Уровень 2 (до 4 ур. контрактов)</option>
                   <option value="3">Уровень 3 (до 5 ур. контрактов)</option>
+                  <option value="4">Уровень 4 (ручной уровень ГМа)</option>
+                  <option value="5">Уровень 5 (ручной уровень ГМа)</option>
                 </select>
               </div>
 
@@ -171,6 +175,24 @@ export default function ClanDossierModal({
                 />
               </div>
             </div>
+
+            {clan.id !== 'clan_guild' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-mono uppercase text-neutral-400">Опыт клана:</label>
+                  <input
+                    type="number"
+                    id="cd-edit-experience"
+                    className="w-full bg-black border border-emerald-500/20 text-neutral-200 px-3 py-1.5 rounded font-mono text-xs focus:border-emerald-500 outline-none"
+                    defaultValue={getClanExperience(clan)}
+                    min="0"
+                  />
+                </div>
+                <div className="flex items-end pb-1 text-[10px] font-mono leading-relaxed text-neutral-500">
+                  Пороги: 8 опыта — уровень 2; 24 — уровень 3. Автоповышение действует со следующего дня.
+                </div>
+              </div>
+            )}
 
             <h3 className="text-amber-500 font-mono text-xs font-bold uppercase tracking-wider pt-2 border-t border-emerald-500/10">Запасы Ресурсов Клана:</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -291,7 +313,8 @@ export default function ClanDossierModal({
         ) : (
           <div className="p-6 space-y-4">
             <div className="text-xs font-mono text-neutral-300 leading-relaxed">
-              Уровень доверия клана: <strong className="text-emerald-400">Уровень {clan.trustLevel}</strong>.<br />
+              Уровень клана: <strong className="text-emerald-400">Уровень {clan.trustLevel}</strong>.<br />
+              {clan.id !== 'clan_guild' && <><span className="text-neutral-500">{getClanProgressLabel(clan)}{clan.pendingTrustLevel ? `; уровень ${clan.pendingTrustLevel} вступит в силу завтра` : ''}.</span><br /></>}
               Допустимые уровни контрактов для оформления: <strong className="text-amber-500 font-bold">1..{maxContractLvl}</strong>.
             </div>
 

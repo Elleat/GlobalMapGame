@@ -1,0 +1,1655 @@
+{
+  "type": "global-map-events",
+  "version": 1,
+  "name": "События Штормграда по умолчанию",
+  "events": [
+    {
+      "id": "event_standalone_009",
+      "title": "Архив без последней страницы",
+      "desc": "Из всех книг одного архива исчезли последние страницы, и описанные в них события перестали иметь последствия. Промедление позволит явлению распространиться; требуется короткая, хорошо подготовленная операция.",
+      "reqResource": "None",
+      "dc": 7,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 81.3,
+      "y": 68,
+      "region": "Ленстер",
+      "regionId": "region_msesdn7d_1",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Страницы похитил переписчик, пытавшийся отменить собственный приговор; архив восстановлен, беглец задержан.",
+      "failText": "Краткий брифинг вернувшегося отряда: у происшествия есть живые организаторы и практическая цель; задержать виновных не удалось.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_009_stage_1",
+          "label": "Найти источник происшествия",
+          "reqResource": "None",
+          "dc": 7
+        },
+        {
+          "id": "event_standalone_009_stage_2",
+          "label": "Устранить обнаруженную угрозу",
+          "reqResource": "Supplies",
+          "dc": 10
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 8,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_009_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        },
+        {
+          "id": "event_standalone_009_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "FIXED",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "дорога меняется после того, как отряд проходит ориентир"
+        },
+        {
+          "id": "event_standalone_009_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "непогода отделяет отряд от подготовленного маршрута"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_005",
+      "title": "Болото, повторяющее слова",
+      "desc": "Камыш повторяет все сказанное на болоте спустя ровно сутки, раскрывая старые тайные разговоры. Промедление позволит явлению распространиться; требуется короткая, хорошо подготовленная операция.",
+      "reqResource": "Equipment",
+      "dc": 9,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 40.5,
+      "y": 67.4,
+      "region": "Манстер",
+      "regionId": "region_msewo7ta_3",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Эхо удерживал подземный зал друидов; записи опасных признаний изъяты, резонатор отключён.",
+      "failText": "Краткий брифинг вернувшегося отряда: происшествие связано с сохранившимся древним механизмом или приказом, но безопасно отключить его не удалось.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_005_stage_1",
+          "label": "Разобраться в происшествии «Болото, повторяющее слова»",
+          "reqResource": "Equipment",
+          "dc": 9
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 5,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_005_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "возвращение осложняет преследователь, оставшийся незамеченным"
+        },
+        {
+          "id": "event_standalone_005_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_004",
+      "title": "Вереск, растущий по следам",
+      "desc": "На пустоши вереск мгновенно вырастает в следах одного неизвестного путника и образует длинную дорогу к холмам. Нужно исследовать место и прекратить угрозу прежде, чем она затронет ближайшие поселения.",
+      "reqResource": "Supplies",
+      "dc": 10,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 24.8,
+      "y": 44,
+      "region": "Коннахт",
+      "regionId": "region_msewjix5_2",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "След принадлежал беглому друиду, нёсшему заражённое семя; его нашли, растение очищено.",
+      "failText": "Краткий брифинг вернувшегося отряда: аномалия имеет материальный источник и продолжает распространяться, несмотря на собранные образцы.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_004_stage_1",
+          "label": "Найти источник происшествия",
+          "reqResource": "Supplies",
+          "dc": 10
+        },
+        {
+          "id": "event_standalone_004_stage_2",
+          "label": "Устранить обнаруженную угрозу",
+          "reqResource": "None",
+          "dc": 9
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 19,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_004_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "чужие наблюдатели вмешиваются в самый неудобный момент"
+        },
+        {
+          "id": "event_standalone_004_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "FIXED",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "местность отвечает на присутствие живых и перекрывает путь"
+        },
+        {
+          "id": "event_standalone_004_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_011",
+      "title": "Грибы в форме лиц",
+      "desc": "После дождя выросли грибы с чертами пропавших людей. Ночью они шепчут направления в глубь леса. След ещё свежий, поэтому отряду предстоит найти источник и закрепить безопасный результат.",
+      "reqResource": "Intelligence",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 44.7,
+      "y": 65.6,
+      "region": "Манстер",
+      "regionId": "region_msewo7ta_3",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Грибы сохраняли последние воспоминания похищенных болотными разбойниками; пленников освободили.",
+      "failText": "Краткий брифинг вернувшегося отряда: у происшествия есть живые организаторы и практическая цель; задержать виновных не удалось.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_011_stage_1",
+          "label": "Добраться до места происшествия",
+          "reqResource": "Intelligence",
+          "dc": 8
+        },
+        {
+          "id": "event_standalone_011_stage_2",
+          "label": "Раскрыть природу явления",
+          "reqResource": "None",
+          "dc": 8
+        },
+        {
+          "id": "event_standalone_011_stage_3",
+          "label": "Завершить дело и закрепить результат",
+          "reqResource": "Supplies",
+          "dc": 10
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 1,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_011_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        },
+        {
+          "id": "event_standalone_011_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "возвращение осложняет преследователь, оставшийся незамеченным"
+        },
+        {
+          "id": "event_standalone_011_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "RANDOM",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "чужие наблюдатели вмешиваются в самый неудобный момент"
+        },
+        {
+          "id": "event_standalone_011_complication_3",
+          "position": 3,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "местность отвечает на присутствие живых и перекрывает путь"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_dummy_002",
+      "title": "Драконьи яйца в сеновале",
+      "desc": "В сеновале нашли три крупных чешуйчатых яйца, которые будто бы нагреваются при звуке человеческого голоса. За сообщение уже взялись спорить очевидцы, поэтому требуется короткая проверка на месте.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 73.2,
+      "y": 72.2,
+      "region": "Прибрежные воды",
+      "regionId": "region_coastal_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Яйцами оказались раскрашенные тыквы, спрятанные детьми ради розыгрыша приезжего торговца.",
+      "failText": "Отряд не смог вернуться с убедительным подтверждением или опровержением слуха.",
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 1,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_dummy_002_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Equipment",
+          "dcMode": "AUTO",
+          "dc": 12,
+          "baseDc": 12,
+          "gmDescription": "непогода отделяет отряд от подготовленного маршрута"
+        },
+        {
+          "id": "event_dummy_002_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 12,
+          "baseDc": 12,
+          "gmDescription": "ложный знак уводит разведчиков в сторону от цели"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_010",
+      "title": "Камни с тёплым сердцем",
+      "desc": "В холодном поле обнаружены валуны, которые пульсируют теплом и медленно сближаются друг с другом. Кланы просят разобраться в случившемся, пока слухи не превратили локальную опасность в панику.",
+      "reqResource": "Alchemy",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 38,
+      "y": 42.7,
+      "region": "Коннахт",
+      "regionId": "region_msewjix5_2",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Камни были частями разбитого земляного голема; его собрали и переподчинили охране местных дорог.",
+      "failText": "Краткий брифинг вернувшегося отряда: происшествие связано с сохранившимся древним механизмом или приказом, но безопасно отключить его не удалось.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_010_stage_1",
+          "label": "Найти источник происшествия",
+          "reqResource": "Alchemy",
+          "dc": 8
+        },
+        {
+          "id": "event_standalone_010_stage_2",
+          "label": "Устранить обнаруженную угрозу",
+          "reqResource": "Intelligence",
+          "dc": 9
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 13,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_010_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "RANDOM",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "непогода отделяет отряд от подготовленного маршрута"
+        },
+        {
+          "id": "event_standalone_010_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "ложный знак уводит разведчиков в сторону от цели"
+        },
+        {
+          "id": "event_standalone_010_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_007",
+      "title": "Кладбище якорей",
+      "desc": "В одном месте Глубоких вод якоря исчезают вместе с цепями, будто кто-то собирает их на морском дне. Кланы просят разобраться в случившемся, пока слухи не превратили локальную опасность в панику.",
+      "reqResource": "Alchemy",
+      "dc": 9,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 5.1,
+      "y": 13,
+      "region": "Глубокие воды",
+      "regionId": "region_deep_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Якоря притягивал магнитный идол затонувшей верфи; идол обезврежен, а безопасный фарватер отмечен.",
+      "failText": "Краткий брифинг вернувшегося отряда: явление поддерживает устойчивый магический источник; его природа установлена лишь частично.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_007_stage_1",
+          "label": "Разобраться в происшествии «Кладбище якорей»",
+          "reqResource": "Alchemy",
+          "dc": 9
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 18,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_007_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "местность отвечает на присутствие живых и перекрывает путь"
+        },
+        {
+          "id": "event_standalone_007_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "чужие наблюдатели вмешиваются в самый неудобный момент"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_008",
+      "title": "Колодец на линии прибоя",
+      "desc": "В отлив на песке открывается каменный колодец, из которого доносится шум большого города. Нужно исследовать место и прекратить угрозу прежде, чем она затронет ближайшие поселения.",
+      "reqResource": "Supplies",
+      "dc": 10,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 82.5,
+      "y": 71.4,
+      "region": "Прибрежные воды",
+      "regionId": "region_coastal_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Колодец являлся вентиляцией затопленного подземного порта; отверстие укреплено, а опасные пары отведены.",
+      "failText": "Краткий брифинг вернувшегося отряда: происшествие связано с сохранившимся древним механизмом или приказом, но безопасно отключить его не удалось.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_008_stage_1",
+          "label": "Разобраться в происшествии «Колодец на линии прибоя»",
+          "reqResource": "Supplies",
+          "dc": 10
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 12,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_008_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "ложный знак уводит разведчиков в сторону от цели"
+        },
+        {
+          "id": "event_standalone_008_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Equipment",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "непогода отделяет отряд от подготовленного маршрута"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_003",
+      "title": "Колокол, созывающий статуи",
+      "desc": "После полуночи городской колокол заставляет каменные статуи сходить с постаментов и собираться на площади. Кланы просят разобраться в случившемся, пока слухи не превратили локальную опасность в панику.",
+      "reqResource": "Alchemy",
+      "dc": 9,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 72.5,
+      "y": 58.7,
+      "region": "Ленстер",
+      "regionId": "region_msesdn7d_1",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "В колокол попала руна старого скульптора; её удалили, а статуи вернули на места до рассвета.",
+      "failText": "Краткий брифинг вернувшегося отряда: явление поддерживает устойчивый магический источник; его природа установлена лишь частично.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_003_stage_1",
+          "label": "Найти источник происшествия",
+          "reqResource": "Alchemy",
+          "dc": 9
+        },
+        {
+          "id": "event_standalone_003_stage_2",
+          "label": "Устранить обнаруженную угрозу",
+          "reqResource": "Intelligence",
+          "dc": 10
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 19,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_003_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "непогода отделяет отряд от подготовленного маршрута"
+        },
+        {
+          "id": "event_standalone_003_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "ложный знак уводит разведчиков в сторону от цели"
+        },
+        {
+          "id": "event_standalone_003_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Equipment",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "op_day01_01",
+      "title": "Колокола под болотом",
+      "desc": "Местные жители сообщают о странных звуках и просят проверить источник тревоги до наступления следующей ночи.",
+      "reqResource": "Supplies",
+      "dc": 10,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 39,
+      "y": 37.7,
+      "region": "Коннахт",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "op_day01_01_stage_1",
+          "label": "Этап 1",
+          "reqResource": "Supplies",
+          "dc": 10
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ.",
+      "regionId": "region_msewjix5_2",
+      "regionMode": "AUTO",
+      "chainIds": [],
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "quotaPriority": 10,
+      "complicationSlots": [
+        {
+          "id": "op_day01_01_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "дорога меняется после того, как отряд проходит ориентир"
+        },
+        {
+          "id": "op_day01_01_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "RANDOM",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_006",
+      "title": "Лёд на летней дороге",
+      "desc": "Посреди тёплого дня участок дороги покрывается толстым льдом, под которым видны движущиеся тени. След ещё свежий, поэтому отряду предстоит найти источник и закрепить безопасный результат.",
+      "reqResource": "Intelligence",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 51.9,
+      "y": 23.1,
+      "region": "Ольстер",
+      "regionId": "region_msewpfo7_4",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Лёд закрывал старый ход ледяных духов; проход укреплён, а заблудившиеся тени выведены.",
+      "failText": "Краткий брифинг вернувшегося отряда: след принадлежит духу или сохранённой памяти; причина беспокойства выяснена не до конца.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_006_stage_1",
+          "label": "Разобраться в происшествии «Лёд на летней дороге»",
+          "reqResource": "Intelligence",
+          "dc": 8
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 10,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_006_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "дорога меняется после того, как отряд проходит ориентир"
+        },
+        {
+          "id": "event_standalone_006_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "FIXED",
+          "resource": "Alchemy",
+          "dcMode": "FIXED",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_dummy_001",
+      "title": "Призрачные сборщики налогов",
+      "desc": "Жители клянутся, что по ночам к ним приходят полупрозрачные чиновники и требуют подать за давно умерших родственников. За сообщение уже взялись спорить очевидцы, поэтому требуется короткая проверка на месте.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 79.2,
+      "y": 75.6,
+      "region": "Глубокие воды",
+      "regionId": "region_deep_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "«Призраками» оказались переодетые мошенники с дешёвыми светящимися масками и украденной книгой долгов.",
+      "failText": "Отряд не смог вернуться с убедительным подтверждением или опровержением слуха.",
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 0,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_dummy_001_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 12,
+          "baseDc": 12,
+          "gmDescription": "ложный знак уводит разведчиков в сторону от цели"
+        },
+        {
+          "id": "event_dummy_001_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "FIXED",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 12,
+          "baseDc": 12,
+          "gmDescription": "непогода отделяет отряд от подготовленного маршрута"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_002",
+      "title": "Прилив, приносящий двери",
+      "desc": "После каждой высокой воды на берегу остаётся новая деревянная дверь, ведущая в чужой дом до следующего отлива. След ещё свежий, поэтому отряду предстоит найти источник и закрепить безопасный результат.",
+      "reqResource": "Intelligence",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 80,
+      "y": 12.6,
+      "region": "Прибрежные воды",
+      "regionId": "region_coastal_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Двери вымывало из разрушенного карманного поместья; оставшиеся проходы закрыты, а случайные гости возвращены домой.",
+      "failText": "Краткий брифинг вернувшегося отряда: явление поддерживает устойчивый магический источник; его природа установлена лишь частично.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_002_stage_1",
+          "label": "Разобраться в происшествии «Прилив, приносящий двери»",
+          "reqResource": "Intelligence",
+          "dc": 8
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 12,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_002_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        },
+        {
+          "id": "event_standalone_002_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "возвращение осложняет преследователь, оставшийся незамеченным"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_msevml56",
+      "title": "Пропавший груз",
+      "desc": "Портовые рабочие сообщают о краже четырёх ящиков спиртного. Они клянутся, что во время ливня видели на складе низкие силуэты с горящими глазами, хотя ни один замок не был взломан.",
+      "reqResource": "None",
+      "dc": 12,
+      "type": "DUMMY",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 30.1,
+      "y": 39.4,
+      "region": "Коннахт",
+      "startDay": 1,
+      "goldReward": 0,
+      "checks": [],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "unlocksMissionIds": [],
+      "successText": "Никаких таинственных похитителей не существовало. Ящики обнаружены в домах самих портовых рабочих — частично опустошёнными и очень плохо спрятанными.",
+      "scoutedByClanIds": [],
+      "chainIds": [],
+      "graphPosition": {
+        "x": 21.171859287352504,
+        "y": 1028.0122500928135
+      },
+      "quotaPriority": 0,
+      "pinned": false,
+      "failText": "Проверить рассказ портовых рабочих не удалось.",
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complicationSlots": [
+        {
+          "id": "event_msevml56_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 12,
+          "baseDc": 12,
+          "gmDescription": "местность отвечает на присутствие живых и перекрывает путь"
+        },
+        {
+          "id": "event_msevml56_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "RANDOM",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 12,
+          "baseDc": 12,
+          "gmDescription": "чужие наблюдатели вмешиваются в самый неудобный момент"
+        }
+      ],
+      "regionId": "region_msewjix5_2",
+      "regionMode": "AUTO"
+    }
+    ,
+    {
+      "id": "op_day01_02",
+      "title": "Пропавший обоз алхимиков",
+      "desc": "Торговый путь оказался перекрыт необъяснимым явлением. Необходимо восстановить движение и выяснить, кто извлекает из хаоса выгоду.",
+      "reqResource": "Equipment",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 60.4,
+      "y": 52.6,
+      "region": "Ленстер",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "op_day01_02_stage_1",
+          "label": "Этап 1",
+          "reqResource": "Equipment",
+          "dc": 8
+        },
+        {
+          "id": "op_day01_02_stage_2",
+          "label": "Этап 2",
+          "reqResource": "Alchemy",
+          "dc": 8
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ.",
+      "regionId": "region_msesdn7d_1",
+      "regionMode": "AUTO",
+      "chainIds": [],
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "quotaPriority": 10,
+      "complicationSlots": [
+        {
+          "id": "op_day01_02_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Equipment",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "возвращение осложняет преследователь, оставшийся незамеченным"
+        },
+        {
+          "id": "op_day01_02_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 14,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        },
+        {
+          "id": "op_day01_02_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "FIXED",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "местность отвечает на присутствие живых и перекрывает путь"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "op_day01_03",
+      "title": "Стражи разрушенного моста",
+      "desc": "Разведчики обнаружили следы опасного существа. Отряду поручено найти логово, оценить угрозу и обезопасить окрестности.",
+      "reqResource": "Intelligence",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 47.6,
+      "y": 41.8,
+      "region": "Коннахт",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "op_day01_03_stage_1",
+          "label": "Этап 1",
+          "reqResource": "Intelligence",
+          "dc": 8
+        },
+        {
+          "id": "op_day01_03_stage_2",
+          "label": "Этап 2",
+          "reqResource": "None",
+          "dc": 7
+        },
+        {
+          "id": "op_day01_03_stage_3",
+          "label": "Этап 3",
+          "reqResource": "Supplies",
+          "dc": 9
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "successText": "Заказ выполнен, угроза устранена, а сведения переданы заказчику.",
+      "failText": "Отряд не сумел выполнить поставленную задачу; последствия остаются на усмотрение ГМ.",
+      "regionId": "region_msewjix5_2",
+      "regionMode": "AUTO",
+      "chainIds": [],
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "quotaPriority": 10,
+      "complicationSlots": [
+        {
+          "id": "op_day01_03_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.05,
+          "resourceMode": "RANDOM",
+          "resource": "Alchemy",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "чужие наблюдатели вмешиваются в самый неудобный момент"
+        },
+        {
+          "id": "op_day01_03_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "FIXED",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "местность отвечает на присутствие живых и перекрывает путь"
+        },
+        {
+          "id": "op_day01_03_complication_2",
+          "position": 2,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        },
+        {
+          "id": "op_day01_03_complication_3",
+          "position": 3,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 15,
+          "baseDc": 12,
+          "gmDescription": "возвращение осложняет преследователь, оставшийся незамеченным"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_001",
+      "title": "Чёрный киль под волнами",
+      "desc": "Под торговыми судами несколько ночей подряд проходит тень корабля, идущего глубоко под водой и строго против течения. Промедление позволит явлению распространиться; требуется короткая, хорошо подготовленная операция.",
+      "reqResource": "None",
+      "dc": 7,
+      "type": "OPERATION",
+      "lifespan": 2,
+      "maxLifespan": 2,
+      "x": 85.4,
+      "y": 89.8,
+      "region": "Глубокие воды",
+      "regionId": "region_deep_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "На дне двигался древний водолазный ковчег с пленённым воздушным элементалем; механизм остановлен, а элементаль освобождён.",
+      "failText": "Краткий брифинг вернувшегося отряда: происшествие связано с сохранившимся древним механизмом или приказом, но безопасно отключить его не удалось.",
+      "startDay": 1,
+      "checks": [
+        {
+          "id": "event_standalone_001_stage_1",
+          "label": "Разобраться в происшествии «Чёрный киль под волнами»",
+          "reqResource": "None",
+          "dc": 7
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 10,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_001_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        },
+        {
+          "id": "event_standalone_001_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "дорога меняется после того, как отряд проходит ориентир"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_015",
+      "title": "Башня, отбрасывающая две тени",
+      "desc": "Сторожевая башня начала отбрасывать вторую тень, указывающую в сторону закрытых подземелий. След ещё свежий, поэтому отряду предстоит найти источник и закрепить безопасный результат.",
+      "reqResource": "Intelligence",
+      "dc": 9,
+      "type": "OPERATION",
+      "lifespan": 3,
+      "maxLifespan": 3,
+      "x": 84.4,
+      "y": 64.2,
+      "region": "Ленстер",
+      "regionId": "region_msesdn7d_1",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Вторая тень принадлежала замурованному дозорному голему; его освободили и переписали устаревший приказ.",
+      "failText": "Краткий брифинг вернувшегося отряда: происшествие связано с сохранившимся древним механизмом или приказом, но безопасно отключить его не удалось.",
+      "startDay": 2,
+      "checks": [
+        {
+          "id": "event_standalone_015_stage_1",
+          "label": "Разобраться в происшествии «Башня, отбрасывающая две тени»",
+          "reqResource": "Intelligence",
+          "dc": 9
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 2,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_015_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.04,
+          "resourceMode": "RANDOM",
+          "resource": "Intelligence",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "дорога меняется после того, как отряд проходит ориентир"
+        },
+        {
+          "id": "event_standalone_015_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Equipment",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_019",
+      "title": "Кит с бронзовыми колоколами",
+      "desc": "В открытом море видели белого кита, обвешанного колоколами. После его песни компасы показывают на ближайшего утопленника. След ещё свежий, поэтому отряду предстоит найти источник и закрепить безопасный результат.",
+      "reqResource": "None",
+      "dc": 11,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 31.2,
+      "y": 21.2,
+      "region": "Глубокие воды",
+      "regionId": "region_deep_waters",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Колокола были частью старого поискового ритуала; их сняли без вреда киту и вернули семьям погибших найденные реликвии.",
+      "failText": "Краткий брифинг вернувшегося отряда: за происшествием стоит необычное живое существо; отряд определил его повадки, но не устранил угрозу.",
+      "startDay": 2,
+      "checks": [
+        {
+          "id": "event_standalone_019_stage_1",
+          "label": "Разобраться в происшествии «Кит с бронзовыми колоколами»",
+          "reqResource": "None",
+          "dc": 11
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 5,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_019_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "RANDOM",
+          "resource": "Equipment",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "часть снаряжения оказывается повреждена старым проклятием"
+        },
+        {
+          "id": "event_standalone_019_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "FIXED",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "возвращение осложняет преследователь, оставшийся незамеченным"
+        }
+      ]
+    }
+    ,
+    {
+      "id": "event_standalone_012",
+      "title": "Крепость с горящими бойницами",
+      "desc": "В руинах северной крепости ночью вспыхивают красные бойницы и слышны команды несуществующего гарнизона. Промедление позволит явлению распространиться; требуется короткая, хорошо подготовленная операция.",
+      "reqResource": "Equipment",
+      "dc": 8,
+      "type": "OPERATION",
+      "lifespan": 4,
+      "maxLifespan": 4,
+      "x": 52,
+      "y": 20.7,
+      "region": "Ольстер",
+      "regionId": "region_msewpfo7_4",
+      "regionMode": "AUTO",
+      "pinned": false,
+      "intelRevealed": false,
+      "scoutedByClanIds": [],
+      "successText": "Оборонная руна продолжала учебную тревогу; приказ завершения службы внесён в механизм.",
+      "failText": "Краткий брифинг вернувшегося отряда: происшествие связано с сохранившимся древним механизмом или приказом, но безопасно отключить его не удалось.",
+      "startDay": 2,
+      "checks": [
+        {
+          "id": "event_standalone_012_stage_1",
+          "label": "Разобраться в происшествии «Крепость с горящими бойницами»",
+          "reqResource": "Equipment",
+          "dc": 8
+        }
+      ],
+      "rewardSpecialItems": [],
+      "prerequisiteMissionIds": [],
+      "prerequisiteMode": "ALL",
+      "chainIds": [],
+      "quotaPriority": 14,
+      "repeat": {
+        "enabled": false,
+        "cooldownDays": 2,
+        "maxOccurrences": null,
+        "repeatAfter": [
+          "OBJECTIVE_FAILED"
+        ]
+      },
+      "complications": {
+        "enabled": true,
+        "chancePerSlot": 0.03,
+        "baseDc": 12,
+        "allowMultiple": true
+      },
+      "complicationSlots": [
+        {
+          "id": "event_standalone_012_complication_0",
+          "position": 0,
+          "enabled": true,
+          "chance": 0.02,
+          "resourceMode": "RANDOM",
+          "resource": "None",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "магический след внезапно оживает и требует немедленной реакции"
+        },
+        {
+          "id": "event_standalone_012_complication_1",
+          "position": 1,
+          "enabled": true,
+          "chance": 0.03,
+          "resourceMode": "FIXED",
+          "resource": "Supplies",
+          "dcMode": "AUTO",
+          "dc": 13,
+          "baseDc": 12,
+          "gmDescription": "дорога меняется после того, как отряд проходит ориентир"
+        }
+      ]
+    }
+  ],
+  "chains": []
+}

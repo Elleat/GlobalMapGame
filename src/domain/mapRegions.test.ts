@@ -17,6 +17,7 @@ test('новый регион скрыт от игроков, но его виз
   assert.equal(region.showLabel, true);
   assert.equal(region.showFill, true);
   assert.equal(region.fog.enabled, false);
+  assert.equal(region.fog.opacity, getFogOpacity('MEDIUM'));
   assert.equal(region.points.length, 4);
 });
 
@@ -26,11 +27,13 @@ test('нормализация ограничивает координаты и 
     ...source,
     points: [{ x: -10, y: 20 }, { x: 120, y: 30 }, { x: 50, y: 140 }],
     fillOpacity: 4,
-    borderOpacity: -1
+    borderOpacity: -1,
+    fog: { ...source.fog, opacity: 4 }
   }, 0);
   assert.deepEqual(region.points, [{ x: 0, y: 20 }, { x: 100, y: 30 }, { x: 50, y: 100 }]);
   assert.equal(region.fillOpacity, 0.8);
   assert.equal(region.borderOpacity, 0);
+  assert.equal(region.fog.opacity, 1);
 });
 
 test('самопересекающаяся граница определяется до сохранения', () => {

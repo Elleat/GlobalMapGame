@@ -37,9 +37,3 @@ export const TRUST_FREE_RESOURCES: Record<number, number> = {
   3: 3
 };
 
-export const TRUST_PAYMENT_LIMIT_H: Record<number, number> = {
-  1: 10,
-  2: 15,
-  3: 25
-};
-

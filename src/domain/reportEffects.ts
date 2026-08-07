@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { BASIC_RESOURCE_KEYS } from '../types';
 import { calculateMaxHp } from '../utils';
+import { addClanExperience, getClanExperienceReward } from './clanProgression';
 import { applyRelationDelta, getMissionRelationDelta } from './relations';
 
 const LEVEL_THRESHOLDS: Record<number, number> = { 1: 1, 2: 3, 3: 6, 4: 10 };
@@ -98,6 +99,7 @@ export function reverseSimulationReportEffects(
   const ownerClanId = originalReport?.rewardRecipientClanId ?? originalReport?.context?.clanId ?? null;
   const restoredClans = clans.map(clan => {
     const goldDelta = effects.clanGoldDeltas[clan.id] ?? 0;
+    const experienceDelta = effects.clanExperienceDeltas?.[clan.id] ?? 0;
     const resources = { ...clan.resources };
     if (clan.id === ownerClanId) {
       effects.resourceLedger.returned.forEach(resource => {
@@ -115,7 +117,7 @@ export function reverseSimulationReportEffects(
       });
       resources.specialItems = items;
     }
-    return { ...clan, gold: clan.gold - goldDelta, resources };
+    return addClanExperience({ ...clan, gold: clan.gold - goldDelta, resources }, -experienceDelta);
   });
 
   return { adventurers: restoredAdventurers, clans: restoredClans };
@@ -148,12 +150,31 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
   let clans = restored.clans;
   const squadIds = Array.from(new Set(input.editedReport.squadAdvIds ?? []));
   const squadIdSet = new Set(squadIds);
-  const returnedIds = (input.editedReport.returnedAdventurerIds === undefined
+  const legacyOutcome = input.editedReport.isSuccess
+    ? 'SUCCESS'
+    : (input.editedReport.returnedAdventurerIds?.length ?? 0) === 0
+      ? 'PARTY_LOST'
+      : 'OBJECTIVE_FAILED';
+  // New editors change `outcome` and `isSuccess` together. Older callers only
+  // changed `isSuccess`, leaving the spread report's outcome untouched. Detect
+  // that exact conflict so archived saves and integrations keep working.
+  const legacySuccessWasEdited = Boolean(
+    input.originalReport
+    && input.editedReport.isSuccess !== input.originalReport.isSuccess
+    && input.editedReport.outcome === input.originalReport.outcome
+  );
+  const outcome = legacySuccessWasEdited ? legacyOutcome : (input.editedReport.outcome ?? legacyOutcome);
+  const returnedIds = (outcome === 'PARTY_LOST' ? [] : input.editedReport.returnedAdventurerIds === undefined
     ? squadIds
     : input.editedReport.returnedAdventurerIds
   ).filter(id => squadIdSet.has(id));
   const returnedIdSet = new Set(returnedIds);
-  const isSuccess = Boolean(input.editedReport.isSuccess);
+  const isSuccess = outcome === 'SUCCESS';
+  const baseObjectiveCompleted = legacySuccessWasEdited
+    && input.originalReport
+    && input.editedReport.baseObjectiveCompleted === input.originalReport.baseObjectiveCompleted
+      ? isSuccess
+      : (input.editedReport.baseObjectiveCompleted ?? isSuccess);
   const damage = Math.max(0, Math.trunc(input.editedReport.damageDealt || 0));
   const relationDelta = getMissionRelationDelta(input.mission, input.contract.attachedResources, isSuccess);
   const beforeById = new Map(
@@ -238,19 +259,33 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
   }
 
   const goldReward = Math.max(0, input.editedReport.goldReward || 0);
-  const rewardGranted = isSuccess && Boolean(input.editedReport.rewardGranted ?? true);
-  const rewardAwardedAmount = rewardGranted
-    ? Math.max(0, input.editedReport.rewardAwardedAmount ?? goldReward)
-    : 0;
+  const legacyFullRewardRestore = Boolean(
+    input.originalReport
+    && input.originalReport.rewardGranted === false
+    && input.editedReport.rewardGranted === true
+    && (input.editedReport.rewardAwardedAmount ?? 0) === (input.originalReport.rewardAwardedAmount ?? 0)
+  );
+  const requestedGoldReward = legacyFullRewardRestore
+    ? goldReward
+    : input.editedReport.rewardAwardedAmount ?? (input.editedReport.rewardGranted === false ? 0 : goldReward);
+  const rewardAwardedAmount = isSuccess ? Math.max(0, Math.min(goldReward, requestedGoldReward)) : 0;
+  const rewardGranted = rewardAwardedAmount > 0;
+  const rewardSpecialItemsGranted = isSuccess && Boolean(
+    input.editedReport.rewardSpecialItemsGranted
+    ?? input.editedReport.rewardGranted
+    ?? true
+  );
   const awardedSpecialItems: string[] = [];
   const clanGoldDeltas: Record<string, number> = {};
+  const clanExperienceDeltas: Record<string, number> = {};
+  const clanExperienceReward = getClanExperienceReward(input.mission, baseObjectiveCompleted, isSuccess);
   clans = clans.map(clan => {
     if (clan.id !== input.contract.clanId) return clan;
     const resources = { ...clan.resources };
     resourceLedger.returned.forEach(resource => {
       resources[resource] = Number(resources[resource] || 0) + 1;
     });
-    if (rewardGranted && (input.mission.rewardSpecialItems?.length ?? 0) > 0) {
+    if (rewardSpecialItemsGranted && (input.mission.rewardSpecialItems?.length ?? 0) > 0) {
       const specialItems = [...(resources.specialItems ?? [])];
       input.mission.rewardSpecialItems?.forEach(item => {
         if (!specialItems.includes(item)) {
@@ -261,7 +296,11 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
       resources.specialItems = specialItems;
     }
     clanGoldDeltas[clan.id] = rewardAwardedAmount;
-    return { ...clan, gold: clan.gold + rewardAwardedAmount, resources };
+    if (clan.id !== 'clan_guild' && clanExperienceReward > 0) clanExperienceDeltas[clan.id] = clanExperienceReward;
+    return addClanExperience(
+      { ...clan, gold: clan.gold + rewardAwardedAmount, resources },
+      clanExperienceDeltas[clan.id] ?? 0
+    );
   });
 
   const adventurersById = new Map(adventurers.map(adventurer => [adventurer.id, adventurer]));
@@ -303,8 +342,9 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     resourceLedger,
     guildGoldDelta: input.contract.clanId === 'clan_guild' ? rewardAwardedAmount : 0,
     clanGoldDeltas,
+    clanExperienceDeltas,
     awardedSpecialItems,
-    unlockedMissionIds: (input.editedReport.baseObjectiveCompleted ?? isSuccess)
+    unlockedMissionIds: outcome !== 'PARTY_LOST' && baseObjectiveCompleted
       ? [...(input.mission.unlocksMissionIds ?? [])]
       : []
   };
@@ -312,10 +352,13 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
   const report: SimulationReport = {
     ...structuredClone(input.editedReport),
     isSuccess,
+    outcome,
+    narrativeText: outcome === 'PARTY_LOST' ? 'Отряд не вернулся.' : input.editedReport.narrativeText,
     totalRoll: (input.editedReport.roll || 0) + (input.editedReport.partyBonus || 0),
     goldReward,
     rewardGranted,
     rewardAwardedAmount,
+    rewardSpecialItemsGranted,
     rewardRecipientClanId: input.contract.clanId,
     damageDealt: damage,
     squadAdvIds: squadIds,
@@ -325,7 +368,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     returnedAdventurerIds: returnedIds,
     effects,
     wasManuallyResolved: true,
-    baseObjectiveCompleted: input.editedReport.baseObjectiveCompleted ?? isSuccess
+    baseObjectiveCompleted
   };
 
   return { report, adventurers, clans };

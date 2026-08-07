@@ -11,6 +11,7 @@ import {
   getContractPerceivedValue,
   getRelationBonus
 } from './economy';
+import { isAvailableNpc } from './adventurers';
 
 export interface DistributionInput {
   adventurers: Adventurer[];
@@ -40,12 +41,11 @@ function cloneContractsForPlayerDistribution(
   adventurersById: Map<string, Adventurer>
 ): Contract[] {
   return contracts.map(contract => {
-    if (contract.clanId === 'clan_guild') {
-      return { ...contract, partyAdvIds: [...(contract.partyAdvIds ?? [])] };
-    }
-
-    const manualPlayers = (contract.partyAdvIds ?? []).filter(id => adventurersById.get(id)?.isPlayer);
-    return { ...contract, partyAdvIds: manualPlayers };
+    const retainedParty = (contract.partyAdvIds ?? []).filter(id => {
+      const adventurer = adventurersById.get(id);
+      return Boolean(adventurer && !adventurer.isArchived);
+    });
+    return { ...contract, partyAdvIds: retainedParty };
   });
 }
 
@@ -121,6 +121,11 @@ function compareCandidates(left: PairCandidate, right: PairCandidate): number {
   if (left.contract.paymentAmount !== right.contract.paymentAmount) {
     return right.contract.paymentAmount - left.contract.paymentAmount;
   }
+  // If offers are equally attractive, the contractor keeps the stronger
+  // eligible candidate and uses the paid level budget more efficiently.
+  if (left.adventurer.level !== right.adventurer.level) {
+    return right.adventurer.level - left.adventurer.level;
+  }
 
   const leftSize = left.contract.partyAdvIds.length;
   const rightSize = right.contract.partyAdvIds.length;
@@ -134,8 +139,7 @@ export function distributePlayerContracts(input: DistributionInput): Distributio
   const contracts = cloneContractsForPlayerDistribution(input.contracts, adventurersById);
   const initiallyAssignedIds = new Set(contracts.flatMap(contract => contract.partyAdvIds));
   const available = input.adventurers.filter(adventurer =>
-    adventurer.status === 'READY'
-    && !adventurer.isPlayer
+    isAvailableNpc(adventurer)
     && !initiallyAssignedIds.has(adventurer.id)
   );
 

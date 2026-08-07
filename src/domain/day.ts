@@ -1,4 +1,4 @@
-import type { Adventurer, Clan, Contract, GameHistoryEntry, Mission, PrerequisiteMode, SimulationReport } from '../types';
+import type { Adventurer, Clan, Contract, GameHistoryEntry, Mission, MissionRecurrence, PrerequisiteMode, SimulationReport } from '../types';
 import { decrementMissionLifespan, isMissionExpired } from './missions';
 import { recalculateReportEffects, reverseSimulationReportEffects } from './reportEffects';
 
@@ -9,6 +9,8 @@ export interface MissionLifecycleInput {
   completedMissionIds: string[];
   closedMissionIds?: string[];
   expiredMissionIds?: string[];
+  missionRecurrences?: MissionRecurrence[];
+  activeClanCount?: number;
   nextDay: number;
 }
 
@@ -21,10 +23,134 @@ export interface MissionLifecycleResult {
   expiredContractIds: string[];
   unlockedMissionIds: string[];
   scenarioDriven: boolean;
+  missionRecurrences: MissionRecurrence[];
+}
+
+/** Places a report into the archive day where its contract was accepted. */
+export function upsertReportInHistory(
+  history: GameHistoryEntry[],
+  report: SimulationReport,
+  targetDay: number
+): GameHistoryEntry[] {
+  if (!history.some(entry => entry.day === targetDay)) {
+    return [...history, {
+      day: targetDay,
+      contractsCount: 1,
+      reports: [structuredClone(report)],
+      logs: []
+    }].sort((left, right) => left.day - right.day);
+  }
+
+  return history.map(entry => {
+    if (entry.day !== targetDay) return entry;
+    const reportIndex = entry.reports.findIndex(item => item.missionId === report.missionId);
+    const reports = reportIndex >= 0
+      ? entry.reports.map((item, index) => index === reportIndex ? structuredClone(report) : item)
+      : [...entry.reports, structuredClone(report)];
+    return {
+      ...entry,
+      contractsCount: Math.max(entry.contractsCount, reports.length),
+      reports
+    };
+  });
+}
+
+function missionDefinitionId(mission: Mission): string {
+  return mission.definitionId ?? mission.id;
+}
+
+function scheduleRecurrence(
+  queue: MissionRecurrence[],
+  mission: Mission,
+  trigger: 'SUCCESS' | 'OBJECTIVE_FAILED' | 'PARTY_LOST' | 'EXPIRED',
+  nextDay: number
+) {
+  const repeat = mission.repeat;
+  if (!repeat?.enabled || !repeat.repeatAfter.includes(trigger)) return;
+  const occurrenceIndex = mission.occurrenceIndex ?? 1;
+  if (repeat.maxOccurrences !== null && occurrenceIndex >= repeat.maxOccurrences) return;
+  const definitionId = missionDefinitionId(mission);
+  const scheduled: MissionRecurrence = {
+    definitionId,
+    occurrenceIndex: occurrenceIndex + 1,
+    nextDay: nextDay + Math.max(1, repeat.cooldownDays) - 1
+  };
+  if (!queue.some(item => item.definitionId === definitionId && item.occurrenceIndex === scheduled.occurrenceIndex)) queue.push(scheduled);
+}
+
+function getQuotaReferencedIds(allMissions: Mission[]): Set<string> {
+  return new Set(allMissions.flatMap(mission => [
+    ...(mission.prerequisiteMissionIds ?? []),
+    ...(mission.unlocksMissionIds ?? [])
+  ]));
+}
+
+function isSafeQuotaFiller(mission: Mission, referencedIds: Set<string>): boolean {
+  if (mission.type !== 'OPERATION' && mission.type !== 'DUMMY') return false;
+  if (mission.definitionId || mission.repeat?.enabled) return false;
+  if ((mission.chainIds?.length ?? 0) > 0 || (mission.prerequisiteMissionIds?.length ?? 0) > 0) return false;
+  if (referencedIds.has(mission.id) || (mission.rewardSpecialItems?.length ?? 0) > 0) return false;
+  return true;
+}
+
+function selectDailyQuota(candidates: Mission[], allMissions: Mission[], activeClanCount?: number): { selected: Mission[]; skipped: Mission[] } {
+  if (activeClanCount === undefined) return { selected: candidates, skipped: [] };
+  const target = Math.max(0, activeClanCount * 2);
+  const excess = Math.max(0, candidates.length - target);
+  if (excess === 0) return { selected: candidates, skipped: [] };
+  const referencedIds = getQuotaReferencedIds(allMissions);
+  const removable = candidates
+    .filter(mission => isSafeQuotaFiller(mission, referencedIds))
+    .sort((left, right) => (left.quotaPriority ?? 0) - (right.quotaPriority ?? 0));
+  const dummies = removable.filter(mission => mission.type === 'DUMMY');
+  const operations = removable.filter(mission => mission.type === 'OPERATION');
+  const dummyGoal = Math.floor(excess / 10);
+  const skipped = [...operations.slice(0, excess - dummyGoal), ...dummies.slice(0, dummyGoal)];
+  if (skipped.length < excess) {
+    const selectedIds = new Set(skipped.map(mission => mission.id));
+    skipped.push(...removable.filter(mission => !selectedIds.has(mission.id)).slice(0, excess - skipped.length));
+  }
+  const skippedIds = new Set(skipped.map(mission => mission.id));
+  return { selected: candidates.filter(mission => !skippedIds.has(mission.id)), skipped };
+}
+
+function fillQuotaFromFuture(
+  candidates: Mission[],
+  allMissions: Mission[],
+  unavailableIds: Set<string>,
+  activeClanCount: number | undefined,
+  day: number
+): Mission[] {
+  if (activeClanCount === undefined) return candidates;
+  const deficit = Math.max(0, activeClanCount * 2) - candidates.length;
+  if (deficit <= 0) return candidates;
+  const candidateIds = new Set(candidates.map(mission => mission.id));
+  const referencedIds = getQuotaReferencedIds(allMissions);
+  const fillers = allMissions
+    .filter(mission => !unavailableIds.has(mission.id) && !candidateIds.has(mission.id))
+    .filter(mission => (mission.startDay ?? 1) > day)
+    .filter(mission => isSafeQuotaFiller(mission, referencedIds))
+    .sort((left, right) =>
+      (left.startDay ?? 1) - (right.startDay ?? 1)
+      || (right.quotaPriority ?? 0) - (left.quotaPriority ?? 0)
+      || left.title.localeCompare(right.title, 'ru')
+    )
+    .slice(0, deficit)
+    .map(mission => structuredClone(mission));
+  return [...candidates, ...fillers];
+}
+
+export function selectInitialScenarioMissions(allMissions: Mission[], activeClanCount: number): Mission[] {
+  const candidates = allMissions
+    .filter(mission => (mission.startDay ?? 1) <= 1 && (mission.prerequisiteMissionIds ?? []).length === 0)
+    .map(mission => structuredClone(mission));
+  const filled = fillQuotaFromFuture(candidates, allMissions, new Set(), activeClanCount, 1);
+  return selectDailyQuota(filled, allMissions, activeClanCount).selected;
 }
 
 function reportCompletesObjective(report: SimulationReport): boolean {
-  return report.baseObjectiveCompleted ?? report.isSuccess;
+  const outcome = report.outcome ?? (report.isSuccess ? 'SUCCESS' : 'OBJECTIVE_FAILED');
+  return outcome !== 'PARTY_LOST' && (report.baseObjectiveCompleted ?? report.isSuccess);
 }
 
 function prerequisitesSatisfied(
@@ -118,6 +244,7 @@ export function recalculateScenarioProgress(
 export interface ReconcileScenarioHistoryInput extends RecalculateScenarioProgressInput {
   adventurers: Adventurer[];
   clans: Clan[];
+  missionRecurrences?: MissionRecurrence[];
 }
 
 export interface ReconcileScenarioHistoryResult extends RecalculateScenarioProgressResult {
@@ -126,6 +253,7 @@ export interface ReconcileScenarioHistoryResult extends RecalculateScenarioProgr
   clans: Clan[];
   closedMissionIds: string[];
   expiredMissionIds: string[];
+  missionRecurrences: MissionRecurrence[];
 }
 
 /**
@@ -223,6 +351,40 @@ export function reconcileScenarioHistory(
     if (!closedMissionIds.has(mission.id) && !expiredMissionIds.has(mission.id)) missions.push(structuredClone(mission));
   });
 
+  const recurrenceByKey = new Map<string, MissionRecurrence>();
+  const reportsWithDays = history.flatMap(entry => entry.reports.map(report => ({ day: entry.day, report })));
+  const reportedDefinitions = new Set<string>();
+  const observedOccurrences = new Set<string>();
+  reportsWithDays.forEach(({ report }) => {
+    const mission = report.context?.mission ?? definitionsById.get(report.missionId);
+    if (!mission) return;
+    const definitionId = missionDefinitionId(mission);
+    reportedDefinitions.add(definitionId);
+    observedOccurrences.add(`${definitionId}:${mission.occurrenceIndex ?? 1}`);
+  });
+  missions.forEach(mission => observedOccurrences.add(`${missionDefinitionId(mission)}:${mission.occurrenceIndex ?? 1}`));
+  reportsWithDays.forEach(({ day, report }) => {
+    if (report.invalidated) return;
+    const mission = report.context?.mission ?? definitionsById.get(report.missionId);
+    const repeat = mission?.repeat;
+    if (!mission || !repeat?.enabled) return;
+    const trigger = report.isExpired
+      ? 'EXPIRED'
+      : report.outcome ?? (report.isSuccess ? 'SUCCESS' : ((report.returnedAdventurerIds?.length ?? 0) === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED'));
+    if (!repeat.repeatAfter.includes(trigger)) return;
+    const occurrenceIndex = mission.occurrenceIndex ?? 1;
+    const nextOccurrence = occurrenceIndex + 1;
+    if (repeat.maxOccurrences !== null && nextOccurrence > repeat.maxOccurrences) return;
+    const definitionId = missionDefinitionId(mission);
+    const key = `${definitionId}:${nextOccurrence}`;
+    if (observedOccurrences.has(key)) return;
+    recurrenceByKey.set(key, { definitionId, occurrenceIndex: nextOccurrence, nextDay: day + Math.max(1, repeat.cooldownDays) });
+  });
+  (input.missionRecurrences ?? []).forEach(recurrence => {
+    if (reportedDefinitions.has(recurrence.definitionId)) return;
+    recurrenceByKey.set(`${recurrence.definitionId}:${recurrence.occurrenceIndex}`, recurrence);
+  });
+
   return {
     history,
     adventurers,
@@ -230,7 +392,8 @@ export function reconcileScenarioHistory(
     missions,
     completedMissionIds: [...completedMissionIds],
     closedMissionIds: [...closedMissionIds],
-    expiredMissionIds: [...expiredMissionIds]
+    expiredMissionIds: [...expiredMissionIds],
+    missionRecurrences: [...recurrenceByKey.values()]
   };
 }
 
@@ -241,14 +404,22 @@ export function advanceMissionLifecycle(input: MissionLifecycleInput): MissionLi
   const expiredMissionIds = new Set(input.expiredMissionIds ?? []);
   const reportsByMissionId = new Map<string, SimulationReport>();
   const unlockedMissionIds = new Set<string>();
+  const missionRecurrences = structuredClone(input.missionRecurrences ?? []);
 
   input.contracts.forEach(contract => {
     if (!contract.simulationReport) return;
     reportsByMissionId.set(contract.missionId, contract.simulationReport);
     if (!contract.simulationReport.isExpired) closedMissionIds.add(contract.missionId);
+    const reportMission = contract.simulationReport.context?.mission;
+    const definitionId = reportMission ? missionDefinitionId(reportMission) : contract.missionId;
     if (reportCompletesObjective(contract.simulationReport)) {
-      completedMissionIds.add(contract.missionId);
+      completedMissionIds.add(definitionId);
       contract.simulationReport.effects?.unlockedMissionIds.forEach(id => unlockedMissionIds.add(id));
+    }
+    if (reportMission) {
+      const trigger = contract.simulationReport.outcome
+        ?? (contract.simulationReport.isSuccess ? 'SUCCESS' : ((contract.simulationReport.returnedAdventurerIds?.length ?? 0) === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED'));
+      scheduleRecurrence(missionRecurrences, reportMission, trigger, input.nextDay);
     }
   });
 
@@ -271,11 +442,15 @@ export function advanceMissionLifecycle(input: MissionLifecycleInput): MissionLi
 
     const aged = decrementMissionLifespan(mission);
     if (!isMissionExpired(aged)) missions.push(aged);
-    else expiredMissionIds.add(mission.id);
+    else {
+      expiredMissionIds.add(mission.id);
+      scheduleRecurrence(missionRecurrences, mission, 'EXPIRED', input.nextDay);
+    }
   });
 
   const activeIds = new Set(missions.map(mission => mission.id));
   const scenarioDriven = allMissions.length > 0;
+  const candidates: Mission[] = [];
   allMissions.forEach(sourceMission => {
     if (
       activeIds.has(sourceMission.id)
@@ -288,12 +463,50 @@ export function advanceMissionLifecycle(input: MissionLifecycleInput): MissionLi
     if (!scheduled && !explicitlyUnlocked) return;
     if (!prerequisitesSatisfied(sourceMission, completedMissionIds)) return;
 
-    missions.push({
+    candidates.push({
       ...structuredClone(sourceMission),
       storyStatus: sourceMission.type === 'STORY' ? (sourceMission.storyStatus ?? 'AVAILABLE') : sourceMission.storyStatus
     });
-    activeIds.add(sourceMission.id);
   });
+
+  const dueRecurrences = missionRecurrences.filter(item => item.nextDay <= input.nextDay);
+  const recurrenceMissionKeys = new Map<string, string>();
+  dueRecurrences.forEach(recurrence => {
+    const definition = allMissions.find(mission => mission.id === recurrence.definitionId);
+    if (!definition || !prerequisitesSatisfied(definition, completedMissionIds)) return;
+    const occurrenceId = `${definition.id}__repeat_${recurrence.occurrenceIndex}`;
+    candidates.push({
+      ...structuredClone(definition),
+      id: occurrenceId,
+      definitionId: definition.id,
+      occurrenceIndex: recurrence.occurrenceIndex,
+      startDay: input.nextDay,
+      lifespan: definition.maxLifespan,
+      storyStatus: definition.type === 'STORY' ? 'AVAILABLE' : definition.storyStatus,
+      intelRevealed: false,
+      scoutedByClanIds: []
+    });
+    recurrenceMissionKeys.set(occurrenceId, `${recurrence.definitionId}:${recurrence.occurrenceIndex}`);
+  });
+  const unavailableIds = new Set([
+    ...activeIds,
+    ...completedMissionIds,
+    ...closedMissionIds,
+    ...expiredMissionIds
+  ]);
+  const filledCandidates = fillQuotaFromFuture(candidates, allMissions, unavailableIds, input.activeClanCount, input.nextDay);
+  const quota = selectDailyQuota(filledCandidates, allMissions, input.activeClanCount);
+  quota.selected.forEach(mission => {
+    missions.push(mission);
+    activeIds.add(mission.id);
+  });
+  quota.skipped.forEach(mission => expiredMissionIds.add(mission.id));
+  const consumedRecurrenceKeys = new Set(
+    quota.selected
+      .map(mission => recurrenceMissionKeys.get(mission.id))
+      .filter((key): key is string => Boolean(key))
+  );
+  const remainingRecurrences = missionRecurrences.filter(item => !consumedRecurrenceKeys.has(`${item.definitionId}:${item.occurrenceIndex}`));
 
   const activeMissionIds = new Set(missions.map(mission => mission.id));
   const expiredContractIds = input.contracts
@@ -311,6 +524,7 @@ export function advanceMissionLifecycle(input: MissionLifecycleInput): MissionLi
     expiredMissionIds: Array.from(expiredMissionIds),
     expiredContractIds,
     unlockedMissionIds: Array.from(unlockedMissionIds),
-    scenarioDriven
+    scenarioDriven,
+    missionRecurrences: remainingRecurrences
   };
 }

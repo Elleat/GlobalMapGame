@@ -4,6 +4,10 @@
   .editor-input {
     @apply w-full rounded-lg border border-neutral-800 bg-black px-3 py-2.5 text-sm text-neutral-200 outline-none transition placeholder:text-neutral-700 focus:border-emerald-500/60;
   }
+
+  .map-toolbar-button {
+    @apply rounded border border-neutral-800 p-2 text-neutral-500 transition hover:border-emerald-500/40 hover:text-emerald-300;
+  }
 }
 
 .region-fog-mask {
@@ -17,7 +21,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(0.75) contrast(0.92);
+  transform: scale(1.01);
+  filter: saturate(0.72) contrast(1.04) brightness(1.14);
   mix-blend-mode: screen;
   pointer-events: none;
 }
