@@ -259,16 +259,22 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
   }
 
   const goldReward = Math.max(0, input.editedReport.goldReward || 0);
-  const rewardGranted = isSuccess && Boolean(input.editedReport.rewardGranted ?? true);
-  const rewardWasExplicitlyRestored = Boolean(
-    rewardGranted
-    && input.originalReport
+  const legacyFullRewardRestore = Boolean(
+    input.originalReport
     && input.originalReport.rewardGranted === false
     && input.editedReport.rewardGranted === true
+    && (input.editedReport.rewardAwardedAmount ?? 0) === (input.originalReport.rewardAwardedAmount ?? 0)
   );
-  const rewardAwardedAmount = rewardGranted
-    ? Math.max(0, rewardWasExplicitlyRestored ? goldReward : (input.editedReport.rewardAwardedAmount ?? goldReward))
-    : 0;
+  const requestedGoldReward = legacyFullRewardRestore
+    ? goldReward
+    : input.editedReport.rewardAwardedAmount ?? (input.editedReport.rewardGranted === false ? 0 : goldReward);
+  const rewardAwardedAmount = isSuccess ? Math.max(0, Math.min(goldReward, requestedGoldReward)) : 0;
+  const rewardGranted = rewardAwardedAmount > 0;
+  const rewardSpecialItemsGranted = isSuccess && Boolean(
+    input.editedReport.rewardSpecialItemsGranted
+    ?? input.editedReport.rewardGranted
+    ?? true
+  );
   const awardedSpecialItems: string[] = [];
   const clanGoldDeltas: Record<string, number> = {};
   const clanExperienceDeltas: Record<string, number> = {};
@@ -279,7 +285,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     resourceLedger.returned.forEach(resource => {
       resources[resource] = Number(resources[resource] || 0) + 1;
     });
-    if (rewardGranted && (input.mission.rewardSpecialItems?.length ?? 0) > 0) {
+    if (rewardSpecialItemsGranted && (input.mission.rewardSpecialItems?.length ?? 0) > 0) {
       const specialItems = [...(resources.specialItems ?? [])];
       input.mission.rewardSpecialItems?.forEach(item => {
         if (!specialItems.includes(item)) {
@@ -352,6 +358,7 @@ export function recalculateReportEffects(input: RecalculateReportInput): Recalcu
     goldReward,
     rewardGranted,
     rewardAwardedAmount,
+    rewardSpecialItemsGranted,
     rewardRecipientClanId: input.contract.clanId,
     damageDealt: damage,
     squadAdvIds: squadIds,

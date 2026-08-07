@@ -33,6 +33,7 @@ function normalizeAdventurer(adventurer: Adventurer): Adventurer {
   return {
     ...adventurer,
     description: adventurer.description ?? '',
+    isArchived: Boolean(adventurer.isArchived),
     rosterCohort: adventurer.rosterCohort === undefined ? undefined : Math.max(1, Math.floor(adventurer.rosterCohort)),
     isRosterReserve: Boolean(adventurer.isRosterReserve),
     relations
@@ -77,6 +78,8 @@ function normalizeReport(report: SimulationReport): SimulationReport {
   return {
     ...report,
     outcome: report.outcome ?? (report.isSuccess ? 'SUCCESS' : (report.returnedAdventurerIds?.length === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED')),
+    rewardAwardedAmount: report.rewardAwardedAmount ?? (report.rewardGranted ? report.goldReward : 0),
+    rewardSpecialItemsGranted: report.rewardSpecialItemsGranted ?? Boolean(report.rewardGranted),
     missionTitle: cleanMissionTitle(report.missionTitle),
     context: report.context
       ? { ...report.context, mission: normalizeMission(report.context.mission) }

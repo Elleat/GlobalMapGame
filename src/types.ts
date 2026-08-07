@@ -66,6 +66,9 @@ export interface Adventurer {
   /** Derived campaign availability; reserve NPCs keep all progress but cannot be assigned. */
   isRosterReserve?: boolean;
   woundedOnDay?: number;
+  /** Hidden from active play, but retained so historical reports stay reproducible. */
+  isArchived?: boolean;
+  archivedOnDay?: number;
 }
 
 export type MissionType = 'STORY' | 'OPERATION' | 'DUMMY';
@@ -272,6 +275,8 @@ export interface SimulationReportContext {
   attachedResources: BasicResourceKey[];
   contractLevel: number;
   maxPartySize: number;
+  /** Market/Guild proposal shown to the GM while choosing actual participants. */
+  suggestedSquadAdvIds?: string[];
   mission: Mission;
 }
 
@@ -291,6 +296,8 @@ export interface SimulationReport {
   rewardGranted?: boolean;
   /** Actual amount transferred; kept separate from the displayed reward. */
   rewardAwardedAmount?: number;
+  /** Special-item rewards are granted independently from the gold reward. */
+  rewardSpecialItemsGranted?: boolean;
   rewardRecipientClanId?: string | null;
   attachedResourcesUsed: string[];
   squadNames: string[];

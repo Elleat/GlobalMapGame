@@ -30,7 +30,7 @@ export default function AdventurersTab({
   const [sortKey, setSortKey] = useState<AdventurerSortKey>('level');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const adventurers = state.adventurers || [];
+  const adventurers = (state.adventurers || []).filter(adventurer => !adventurer.isArchived);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

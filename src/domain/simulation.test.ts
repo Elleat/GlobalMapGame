@@ -519,6 +519,40 @@ test('редактор рапорта откатывает старые эффе
   assert.equal(restoredSuccess.clans.find(item => item.id === 'clan_guild')?.gold, 500);
 });
 
+test('ГМ может независимо выдать часть золота и не выдавать особый предмет', () => {
+  const operation = mission({ goldReward: 20, rewardSpecialItems: ['Ключ от башни'], checks: [{ reqResource: 'None', dc: 1 }] });
+  const signedContract = contract();
+  const successful = simulateContract({
+    contract: signedContract,
+    mission: operation,
+    adventurers: [adventurer()],
+    clans: [clan()],
+    day: 1,
+    random: sequence([0.99])
+  });
+  assert.deepEqual(successful.clans[0].resources.specialItems, ['Ключ от башни']);
+
+  const edited = recalculateReportEffects({
+    originalReport: successful.report,
+    editedReport: {
+      ...successful.report,
+      rewardAwardedAmount: 7,
+      rewardGranted: true,
+      rewardSpecialItemsGranted: false
+    },
+    contract: signedContract,
+    mission: operation,
+    adventurers: successful.adventurers,
+    clans: successful.clans,
+    day: 1
+  });
+
+  assert.equal(edited.report.rewardAwardedAmount, 7);
+  assert.equal(edited.report.rewardSpecialItemsGranted, false);
+  assert.equal(edited.clans[0].gold, 107);
+  assert.deepEqual(edited.clans[0].resources.specialItems, []);
+});
+
 test('редактирование старого рапорта сохраняет более поздний прогресс как дельту', () => {
   const operation = mission({ goldReward: 20 });
   const signedContract = contract();

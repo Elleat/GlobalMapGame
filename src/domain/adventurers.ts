@@ -29,5 +29,5 @@ export function applyNpcRosterCapacity(adventurers: Adventurer[], activeClanCoun
 }
 
 export function isAvailableNpc(adventurer: Adventurer): boolean {
-  return !adventurer.isPlayer && !adventurer.isRosterReserve && adventurer.status === 'READY';
+  return !adventurer.isArchived && !adventurer.isPlayer && !adventurer.isRosterReserve && adventurer.status === 'READY';
 }

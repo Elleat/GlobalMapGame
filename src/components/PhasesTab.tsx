@@ -42,6 +42,7 @@ import { activatePendingClanLevel } from '../domain/clanProgression';
 import { findMapRegionAtPoint } from '../domain/mapRegions';
 import { getMissionPresentation, getScoutingClanNames } from '../domain/missionPresentation';
 import { getActivePlayerClans } from '../domain/clans';
+import ReportParticipantsEditor from './ReportParticipantsEditor';
 
 interface PhasesTabProps {
   state: GameState;
@@ -49,6 +50,7 @@ interface PhasesTabProps {
   showToast: (msg: string, isError?: boolean) => void;
   onOpenStore: (clanId: string) => void;
   onRedirectToReports?: () => void;
+  onSelectAdventurer?: (id: string) => void;
 }
 
 export default function PhasesTab({
@@ -56,7 +58,8 @@ export default function PhasesTab({
   updateState,
   showToast,
   onOpenStore,
-  onRedirectToReports
+  onRedirectToReports,
+  onSelectAdventurer
 }: PhasesTabProps) {
   const [selectedMissionId, setSelectedMissionId] = useState('');
   const [selectedClanId, setSelectedClanId] = useState('');
@@ -361,6 +364,27 @@ export default function PhasesTab({
     showToast('🛡️ Герой добавлен в отряд.');
   };
 
+  const handleAssignAdventurerToNearestSlot = (advId: string) => {
+    const adventurer = state.adventurers.find(item => item.id === advId);
+    if (!adventurer || adventurer.isArchived) return;
+    const assignedContract = state.contracts.find(contract => contract.partyAdvIds?.includes(advId));
+    if (assignedContract) {
+      showToast(`«${adventurer.name}» уже назначен в отряд «${assignedContract.title}».`);
+      return;
+    }
+    const nearest = state.contracts.find(contract =>
+      contract.confirmed
+      && contract.clanId !== 'clan_guild'
+      && adventurer.level <= contract.contractLevel
+      && (contract.partyAdvIds?.length ?? 0) < getContractTargetPartySize(contract, state.missions)
+    );
+    if (!nearest) {
+      showToast('Нет ближайшего свободного слота подходящего ранга.', true);
+      return;
+    }
+    handleAssignAdventurerToContract(nearest, advId);
+  };
+
   const handleRemoveAdventurerFromAllContracts = (advId: string) => {
     if (state.isGuildActionsCompleted) {
       showToast('После действий Гильдии отряды зафиксированы до симуляции.', true);
@@ -407,6 +431,7 @@ export default function PhasesTab({
       goldReward: getMissionGoldReward(mission, state.hCost),
       rewardGranted: false,
       rewardAwardedAmount: 0,
+      rewardSpecialItemsGranted: false,
       rewardRecipientClanId: contract.clanId,
       attachedResourcesUsed: [],
       squadNames: [],
@@ -430,6 +455,7 @@ export default function PhasesTab({
         attachedResources: [...contract.attachedResources],
         contractLevel: contract.contractLevel,
         maxPartySize: contract.maxPartySize,
+        suggestedSquadAdvIds: [...(contract.suggestedSquadAdvIds ?? contract.partyAdvIds)],
         mission: structuredClone(mission)
       }
     };
@@ -498,6 +524,7 @@ export default function PhasesTab({
       narrativeText: outcome === 'PARTY_LOST' ? 'Отряд не вернулся.' : previous.narrativeText,
       rewardGranted: false,
       rewardAwardedAmount: 0,
+      rewardSpecialItemsGranted: false,
       isResourceAutoSuccess: outcome === 'SUCCESS' ? previous.isResourceAutoSuccess : false,
       autoSuccessReason: outcome === 'SUCCESS' ? previous.autoSuccessReason : null
     } : previous);
@@ -532,10 +559,11 @@ export default function PhasesTab({
         baseObjectiveCompleted: editedSuccess
           ? true
           : (editingReportData.baseObjectiveCompleted ?? sourceReport.baseObjectiveCompleted ?? false),
-        rewardGranted: Boolean(editingReportData.rewardGranted) && editedSuccess,
-        rewardAwardedAmount: Boolean(editingReportData.rewardGranted) && editedSuccess
-          ? (editingReportData.goldReward ?? sourceReport.goldReward)
+        rewardAwardedAmount: editedSuccess
+          ? Math.max(0, Math.min(editingReportData.goldReward ?? sourceReport.goldReward, editingReportData.rewardAwardedAmount ?? 0))
           : 0,
+        rewardGranted: editedSuccess && (editingReportData.rewardAwardedAmount ?? 0) > 0,
+        rewardSpecialItemsGranted: editedSuccess && Boolean(editingReportData.rewardSpecialItemsGranted),
         rewardRecipientClanId: originalContract.clanId
       } as SimulationReport;
       const recalculated = recalculateReportEffects({
@@ -774,6 +802,7 @@ export default function PhasesTab({
       }
 
       const healedAdventurers = state.adventurers.map(adventurer => {
+        if (adventurer.isArchived) return adventurer;
         if (adventurer.status === 'WOUNDED') {
           if (adventurer.woundedOnDay === state.day) return adventurer;
           return {
@@ -890,6 +919,7 @@ export default function PhasesTab({
       {state.isDmMode && !state.isDaySimulated && editingMissionId && editingReportData && (() => {
         const contract = state.contracts.find(item => item.missionId === editingMissionId);
         if (!contract) return null;
+        const mission = state.missions.find(item => item.id === editingMissionId) ?? editingReportData.context?.mission;
         return (
           <div className="space-y-4 rounded-lg border border-amber-500/40 bg-[#0d0d0d] p-5 font-mono text-xs">
             <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
@@ -899,8 +929,9 @@ export default function PhasesTab({
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <select value={editingReportData.outcome ?? (editingReportData.isSuccess ? 'SUCCESS' : 'OBJECTIVE_FAILED')} onChange={event => updateEditingOutcome(event.target.value as NonNullable<SimulationReport['outcome']>)} className="editor-input font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
               <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" disabled={editingReportData.isSuccess} checked={editingReportData.isSuccess || (editingReportData.baseObjectiveCompleted ?? false)} onChange={event => updateEditingField('baseObjectiveCompleted', event.target.checked)} /> Основная задача выполнена</label>
-              <label className="flex items-center gap-2 rounded border border-neutral-800 p-2"><input type="checkbox" disabled={!editingReportData.isSuccess} checked={editingReportData.rewardGranted ?? false} onChange={event => updateEditingField('rewardGranted', event.target.checked)} /> Награда выдана</label>
+              <label className="space-y-1 rounded border border-neutral-800 p-2"><span className="block text-[9px] uppercase text-neutral-500">Выдано золотом</span><input type="number" min={0} max={editingReportData.goldReward ?? 0} disabled={!editingReportData.isSuccess} value={editingReportData.rewardAwardedAmount ?? 0} onChange={event => updateEditingField('rewardAwardedAmount', Math.max(0, Math.min(editingReportData.goldReward ?? 0, Number(event.target.value) || 0)))} className="editor-input" /></label>
             </div>
+            {(mission?.rewardSpecialItems?.length ?? 0) > 0 && <label className="flex items-center gap-2 rounded border border-violet-500/20 bg-violet-500/5 p-2"><input type="checkbox" disabled={!editingReportData.isSuccess} checked={editingReportData.rewardSpecialItemsGranted ?? false} onChange={event => updateEditingField('rewardSpecialItemsGranted', event.target.checked)} /> Особая награда выдана: {mission?.rewardSpecialItems?.join(', ')}</label>}
             <textarea value={editingReportData.narrativeText ?? ''} onChange={event => updateEditingField('narrativeText', event.target.value)} className="editor-input min-h-24" placeholder="Описание результата" />
             <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
               {([
@@ -909,13 +940,7 @@ export default function PhasesTab({
             </div>
             <label className="flex items-center gap-2"><input type="checkbox" checked={editingReportData.isResourceAutoSuccess ?? false} onChange={event => updateEditingField('isResourceAutoSuccess', event.target.checked)} /> Автоуспех</label>
             {editingReportData.isResourceAutoSuccess && <input value={editingReportData.autoSuccessReason ?? ''} onChange={event => updateEditingField('autoSuccessReason', event.target.value)} className="editor-input" placeholder="Причина автоуспеха" />}
-            <div className="grid max-h-48 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
-              {state.adventurers.map(adventurer => {
-                const selected = editingReportData.squadAdvIds?.includes(adventurer.id) ?? false;
-                const returned = editingReportData.returnedAdventurerIds?.includes(adventurer.id) ?? false;
-                return <div key={adventurer.id} className={`flex items-center gap-2 rounded border p-2 ${selected ? 'border-emerald-500/40' : 'border-neutral-800'}`}><button type="button" onClick={() => toggleEditingParticipant(adventurer.id)} className="flex-1 text-left">{adventurer.name} · ур. {adventurer.level}</button>{selected && <button type="button" onClick={() => toggleEditingReturn(adventurer.id)} className={returned ? 'text-emerald-400' : 'text-rose-400'}>{returned ? 'Вернулся' : 'Не вернулся'}</button>}</div>;
-              })}
-            </div>
+            <ReportParticipantsEditor adventurers={state.adventurers} selectedIds={editingReportData.squadAdvIds ?? []} returnedIds={editingReportData.returnedAdventurerIds ?? []} suggestedIds={contract.suggestedSquadAdvIds ?? editingReportData.context?.suggestedSquadAdvIds ?? contract.partyAdvIds ?? mission?.suggestedSquadAdvIds ?? []} onToggleSelected={toggleEditingParticipant} onToggleReturned={toggleEditingReturn} onOpenDossier={onSelectAdventurer} />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(['Supplies', 'Equipment', 'Intelligence', 'Alchemy'] as BasicResourceKey[]).map(resource => {
                 const used = (editingReportData.attachedResourcesUsed ?? []).filter(item => item === resource).length;
@@ -1405,11 +1430,11 @@ export default function PhasesTab({
                                     if (!state.isDmMode) return;
                                     e.dataTransfer.setData('text/plain', id);
                                   }}
-                                  onClick={() => handleToggleAdventurer(c, id)}
-                                  className="px-2.5 py-1.5 bg-neutral-900 border border-emerald-500/30 rounded text-xs font-mono hover:border-rose-500 hover:text-rose-400 text-emerald-300 flex items-center gap-1.5 cursor-pointer select-none transition-all uppercase"
+                                  className="px-2.5 py-1.5 bg-neutral-900 border border-emerald-500/30 rounded text-xs font-mono text-emerald-300 flex items-center gap-1.5 select-none transition-all uppercase"
                                 >
-                                  <span>🗡️ {adv.name}</span>
+                                  <button type="button" onClick={() => onSelectAdventurer?.(adv.id)} className="hover:text-white">🗡️ {adv.name}</button>
                                   <span className="text-[9px] bg-emerald-950 px-1 rounded text-emerald-400 font-bold">Lvl {adv.level}</span>
+                                  {state.isDmMode && <button type="button" onClick={() => handleToggleAdventurer(c, id)} className="ml-1 text-rose-500 hover:text-rose-300" title="Снять с задания">✕</button>}
                                 </div>
                               );
                             })}
@@ -1439,14 +1464,14 @@ export default function PhasesTab({
                 Список приключенцев
               </h3>
 
-              <div className="space-y-2 overflow-y-auto max-h-[420px] pr-1">
+              <div className="space-y-2 pr-1">
                 {(() => {
                   const readyAdvs = state.adventurers
-                    .filter(a => a.status === 'READY' && !a.isRosterReserve)
+                    .filter(a => !a.isArchived && a.status === 'READY' && !a.isRosterReserve)
                     .sort((a, b) => a.level - b.level);
                   
                   const woundedAdvs = state.adventurers
-                    .filter(a => a.status === 'WOUNDED');
+                    .filter(a => !a.isArchived && a.status === 'WOUNDED');
                   
                   const displayedAdvs = [...readyAdvs, ...woundedAdvs];
 
@@ -1485,13 +1510,8 @@ export default function PhasesTab({
                           e.dataTransfer.setData('text/plain', adv.id);
                         }}
                         onClick={() => {
-                          // Click assigns them to the first active contract if in GM mode
-                          const firstC = state.contracts[0];
-                          if (firstC) {
-                            handleToggleAdventurer(firstC, adv.id);
-                          } else {
-                            showToast('Сначала оформите хотя бы один контракт на Фазе 1!', true);
-                          }
+                           if (!state.isDmMode) return;
+                           handleAssignAdventurerToNearestSlot(adv.id);
                         }}
                         className={`p-2.5 bg-[#121212] border rounded text-xs font-mono transition-all flex justify-between items-center cursor-pointer select-none ${isAssigned ? 'border-emerald-500 text-emerald-300' : 'border-neutral-800 hover:border-neutral-700 text-neutral-400'}`}
                       >
@@ -1647,9 +1667,9 @@ export default function PhasesTab({
                                     const adv = state.adventurers.find(a => a.id === id);
                                     if (!adv) return null;
                                     return (
-                                      <span key={id} className="px-1.5 py-0.5 bg-black/60 border border-neutral-800 rounded text-[10px] text-emerald-300">
+                                      <button type="button" key={id} onClick={() => onSelectAdventurer?.(id)} className="px-1.5 py-0.5 bg-black/60 border border-neutral-800 rounded text-[10px] text-emerald-300 hover:border-emerald-500 hover:text-white">
                                         🗡️ {adv.name} (Lvl {adv.level})
-                                      </span>
+                                      </button>
                                     );
                                   })}
                                 </div>
@@ -1731,9 +1751,14 @@ export default function PhasesTab({
 
               {/* Simulation Result Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {state.contracts.filter(c => c.confirmed).map((c, index) => {
+                {state.contracts.filter(c => c.confirmed).map((contract, originalIndex) => ({ contract, originalIndex })).sort((left, right) => {
+                  const leftStory = state.missions.find(mission => mission.id === left.contract.missionId)?.type === 'STORY';
+                  const rightStory = state.missions.find(mission => mission.id === right.contract.missionId)?.type === 'STORY';
+                  return Number(rightStory) - Number(leftStory) || left.originalIndex - right.originalIndex;
+                }).map(({ contract: c, originalIndex: index }) => {
                   const r = c.simulationReport ?? (editingMissionId === c.missionId ? editingReportData as SimulationReport : null);
                   if (!r) return null;
+                  const reportMission = state.missions.find(mission => mission.id === c.missionId) ?? r.context?.mission;
 
                   const isEditing = editingMissionId === c.missionId && editingReportData;
                   const hideLostPartyDetails = !state.isDmMode && (r.outcome === 'PARTY_LOST' || (!r.isSuccess && (r.returnedAdventurerIds?.length ?? 0) === 0));
@@ -1769,16 +1794,12 @@ export default function PhasesTab({
                               />
                               Основная задача выполнена
                             </label>
-                            <label className="flex items-center gap-2 rounded border border-neutral-800 bg-black/30 p-2.5 text-[10px] text-neutral-300">
-                              <input
-                                type="checkbox"
-                                checked={editingReportData.rewardGranted ?? false}
-                                disabled={!editingReportData.isSuccess}
-                                onChange={event => updateEditingField('rewardGranted', event.target.checked)}
-                              />
-                              Награда фактически выдана
+                            <label className="rounded border border-neutral-800 bg-black/30 p-2.5 text-[10px] text-neutral-300">
+                              <span className="mb-1 block text-neutral-500">Фактически выдано золотом</span>
+                              <input type="number" min={0} max={editingReportData.goldReward ?? 0} value={editingReportData.rewardAwardedAmount ?? 0} disabled={!editingReportData.isSuccess} onChange={event => updateEditingField('rewardAwardedAmount', Math.max(0, Math.min(editingReportData.goldReward ?? 0, Number(event.target.value) || 0)))} className="editor-input" />
                             </label>
                           </div>
+                          {(reportMission?.rewardSpecialItems?.length ?? 0) > 0 && <label className="flex items-center gap-2 rounded border border-violet-500/20 bg-violet-500/5 p-2.5 text-[10px] text-violet-300"><input type="checkbox" checked={editingReportData.rewardSpecialItemsGranted ?? false} disabled={!editingReportData.isSuccess} onChange={event => updateEditingField('rewardSpecialItemsGranted', event.target.checked)} /> Особая награда выдана: {reportMission?.rewardSpecialItems?.join(', ')}</label>}
 
                           {/* Narrative output */}
                           <div className="space-y-1">
@@ -1870,32 +1891,7 @@ export default function PhasesTab({
 
                           <div className="space-y-2">
                             <label className="text-neutral-400 uppercase text-[10px] font-bold block">Фактические участники:</label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto pr-1">
-                              {state.adventurers.map(adventurer => {
-                                const selected = editingReportData.squadAdvIds?.includes(adventurer.id) ?? false;
-                                const returned = editingReportData.returnedAdventurerIds?.includes(adventurer.id) ?? false;
-                                return (
-                                  <div key={adventurer.id} className={`flex items-center justify-between gap-2 border rounded p-2 ${selected ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-neutral-800 bg-black/30'}`}>
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleEditingParticipant(adventurer.id)}
-                                      className={`text-left flex-1 cursor-pointer ${selected ? 'text-emerald-300' : 'text-neutral-500'}`}
-                                    >
-                                      {adventurer.name} · ур. {adventurer.level}{adventurer.isPlayer ? ' · Игрок' : ''}
-                                    </button>
-                                    {selected && (
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleEditingReturn(adventurer.id)}
-                                        className={`px-2 py-1 rounded border text-[9px] uppercase cursor-pointer ${returned ? 'border-emerald-500/30 text-emerald-400' : 'border-rose-500/30 text-rose-400'}`}
-                                      >
-                                        {returned ? 'Вернулся' : 'Не вернулся'}
-                                      </button>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            <ReportParticipantsEditor adventurers={state.adventurers} selectedIds={editingReportData.squadAdvIds ?? []} returnedIds={editingReportData.returnedAdventurerIds ?? []} suggestedIds={c.suggestedSquadAdvIds ?? editingReportData.context?.suggestedSquadAdvIds ?? c.partyAdvIds ?? reportMission?.suggestedSquadAdvIds ?? []} onToggleSelected={toggleEditingParticipant} onToggleReturned={toggleEditingReturn} onOpenDossier={onSelectAdventurer} />
                           </div>
 
                           <div className="space-y-2">
@@ -2002,7 +1998,12 @@ export default function PhasesTab({
                               )}
                               {r.goldReward > 0 && (
                                 <span className="text-amber-500 font-bold flex items-center gap-1 bg-amber-950/10 px-2 py-1 rounded border border-amber-500/10">
-                                  🪙 Награда: {r.goldReward}г · {r.rewardGranted ? 'выдана' : 'не выдана'}
+                                  🪙 Награда: {r.goldReward}г · выдано {r.rewardAwardedAmount ?? (r.rewardGranted ? r.goldReward : 0)}г
+                                </span>
+                              )}
+                              {(reportMission?.rewardSpecialItems?.length ?? 0) > 0 && (
+                                <span className={`font-bold flex items-center gap-1 px-2 py-1 rounded border ${r.rewardSpecialItemsGranted ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' : 'border-neutral-800 bg-black/20 text-neutral-500'}`}>
+                                  ◆ {reportMission?.rewardSpecialItems?.join(', ')} · {r.rewardSpecialItemsGranted ? 'выдано' : 'не выдано'}
                                 </span>
                               )}
                             </div>
@@ -2013,9 +2014,9 @@ export default function PhasesTab({
                             <span className="text-[10px] font-mono uppercase text-neutral-500 block">Участники экспедиции:</span>
                             <div className="flex flex-wrap gap-1.5 text-[10px] font-mono">
                               {r.squadNames.map((n, i) => (
-                                <span key={i} className="px-2 py-1 bg-[#141414] border border-neutral-800 rounded text-neutral-300">
+                                <button type="button" onClick={() => r.squadAdvIds[i] && onSelectAdventurer?.(r.squadAdvIds[i])} key={i} className="px-2 py-1 bg-[#141414] border border-neutral-800 rounded text-neutral-300 hover:border-emerald-500 hover:text-white">
                                   🗡️ {n}
-                                </span>
+                                </button>
                               ))}
                             </div>
                           </div>}

@@ -188,6 +188,7 @@ function createNoSquadReport(
       attachedResources: [...contract.attachedResources],
       contractLevel: contract.contractLevel,
       maxPartySize: contract.maxPartySize,
+      suggestedSquadAdvIds: [...(contract.suggestedSquadAdvIds ?? contract.partyAdvIds)],
       mission: structuredClone(mission)
     }
   };
@@ -519,6 +520,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
     goldReward,
     rewardGranted: isSuccess,
     rewardAwardedAmount: isSuccess ? goldReward : 0,
+    rewardSpecialItemsGranted: isSuccess && (mission.rewardSpecialItems?.length ?? 0) > 0,
     rewardRecipientClanId: contract.clanId,
     attachedResourcesUsed: [...resourceLedger.used],
     squadNames: party.map(member => member.name),
@@ -539,6 +541,7 @@ export function simulateContract(input: ContractSimulationInput): ContractSimula
       attachedResources: [...contract.attachedResources],
       contractLevel: contract.contractLevel,
       maxPartySize: contract.maxPartySize,
+      suggestedSquadAdvIds: [...(contract.suggestedSquadAdvIds ?? contract.partyAdvIds)],
       mission: structuredClone(mission)
     }
   };

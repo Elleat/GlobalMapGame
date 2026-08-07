@@ -10,21 +10,24 @@ import { recalculateReportEffects } from '../domain/reportEffects';
 import RetreatReportBlock from './RetreatReportBlock';
 import { reconcileScenarioHistory } from '../domain/day';
 import { getResourceNameRu } from '../utils';
+import ReportParticipantsEditor from './ReportParticipantsEditor';
 
 interface ResultsTabProps {
   state: GameState;
   updateState: (newState: Partial<GameState>) => void;
   showToast: (msg: string, isError?: boolean) => void;
+  onSelectAdventurer?: (id: string) => void;
 }
 
-export default function ResultsTab({ state, updateState, showToast }: ResultsTabProps) {
+export default function ResultsTab({ state, updateState, showToast, onSelectAdventurer }: ResultsTabProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [editingReportIdx, setEditingReportIdx] = useState<number | null>(null);
 
   // Form states for GM Editing
   const [editOutcome, setEditOutcome] = useState<MissionOutcome>('OBJECTIVE_FAILED');
   const [editBaseObjective, setEditBaseObjective] = useState<boolean>(false);
-  const [editRewardGranted, setEditRewardGranted] = useState<boolean>(false);
+  const [editRewardAmount, setEditRewardAmount] = useState<number>(0);
+  const [editSpecialRewardGranted, setEditSpecialRewardGranted] = useState<boolean>(false);
   const [editNarrative, setEditNarrative] = useState<string>('');
   const [editAutoSuccess, setEditAutoSuccess] = useState<boolean>(false);
   const [editAutoReason, setEditAutoReason] = useState<string>('');
@@ -48,7 +51,8 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
     setEditingReportIdx(idx);
     setEditOutcome(rep.outcome ?? (rep.isSuccess ? 'SUCCESS' : ((rep.returnedAdventurerIds?.length ?? 0) === 0 ? 'PARTY_LOST' : 'OBJECTIVE_FAILED')));
     setEditBaseObjective(rep.baseObjectiveCompleted ?? rep.isSuccess);
-    setEditRewardGranted(rep.rewardGranted ?? rep.isSuccess);
+    setEditRewardAmount(rep.rewardAwardedAmount ?? (rep.rewardGranted ? rep.goldReward : 0));
+    setEditSpecialRewardGranted(rep.rewardSpecialItemsGranted ?? Boolean(rep.rewardGranted));
     setEditNarrative(rep.narrativeText);
     setEditAutoSuccess(rep.isResourceAutoSuccess);
     setEditAutoReason(rep.autoSuccessReason || '');
@@ -101,8 +105,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
       totalRoll: editRoll + editBonus,
       dc: editDc,
       goldReward: editGold,
-      rewardGranted: editRewardGranted && finalSuccess,
-      rewardAwardedAmount: editRewardGranted && finalSuccess ? editGold : 0,
+      rewardAwardedAmount: finalSuccess ? Math.max(0, Math.min(editGold, editRewardAmount)) : 0,
+      rewardGranted: finalSuccess && editRewardAmount > 0,
+      rewardSpecialItemsGranted: finalSuccess && editSpecialRewardGranted,
       rewardRecipientClanId: context.clanId,
       damageDealt: editDamage,
       narrativeText: outcome === 'PARTY_LOST' ? 'Отряд не вернулся.' : editNarrative,
@@ -270,7 +275,11 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                       {dayEntry.reports.length === 0 ? (
                         <p className="text-neutral-500 font-mono text-xs italic">Экспедиции отсутствовали или не симулировались.</p>
                       ) : (
-                        dayEntry.reports.map((rep, idx) => {
+                        dayEntry.reports.map((rep, originalIndex) => ({ rep, originalIndex })).sort((left, right) => {
+                          const leftStory = left.rep.context?.mission.type === 'STORY' || state.allMissions?.find(mission => mission.id === left.rep.missionId)?.type === 'STORY';
+                          const rightStory = right.rep.context?.mission.type === 'STORY' || state.allMissions?.find(mission => mission.id === right.rep.missionId)?.type === 'STORY';
+                          return Number(rightStory) - Number(leftStory) || left.originalIndex - right.originalIndex;
+                        }).map(({ rep, originalIndex: idx }) => {
                           if (rep.isExpired) return null;
 
                           const isEditing = editingReportIdx === idx;
@@ -358,9 +367,9 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                     <span className="text-[10px] text-neutral-500 uppercase">Участники отряда:</span>
                                     <div className="flex flex-wrap gap-1.5 text-[10px]">
                                       {rep.squadNames.map((n, i) => (
-                                        <span key={i} className="px-2 py-0.5 bg-black border border-neutral-800 rounded text-neutral-300">
+                                        <button type="button" onClick={() => rep.squadAdvIds[i] && onSelectAdventurer?.(rep.squadAdvIds[i])} key={i} className="px-2 py-0.5 bg-black border border-neutral-800 rounded text-neutral-300 hover:border-emerald-500 hover:text-white">
                                           🗡 {n}
-                                        </span>
+                                        </button>
                                       ))}
                                     </div>
                                   </div>}
@@ -368,7 +377,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                   {!hideLostPartyDetails && <div className="flex justify-between items-center text-[10px] text-neutral-400 pt-2 border-t border-neutral-900">
                                     <span className="flex items-center gap-1">
                                       <Coins className="w-3.5 h-3.5 text-amber-500" />
-                                      Награда: <strong className="text-amber-500 text-xs">{rep.goldReward} Золота</strong> · {rep.rewardGranted ? 'выдана' : 'не выдана'}
+                                      Награда: <strong className="text-amber-500 text-xs">{rep.goldReward} Золота</strong> · выдано {rep.rewardAwardedAmount ?? (rep.rewardGranted ? rep.goldReward : 0)}
                                     </span>
                                     {rep.damageDealt > 0 && (
                                       <span className="flex items-center gap-1 text-rose-500">
@@ -377,6 +386,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                       </span>
                                     )}
                                   </div>}
+                                  {!hideLostPartyDetails && (rep.context?.mission.rewardSpecialItems?.length ?? 0) > 0 && <div className={`rounded border p-2 text-[10px] ${rep.rewardSpecialItemsGranted ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' : 'border-neutral-800 text-neutral-500'}`}>◆ Особая награда: {rep.context?.mission.rewardSpecialItems?.join(', ')} · {rep.rewardSpecialItemsGranted ? 'выдана' : 'не выдана'}</div>}
                                 </>
                               )}
 
@@ -393,7 +403,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                       <span className="text-neutral-300 font-bold uppercase block">Финальный результат</span>
                                       <small className="text-neutral-600">Пересчитывает опыт, отношения, HP, награды и ресурсы.</small>
                                     </div>
-                                    <select value={editOutcome} onChange={event => { const next = event.target.value as MissionOutcome; setEditOutcome(next); if (next === 'SUCCESS') setEditBaseObjective(true); setEditRewardGranted(false); if (next !== 'SUCCESS') setEditAutoSuccess(false); if (next === 'PARTY_LOST') setEditReturnedIds([]); }} className="editor-input max-w-[280px] font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
+                                    <select value={editOutcome} onChange={event => { const next = event.target.value as MissionOutcome; setEditOutcome(next); if (next === 'SUCCESS') setEditBaseObjective(true); setEditRewardAmount(0); setEditSpecialRewardGranted(false); if (next !== 'SUCCESS') setEditAutoSuccess(false); if (next === 'PARTY_LOST') setEditReturnedIds([]); }} className="editor-input max-w-[280px] font-bold uppercase"><option value="SUCCESS">Успех</option><option value="OBJECTIVE_FAILED">Провал задачи · отряд вернулся</option><option value="PARTY_LOST">Отряд не вернулся</option></select>
                                   </div>
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -401,11 +411,12 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                       <input type="checkbox" disabled={editOutcome === 'SUCCESS'} checked={editOutcome === 'SUCCESS' || editBaseObjective} onChange={event => setEditBaseObjective(event.target.checked)} />
                                       Основная задача выполнена
                                     </label>
-                                    <label className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">
-                                      <input type="checkbox" checked={editRewardGranted} disabled={editOutcome !== 'SUCCESS' && !editAutoSuccess} onChange={event => setEditRewardGranted(event.target.checked)} />
-                                      Награда фактически выдана
+                                    <label className="rounded border border-neutral-800 bg-neutral-950 p-3 text-neutral-300">
+                                      <span className="mb-1 block text-[9px] uppercase text-neutral-500">Фактически выдано золотом</span>
+                                      <input type="number" min={0} max={editGold} value={editRewardAmount} disabled={editOutcome !== 'SUCCESS' && !editAutoSuccess} onChange={event => setEditRewardAmount(Math.max(0, Math.min(editGold, Number(event.target.value) || 0)))} className="editor-input" />
                                     </label>
                                   </div>
+                                  {(rep.context?.mission.rewardSpecialItems?.length ?? 0) > 0 && <label className="flex items-center gap-2 rounded border border-violet-500/20 bg-violet-500/5 p-3 text-violet-300"><input type="checkbox" checked={editSpecialRewardGranted} disabled={editOutcome !== 'SUCCESS' && !editAutoSuccess} onChange={event => setEditSpecialRewardGranted(event.target.checked)} /> Особая награда выдана: {rep.context?.mission.rewardSpecialItems?.join(', ')}</label>}
 
                                   <div className="flex flex-col gap-1">
                                     <label className="text-neutral-500 text-[10px] uppercase">Художественное описание:</label>
@@ -500,35 +511,7 @@ export default function ResultsTab({ state, updateState, showToast }: ResultsTab
                                   {/* Squad list selector */}
                                   <div className="flex flex-col gap-1.5 pt-1">
                                     <label className="text-neutral-500 text-[10px] uppercase block font-bold">Фактические участники:</label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[180px] overflow-y-auto pr-1 bg-black/40 p-2 rounded border border-neutral-800">
-                                      {state.adventurers.map(a => {
-                                        const isChecked = editSquadIds.includes(a.id);
-                                        const returned = editReturnedIds.includes(a.id);
-                                        return (
-                                          <div
-                                            key={a.id}
-                                            className={`p-2 rounded border text-[10px] flex justify-between items-center gap-2 transition-all ${isChecked ? 'bg-amber-500/10 border-amber-500/60 text-amber-400 font-bold' : 'bg-transparent border-neutral-900 text-neutral-400'}`}
-                                          >
-                                            <button
-                                              type="button"
-                                              onClick={() => toggleHeroInSquad(a.id)}
-                                              className="flex-1 text-left cursor-pointer"
-                                            >
-                                              🛡️ {a.name} (Ур.{a.level}){a.isPlayer ? ' · Игрок' : ''}
-                                            </button>
-                                            {isChecked && (
-                                              <button
-                                                type="button"
-                                                onClick={() => toggleHeroReturned(a.id)}
-                                                className={`px-2 py-1 rounded border text-[9px] uppercase cursor-pointer ${returned ? 'border-emerald-500/30 text-emerald-400' : 'border-rose-500/30 text-rose-400'}`}
-                                              >
-                                                {returned ? 'Вернулся' : 'Не вернулся'}
-                                              </button>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
+                                    <ReportParticipantsEditor adventurers={state.adventurers} selectedIds={editSquadIds} returnedIds={editReturnedIds} suggestedIds={state.contracts.find(contract => contract.missionId === rep.missionId)?.suggestedSquadAdvIds ?? rep.context?.suggestedSquadAdvIds ?? rep.context?.mission.suggestedSquadAdvIds ?? []} onToggleSelected={toggleHeroInSquad} onToggleReturned={toggleHeroReturned} onOpenDossier={onSelectAdventurer} />
                                   </div>
 
                                   <div className="space-y-2">

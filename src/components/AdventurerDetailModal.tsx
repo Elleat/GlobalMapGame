@@ -4,8 +4,8 @@
  */
 
 import React from 'react';
-import { X, Heart, Shield, Award, Users, Plus, Minus, BookOpen } from 'lucide-react';
-import { Adventurer, Clan, GameState } from '../types';
+import { X, Heart, Award, Users, Plus, Minus, BookOpen, Trash2 } from 'lucide-react';
+import { Adventurer, GameState } from '../types';
 import { getStatusNameRu, getAdvClassIcon } from '../utils';
 import { getActiveClansGuildFirst } from '../domain/clans';
 
@@ -17,6 +17,7 @@ interface AdventurerDetailModalProps {
   onHeal: (id: string) => void;
   onAdjustReputation: (advId: string, clanId: string, delta: number) => void;
   onUpdateAdventurer?: (id: string, updatedFields: Partial<Adventurer>) => void;
+  onArchiveAdventurer?: (id: string) => void;
 }
 
 export default function AdventurerDetailModal({
@@ -26,7 +27,8 @@ export default function AdventurerDetailModal({
   state,
   onHeal,
   onAdjustReputation,
-  onUpdateAdventurer
+  onUpdateAdventurer,
+  onArchiveAdventurer
 }: AdventurerDetailModalProps) {
   const [isDescriptionOpen, setIsDescriptionOpen] = React.useState(false);
 
@@ -44,7 +46,7 @@ export default function AdventurerDetailModal({
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[1000] flex items-center justify-center p-4">
-      <div className="bg-[#0d0d0d] border border-emerald-500/30 rounded-lg w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-[#0d0d0d] border border-emerald-500/30 rounded-lg w-full max-w-md max-h-[92vh] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-emerald-500/20 flex justify-between items-center bg-[#080808]">
@@ -52,6 +54,7 @@ export default function AdventurerDetailModal({
             <h2 className="text-emerald-400 font-mono text-sm font-bold tracking-wider uppercase flex items-center gap-2">
               <span className="text-base">{classIcon}</span>
               {adv.name}
+              {adv.isArchived && <span className="rounded border border-neutral-700 px-1.5 py-0.5 text-[8px] text-neutral-500">Архив</span>}
             </h2>
             {state.isDmMode ? (
               <div className="flex items-center gap-2 font-mono text-[10px] uppercase mt-1">
@@ -79,7 +82,19 @@ export default function AdventurerDetailModal({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto">
+          {state.isDmMode && (
+            <div className="grid grid-cols-1 gap-3 rounded border border-amber-500/20 bg-amber-500/5 p-3 sm:grid-cols-2">
+              <label className="space-y-1 font-mono text-[10px] uppercase text-neutral-500">
+                <span>Имя</span>
+                <input value={adv.name} onChange={event => onUpdateAdventurer?.(adv.id, { name: event.target.value })} className="editor-input" />
+              </label>
+              <label className="space-y-1 font-mono text-[10px] uppercase text-neutral-500">
+                <span>Класс</span>
+                <input value={adv.class} onChange={event => onUpdateAdventurer?.(adv.id, { class: event.target.value })} className="editor-input" />
+              </label>
+            </div>
+          )}
           
           {/* Health & Performance Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -187,7 +202,12 @@ export default function AdventurerDetailModal({
             </div>
           </div>
 
-          {adv.description?.trim() && (
+          {state.isDmMode ? (
+            <label className="block rounded border border-amber-500/20 bg-amber-500/5 p-3">
+              <span className="mb-2 flex items-center gap-2 font-mono text-xs font-bold uppercase text-amber-400"><BookOpen className="h-4 w-4" /> Описание персонажа</span>
+              <textarea value={adv.description ?? ''} onChange={event => onUpdateAdventurer?.(adv.id, { description: event.target.value })} rows={5} placeholder="Описание показывается игрокам только по отдельной кнопке." className="editor-input resize-y leading-relaxed" />
+            </label>
+          ) : adv.description?.trim() && (
             <div className="rounded border border-emerald-500/15 bg-[#111] p-3">
               <button
                 type="button"
@@ -263,7 +283,18 @@ export default function AdventurerDetailModal({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-emerald-500/20 bg-[#080808] flex justify-end gap-3">
-          {state.isDmMode && adv.status !== 'DEAD' && (
+          {state.isDmMode && onArchiveAdventurer && !adv.isArchived && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Удалить «${adv.name}» из активной игры? Старые рапорты сохранятся.`)) onArchiveAdventurer(adv.id);
+              }}
+              className="mr-auto flex items-center gap-2 rounded border border-rose-500/40 bg-rose-500/10 px-4 py-2 font-mono text-xs font-bold uppercase text-rose-400 hover:bg-rose-500 hover:text-black"
+            >
+              <Trash2 className="h-4 w-4" /> Удалить
+            </button>
+          )}
+          {state.isDmMode && !adv.isArchived && adv.status !== 'DEAD' && (
             <button
               onClick={() => {
                 onHeal(adv.id);

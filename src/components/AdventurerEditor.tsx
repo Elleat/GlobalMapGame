@@ -49,14 +49,15 @@ export default function AdventurerEditor({ state, updateState, showToast, mode =
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
+    const visible = mode === 'LIVE' ? state.adventurers.filter(adventurer => !adventurer.isArchived) : state.adventurers;
     const normalized = query.trim().toLocaleLowerCase('ru');
-    if (!normalized) return state.adventurers;
-    return state.adventurers.filter(adventurer =>
+    if (!normalized) return visible;
+    return visible.filter(adventurer =>
       `${adventurer.name} ${adventurer.class} ${adventurer.description ?? ''}`
         .toLocaleLowerCase('ru')
         .includes(normalized)
     );
-  }, [query, state.adventurers]);
+  }, [mode, query, state.adventurers]);
 
   const selected = state.adventurers.find(item => item.id === selectedId) ?? null;
 
@@ -77,7 +78,9 @@ export default function AdventurerEditor({ state, updateState, showToast, mode =
   const deleteAdventurer = (id: string) => {
     const adventurer = state.adventurers.find(item => item.id === id);
     updateState({
-      adventurers: state.adventurers.filter(item => item.id !== id),
+      adventurers: mode === 'LIVE'
+        ? state.adventurers.map(item => item.id === id ? { ...item, isArchived: true, archivedOnDay: state.day } : item)
+        : state.adventurers.filter(item => item.id !== id),
       contracts: state.contracts.map(contract => ({
         ...contract,
         partyAdvIds: contract.partyAdvIds.filter(item => item !== id),
@@ -90,8 +93,10 @@ export default function AdventurerEditor({ state, updateState, showToast, mode =
       }))
     });
     setPendingDeleteId(null);
-    setSelectedId(state.adventurers.find(item => item.id !== id)?.id ?? null);
-    showToast(`Авантюрист «${adventurer?.name ?? id}» удалён.`);
+    setSelectedId(state.adventurers.find(item => item.id !== id && (mode !== 'LIVE' || !item.isArchived))?.id ?? null);
+    showToast(mode === 'LIVE'
+      ? `Авантюрист «${adventurer?.name ?? id}» удалён из активной игры и сохранён в архиве.`
+      : `Авантюрист «${adventurer?.name ?? id}» удалён.`);
   };
 
   return (

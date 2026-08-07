@@ -41,12 +41,11 @@ function cloneContractsForPlayerDistribution(
   adventurersById: Map<string, Adventurer>
 ): Contract[] {
   return contracts.map(contract => {
-    if (contract.clanId === 'clan_guild') {
-      return { ...contract, partyAdvIds: [...(contract.partyAdvIds ?? [])] };
-    }
-
-    const manualPlayers = (contract.partyAdvIds ?? []).filter(id => adventurersById.get(id)?.isPlayer);
-    return { ...contract, partyAdvIds: manualPlayers };
+    const retainedParty = (contract.partyAdvIds ?? []).filter(id => {
+      const adventurer = adventurersById.get(id);
+      return Boolean(adventurer && !adventurer.isArchived);
+    });
+    return { ...contract, partyAdvIds: retainedParty };
   });
 }
 
